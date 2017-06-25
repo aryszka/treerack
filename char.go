@@ -44,12 +44,12 @@ func (p *charParser) commitType() CommitType {
 	return p.commit
 }
 
-func (p *charParser) setIncludedBy(including parser, path []string) {
+func (p *charParser) setIncludedBy(includedBy parser, path []string) {
 	if stringsContain(path, p.name) {
 		panic(cannotIncludeParsers(p.name))
 	}
 
-	p.includedBy = append(p.includedBy, including)
+	p.includedBy = append(p.includedBy, includedBy)
 }
 
 func (p *charParser) cacheIncluded(*context, *Node) {
@@ -91,8 +91,8 @@ func (p *charParser) parse(t Trace, c *context) {
 		t.Out1("success", string(tok))
 		n := newNode(p.name, p.commit, c.offset, c.offset+1)
 		c.cache.set(c.offset, p.name, n)
-		for _, including := range p.includedBy {
-			including.cacheIncluded(c, n)
+		for _, includedBy := range p.includedBy {
+			includedBy.cacheIncluded(c, n)
 		}
 
 		c.success(n)

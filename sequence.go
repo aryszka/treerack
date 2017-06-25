@@ -7,11 +7,11 @@ type sequenceDefinition struct {
 }
 
 type sequenceParser struct {
-	name      string
-	commit    CommitType
-	items     []parser
-	ranges    [][]int
-	including []parser
+	name       string
+	commit     CommitType
+	items      []parser
+	ranges     [][]int
+	includedBy []parser
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -91,12 +91,12 @@ func (d *sequenceDefinition) commitType() CommitType {
 
 func (p *sequenceParser) nodeName() string { return p.name }
 
-func (p *sequenceParser) setIncludedBy(i parser, path []string) {
+func (p *sequenceParser) setIncludedBy(includedBy parser, path []string) {
 	if stringsContain(path, p.name) {
 		return
 	}
 
-	p.including = append(p.including, i)
+	p.includedBy = append(p.includedBy, includedBy)
 }
 
 func (p *sequenceParser) cacheIncluded(c *context, n *Node) {
@@ -108,8 +108,8 @@ func (p *sequenceParser) cacheIncluded(c *context, n *Node) {
 	nc.append(n)
 	c.cache.set(nc.from, p.name, nc)
 
-	for _, i := range p.including {
-		i.cacheIncluded(c, nc)
+	for _, includedBy := range p.includedBy {
+		includedBy.cacheIncluded(c, nc)
 	}
 }
 
@@ -175,8 +175,8 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	t.Out1("success, items parsed")
 
 	c.cache.set(node.from, p.name, node)
-	for _, i := range p.including {
-		i.cacheIncluded(c, node)
+	for _, includedBy := range p.includedBy {
+		includedBy.cacheIncluded(c, node)
 	}
 
 	c.success(node)
