@@ -1,7 +1,5 @@
 package parse
 
-// TODO: rename to token
-
 type charParser struct {
 	name       string
 	commit     CommitType

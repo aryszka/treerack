@@ -108,25 +108,10 @@ func (p *sequenceParser) cacheIncluded(c *context, n *Node) {
 	nc.append(n)
 	c.cache.set(nc.from, p.name, nc)
 
-	// maybe it is enough to cache only those that are on the path
 	for _, i := range p.including {
 		i.cacheIncluded(c, nc)
 	}
 }
-
-/*
-should be possible to parse:
-
-a = "0"
-b = "1"
-c = a* e b
-d = a | c
-e = b | d
-
-input: 111
-*/
-
-// TODO: apply the quantifier migration to the syntax
 
 func (p *sequenceParser) parse(t Trace, c *context) {
 	t = t.Extend(p.name)
@@ -156,36 +141,12 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		m, ok := c.fromCache(items[0].nodeName())
 		if ok {
 			t.Out1("sequence item found in cache, match:", m, items[0].nodeName(), c.offset)
-			if m {
-				if c.node.tokenLength() > 0 {
-					node.append(c.node)
-					currentCount++
-				}
-
-				if c.node.tokenLength() == 0 || ranges[0][1] >= 0 && currentCount == ranges[0][1] {
-					items = items[1:]
-					ranges = ranges[1:]
-					currentCount = 0
-				}
-
-				continue
-			}
-
-			if currentCount < ranges[0][0] {
-				c.cache.set(node.from, p.name, nil)
-				c.fail(node.from)
-				return
-			}
-
-			items = items[1:]
-			ranges = ranges[1:]
-			currentCount = 0
-			continue
+		} else {
+			items[0].parse(t, c)
+			m = c.match
 		}
 
-		items[0].parse(t, c)
-
-		if !c.match {
+		if !m {
 			if currentCount < ranges[0][0] {
 				t.Out1("fail, item failed")
 				c.cache.set(node.from, p.name, nil)
