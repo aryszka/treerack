@@ -3,7 +3,7 @@ package parse
 import "testing"
 
 func TestKeyVal(t *testing.T) {
-	test(t, "keyval.p", "doc", []testItem{{
+	test(t, "keyval.parser", "doc", []testItem{{
 		msg: "empty",
 	}, {
 		msg:  "a comment",

@@ -14,7 +14,7 @@ func TestBoot(t *testing.T) {
 		return
 	}
 
-	f, err := os.Open("syntax.p")
+	f, err := os.Open("syntax.parser")
 	if err != nil {
 		t.Error(err)
 		return

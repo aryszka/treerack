@@ -202,7 +202,7 @@ func bootSyntax(t Trace) (*Syntax, error) {
 		return nil, err
 	}
 
-	f, err := os.Open("syntax.p")
+	f, err := os.Open("syntax.parser")
 	if err != nil {
 		return nil, err
 	}

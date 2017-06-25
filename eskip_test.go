@@ -727,7 +727,7 @@ func TestEskip(t *testing.T) {
 	r := generateEskip(1 << 9)
 	e := eskip.Print(true, r...)
 	b := bytes.NewBufferString(e)
-	s, err := testSyntax("eskip.p", 0)
+	s, err := testSyntax("eskip.parser", 0)
 	if err != nil {
 		t.Error(err)
 		return

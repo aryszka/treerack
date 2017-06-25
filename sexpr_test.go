@@ -3,7 +3,7 @@ package parse
 import "testing"
 
 func TestSExpr(t *testing.T) {
-	test(t, "sexpr.p", "s-expression", []testItem{{
+	test(t, "sexpr.parser", "s-expression", []testItem{{
 		msg:  "number",
 		text: "42",
 		nodes: []*Node{{

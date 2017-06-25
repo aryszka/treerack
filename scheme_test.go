@@ -3,7 +3,7 @@ package parse
 import "testing"
 
 func TestScheme(t *testing.T) {
-	test(t, "scheme.p", "scheme", []testItem{{
+	test(t, "scheme.parser", "scheme", []testItem{{
 		msg: "empty",
 	}, {
 		msg: "a function",

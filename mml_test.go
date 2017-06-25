@@ -3,7 +3,7 @@ package parse
 import "testing"
 
 func TestMML(t *testing.T) {
-	test(t, "mml.p", "mml", []testItem{{
+	test(t, "mml.parser", "mml", []testItem{{
 		msg:  "empty",
 		node: &Node{Name: "mml"},
 	}, {

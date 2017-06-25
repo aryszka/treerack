@@ -285,7 +285,7 @@ func jsonTreeToJSON(n *Node) (interface{}, error) {
 }
 
 func TestJSON(t *testing.T) {
-	test(t, "json.p", "value", []testItem{{
+	test(t, "json.parser", "value", []testItem{{
 		msg:  "true",
 		text: "true",
 		node: &Node{
@@ -509,7 +509,7 @@ func TestRandomJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer(b)
 
-	s, err := testSyntax("json.p", 0)
+	s, err := testSyntax("json.parser", 0)
 	if err != nil {
 		t.Error(err)
 		return
