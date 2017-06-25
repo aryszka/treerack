@@ -44,7 +44,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "block-comment-char", "alias", "not-block-close", "not-star",
 }, {
-	"quantifier", "block-comment-body", "alias", "block-comment-char", "0", "-1",
+	"sequence", "block-comment-body", "alias", "block-comment-char:0:-1",
 }, {
 	"sequence",
 	"block-comment",
@@ -53,15 +53,15 @@ var bootDefinitions = [][]string{{
 	"block-comment-body",
 	"close-block-comment",
 }, {
-	"quantifier", "not-nls", "alias", "not-nl", "0", "-1",
+	"sequence", "not-nls", "alias", "not-nl:0:-1",
 }, {
 	"sequence", "line-comment", "alias", "double-slash", "not-nls",
 }, {
 	"choice", "comment-segment", "alias", "block-comment", "line-comment",
 }, {
-	"quantifier", "wss", "alias", "ws", "0", "-1",
+	"sequence", "wss", "alias", "ws:0:-1",
 }, {
-	"quantifier", "optional-nl", "alias", "nl", "0", "1",
+	"sequence", "optional-nl", "alias", "nl:0:1",
 }, {
 	"choice",
 	"ws-no-nl",
@@ -81,7 +81,7 @@ var bootDefinitions = [][]string{{
 	"ws-no-nl",
 	"comment-segment",
 }, {
-	"quantifier", "continue-comment", "alias", "continue-comment-segment", "0", "-1",
+	"sequence", "continue-comment", "alias", "continue-comment-segment:0:-1",
 }, {
 	"sequence",
 	"comment",
@@ -91,7 +91,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "wsc", "alias", "ws", "comment",
 }, {
-	"quantifier", "wscs", "alias", "wsc", "0", "-1",
+	"sequence", "wscs", "alias", "wsc:0:-1",
 }, {
 	"anything", "anything", "alias",
 }, {
@@ -105,7 +105,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"chars", "dash", "alias", "-",
 }, {
-	"quantifier", "optional-class-not", "alias", "class-not", "0", "1",
+	"sequence", "optional-class-not", "alias", "class-not:0:1",
 }, {
 	"class", "not-class-control", "alias", "^\\\\\\[\\]\\^\\-",
 }, {
@@ -119,7 +119,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "char-or-range", "alias", "class-char", "char-range",
 }, {
-	"quantifier", "chars-or-ranges", "alias", "char-or-range", "0", "-1",
+	"sequence", "chars-or-ranges", "alias", "char-or-range:0:-1",
 }, {
 	"sequence", "char-class", "none", "open-square", "optional-class-not", "chars-or-ranges", "close-square",
 }, {
@@ -129,7 +129,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "sequence-char", "none", "not-char-sequence-control", "escaped-char",
 }, {
-	"quantifier", "char-sequence-chars", "alias", "sequence-char", "0", "-1",
+	"sequence", "char-sequence-chars", "alias", "sequence-char:0:-1",
 }, {
 	"sequence", "char-sequence", "none", "double-quote", "char-sequence-chars", "double-quote",
 }, {
@@ -137,7 +137,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"class", "symbol-char", "alias", "^\\\\ \\n\\t\\b\\f\\r\\v\\b/.\\[\\]\\\"{}\\^+*?|():=;",
 }, {
-	"quantifier", "symbol-chars", "alias", "symbol-char", "1", "-1",
+	"sequence", "symbol-chars", "alias", "symbol-char:1:-1",
 }, {
 	"sequence", "symbol", "none", "symbol-chars",
 }, {
@@ -153,7 +153,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"class", "digit", "alias", "0-9",
 }, {
-	"quantifier", "number", "alias", "digit", "1", "-1",
+	"sequence", "number", "alias", "digit:1:-1",
 }, {
 	"sequence", "count", "none", "number",
 }, {
@@ -194,23 +194,23 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "quantifiable", "alias", "terminal", "symbol", "group",
 }, {
-	"sequence", "quantifier", "none", "quantifiable", "wscs", "quantity",
+	"choice", "item-choice", "alias", "terminal", "symbol", "group",
 }, {
-	"choice", "item", "alias", "terminal", "symbol", "group", "quantifier",
+	"sequence", "item", "none", "item-choice", "quantity:0:1",
 }, {
 	"sequence", "item-continue", "alias", "wscs", "item",
 }, {
-	"quantifier", "items-continue", "alias", "item-continue", "0", "-1",
+	"sequence", "items-continue", "alias", "item-continue:0:-1",
 }, {
 	"sequence", "sequence", "none", "item", "items-continue",
 }, {
-	"choice", "element", "alias", "terminal", "symbol", "group", "quantifier", "sequence",
+	"choice", "element", "alias", "terminal", "symbol", "group", "sequence",
 }, {
 	"chars", "pipe", "alias", "|",
 }, {
 	"sequence", "element-continue", "alias", "wscs", "pipe", "wscs", "element",
 }, {
-	"quantifier", "elements-continue", "alias", "element-continue", "1", "-1",
+	"sequence", "elements-continue", "alias", "element-continue:1:-1",
 }, {
 	"sequence", "choice", "none", "element", "elements-continue",
 }, {
@@ -220,7 +220,6 @@ var bootDefinitions = [][]string{{
 	"terminal",
 	"symbol",
 	"group",
-	"quantifier",
 	"sequence",
 	"choice",
 }, {
@@ -236,7 +235,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"sequence", "flag-tag", "alias", "colon", "flag",
 }, {
-	"quantifier", "flags", "alias", "flag-tag", "0", "-1",
+	"sequence", "flags", "alias", "flag-tag:0:-1",
 }, {
 	"chars", "equal", "alias", "=",
 }, {
@@ -246,7 +245,7 @@ var bootDefinitions = [][]string{{
 }, {
 	"choice", "wsc-or-semicolon", "alias", "wsc", "semicolon",
 }, {
-	"quantifier", "wsc-or-semicolons", "alias", "wsc-or-semicolon", "0", "-1",
+	"sequence", "wsc-or-semicolons", "alias", "wsc-or-semicolon:0:-1",
 }, {
 	"sequence",
 	"subsequent-definition",
@@ -256,12 +255,10 @@ var bootDefinitions = [][]string{{
 	"wsc-or-semicolons",
 	"definition",
 }, {
-	"quantifier",
+	"sequence",
 	"subsequent-definitions",
 	"alias",
-	"subsequent-definition",
-	"0",
-	"-1",
+	"subsequent-definition:0:-1",
 }, {
 	"sequence",
 	"definitions",
@@ -269,12 +266,10 @@ var bootDefinitions = [][]string{{
 	"definition",
 	"subsequent-definitions",
 }, {
-	"quantifier",
+	"sequence",
 	"opt-definitions",
 	"alias",
-	"definitions",
-	"0",
-	"1",
+	"definitions:0:1",
 }, {
 	"sequence",
 	"syntax",

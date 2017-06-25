@@ -1,9 +1,10 @@
 package parse
 
+// TODO: rename to token
+
 type charParser struct {
 	name       string
 	commit     CommitType
-	any        bool
 	not        bool
 	chars      []rune
 	ranges     [][]rune
@@ -13,14 +14,13 @@ type charParser struct {
 func newChar(
 	name string,
 	ct CommitType,
-	any, not bool,
+	not bool,
 	chars []rune,
 	ranges [][]rune,
 ) *charParser {
 	return &charParser{
 		name:   name,
 		commit: ct,
-		any:    any,
 		not:    not,
 		chars:  chars,
 		ranges: ranges,
@@ -31,7 +31,11 @@ func (p *charParser) nodeName() string { return p.name }
 
 func (p *charParser) parser(r *registry, path []string) (parser, error) {
 	if stringsContain(path, p.name) {
-		panic(errCannotIncludeParsers)
+		panic(cannotIncludeParsers(p.name))
+	}
+
+	if _, ok := r.parser(p.name); ok {
+		return p, nil
 	}
 
 	r.setParser(p)
@@ -42,23 +46,19 @@ func (p *charParser) commitType() CommitType {
 	return p.commit
 }
 
-func (p *charParser) setIncludedBy(i parser, path []string) {
+func (p *charParser) setIncludedBy(including parser, path []string) {
 	if stringsContain(path, p.name) {
-		panic(errCannotIncludeParsers)
+		panic(cannotIncludeParsers(p.name))
 	}
 
-	p.includedBy = append(p.includedBy, i)
+	p.includedBy = append(p.includedBy, including)
 }
 
 func (p *charParser) cacheIncluded(*context, *Node) {
-	panic(errCannotIncludeParsers)
+	panic(cannotIncludeParsers(p.name))
 }
 
 func (p *charParser) match(t rune) bool {
-	if p.any {
-		return true
-	}
-
 	for _, ci := range p.chars {
 		if ci == t {
 			return !p.not
@@ -93,8 +93,8 @@ func (p *charParser) parse(t Trace, c *context) {
 		t.Out1("success", string(tok))
 		n := newNode(p.name, p.commit, c.offset, c.offset+1)
 		c.cache.set(c.offset, p.name, n)
-		for _, i := range p.includedBy {
-			i.cacheIncluded(c, n)
+		for _, including := range p.includedBy {
+			including.cacheIncluded(c, n)
 		}
 
 		c.success(n)

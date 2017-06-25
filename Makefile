@@ -14,4 +14,4 @@ check: build
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
 
-precommit: build check fmt
+precommit: fmt build check

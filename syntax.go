@@ -16,6 +16,11 @@ const (
 	Root
 )
 
+type SequenceItem struct {
+	Name     string
+	Min, Max int // 0,0 considered as 1,1, x,0 considered as x,-1
+}
+
 type Syntax struct {
 	trace       Trace
 	registry    *registry
@@ -68,11 +73,11 @@ func (s *Syntax) register(d definition) error {
 }
 
 func (s *Syntax) AnyChar(name string, ct CommitType) error {
-	return s.register(newChar(name, ct, true, false, nil, nil))
+	return s.Class(name, ct, true, nil, nil)
 }
 
 func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
-	return s.register(newChar(name, ct, false, not, chars, ranges))
+	return s.register(newChar(name, ct, not, chars, ranges))
 }
 
 func childName(name string, childIndex int) string {
@@ -84,19 +89,15 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 	for i, ci := range chars {
 		ref := childName(name, i)
 		refs = append(refs, ref)
-		if err := s.register(newChar(ref, Alias, false, false, []rune{ci}, nil)); err != nil {
+		if err := s.register(newChar(ref, Alias, false, []rune{ci}, nil)); err != nil {
 			return err
 		}
 	}
 
-	return s.Sequence(name, ct, refs...)
+	return s.Sequence(name, ct, namesToSequenceItems(refs)...)
 }
 
-func (s *Syntax) Quantifier(name string, ct CommitType, item string, min, max int) error {
-	return s.register(newQuantifier(name, ct, item, min, max))
-}
-
-func (s *Syntax) Sequence(name string, ct CommitType, items ...string) error {
+func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) error {
 	return s.register(newSequence(name, ct, items))
 }
 

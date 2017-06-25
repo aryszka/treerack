@@ -7,7 +7,6 @@ import (
 
 func TestBoot(t *testing.T) {
 	var trace Trace
-	// trace = NewTrace(2)
 
 	b, err := initBoot(trace, bootDefinitions)
 	if err != nil {
@@ -29,12 +28,20 @@ func TestBoot(t *testing.T) {
 		return
 	}
 
+	// trace = NewTrace(1)
 	s0 := NewSyntax(trace)
 	if err := define(s0, n0); err != nil {
 		t.Error(err)
+		return
 	}
 
 	_, err = f.Seek(0, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = s0.Init()
 	if err != nil {
 		t.Error(err)
 		return

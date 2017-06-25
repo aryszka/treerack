@@ -1,9 +1,6 @@
 package parse
 
-import (
-	"errors"
-	"fmt"
-)
+import "fmt"
 
 type definition interface {
 	nodeName() string
@@ -18,10 +15,12 @@ type parser interface {
 	parse(Trace, *context)
 }
 
-var errCannotIncludeParsers = errors.New("cannot include parsers")
-
 func parserNotFound(name string) error {
 	return fmt.Errorf("parser not found: %s", name)
+}
+
+func cannotIncludeParsers(name string) error {
+	return fmt.Errorf("parser: %s cannot include other parsers", name)
 }
 
 func stringsContain(ss []string, s string) bool {

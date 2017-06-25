@@ -49,22 +49,19 @@ quantity:alias   = count-quantifier
                  | zero-or-more
                  | zero-or-one;
 
-quantifier = (terminal | symbol | group) wsc* quantity;
+item     = (terminal | symbol | group) quantity?;
+sequence = item (wsc* item)*; // TODO: why was this '+'?
 
-item:alias = terminal | symbol | group | quantifier;
-sequence   = item (wsc* item)+;
-
-element:alias = terminal | symbol | group | quantifier | sequence;
+element:alias = terminal | symbol | group | sequence;
 
 // DOC: once cached, doesn't try again, even in a new context, therefore the order may matter
-choice        = element (wsc* "|" wsc* element)+;
+choice = element (wsc* "|" wsc* element)+;
 
 // DOC: not having 'not' needs some tricks sometimes
 
 expression:alias = terminal
                  | symbol
                  | group
-                 | quantifier
                  | sequence
                  | choice;
 

@@ -358,9 +358,10 @@ func TestSequence(t *testing.T) {
 		}},
 	)
 
-	testString(
+	testStringTrace(
 		t,
 		`A = "a" | (A?)*`,
+		1,
 		[]testItem{{
 			msg:  "sequence in choice with redundant quantifier",
 			text: "aaa",
@@ -397,15 +398,15 @@ func TestQuantifiers(t *testing.T) {
 		t,
 		`A = "a" "b"{0} "a"`,
 		[]testItem{{
-			msg:  "zero",
-			text: "aa",
+			msg:  "zero, considered as one",
+			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				to:   3,
 			},
 		}, {
 			msg:  "zero, fail",
-			text: "aba",
+			text: "aa",
 			fail: true,
 		}},
 	)
@@ -642,10 +643,9 @@ func TestQuantifiers(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" "b"{0,} "a"`,
-		1,
 		[]testItem{{
 			msg:  "zero or more, explicit, missing",
 			text: "aa",
@@ -663,10 +663,9 @@ func TestQuantifiers(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" "b"* "a"`,
-		1,
 		[]testItem{{
 			msg:  "zero or more, shortcut, missing",
 			text: "aa",
@@ -684,10 +683,9 @@ func TestQuantifiers(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" "b"{1,} "a"`,
-		1,
 		[]testItem{{
 			msg:  "one or more, explicit, missing",
 			text: "aa",
@@ -702,10 +700,9 @@ func TestQuantifiers(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" "b"+ "a"`,
-		1,
 		[]testItem{{
 			msg:  "one or more, shortcut, missing",
 			text: "aa",
@@ -720,10 +717,9 @@ func TestQuantifiers(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" "b"{3,} "a"`,
-		1,
 		[]testItem{{
 			msg:  "three or more, explicit, missing",
 			text: "abba",

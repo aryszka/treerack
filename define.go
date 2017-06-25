@@ -106,19 +106,25 @@ func nodeChar(n *Node) rune {
 	return toRune(s)
 }
 
+func defineMember(s *Syntax, defaultName string, n *Node) (string, error) {
+	switch n.Name {
+	case "symbol":
+		return n.Text(), nil
+	default:
+		return defaultName, defineExpression(s, defaultName, Alias, n)
+	}
+}
+
 func defineMembers(s *Syntax, name string, n ...*Node) ([]string, error) {
 	var refs []string
 	for i, ni := range n {
 		nmi := childName(name, i)
-		switch ni.Name {
-		case "symbol":
-			refs = append(refs, ni.Text())
-		default:
-			refs = append(refs, nmi)
-			if err := defineExpression(s, nmi, Alias, ni); err != nil {
-				return nil, err
-			}
+		ref, err := defineMember(s, nmi, ni)
+		if err != nil {
+			return nil, err
 		}
+
+		refs = append(refs, ref)
 	}
 
 	return refs, nil
@@ -156,38 +162,33 @@ func defineCharSequence(s *Syntax, name string, ct CommitType, charNodes []*Node
 	return s.CharSequence(name, ct, chars)
 }
 
-func defineQuantifier(s *Syntax, name string, ct CommitType, n *Node, q *Node) error {
-	refs, err := defineMembers(s, name, n)
-	if err != nil {
-		return err
-	}
-
-	var min, max int
-	switch q.Name {
+func getQuantity(n *Node) (min int, max int, err error) {
+	switch n.Name {
 	case "count-quantifier":
-		min, err = strconv.Atoi(q.Nodes[0].Text())
+		min, err = strconv.Atoi(n.Nodes[0].Text())
 		if err != nil {
-			return err
+			return
 		}
 
 		max = min
 	case "range-quantifier":
 		min = 0
 		max = -1
-		for _, rq := range q.Nodes {
+		for _, rq := range n.Nodes {
 			switch rq.Name {
 			case "range-from":
 				min, err = strconv.Atoi(rq.Text())
 				if err != nil {
-					return err
+					return
 				}
 			case "range-to":
 				max, err = strconv.Atoi(rq.Text())
 				if err != nil {
-					return err
+					return
 				}
 			default:
-				return ErrInvalidSyntax
+				err = ErrInvalidSyntax
+				return
 			}
 		}
 	case "one-or-more":
@@ -198,23 +199,42 @@ func defineQuantifier(s *Syntax, name string, ct CommitType, n *Node, q *Node) e
 		min, max = 0, 1
 	}
 
-	return s.Quantifier(name, ct, refs[0], min, max)
+	return
+}
+
+func defineSymbol(s *Syntax, name string, ct CommitType, n *Node) error {
+	return s.Sequence(name, ct, SequenceItem{Name: n.Text()})
 }
 
 func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
-	refs, err := defineMembers(s, name, n...)
-	if err != nil {
-		return err
+	var items []SequenceItem
+	for i, ni := range n {
+		if ni.Name != "item" || len(ni.Nodes) == 0 {
+			return ErrInvalidSyntax
+		}
+
+		var (
+			item SequenceItem
+			err  error
+		)
+
+		defaultName := childName(name, i)
+		item.Name, err = defineMember(s, defaultName, ni.Nodes[0])
+		if err != nil {
+			return err
+		}
+
+		if len(ni.Nodes) == 2 {
+			item.Min, item.Max, err = getQuantity(ni.Nodes[1])
+			if err != nil {
+				return err
+			}
+		}
+
+		items = append(items, item)
 	}
 
-	// // TODO: try to make this expressed in the syntax (maybe as sequences need either a quantififer or not
-	// // one item? or by maintaining the excluded and caching in the sequence in a similar way when there is
-	// // only one item?) how does this effect the quantifiers?
-	// if len(refs) == 1 {
-	// 	return s.Choice(name, ct, refs[0])
-	// }
-
-	return s.Sequence(name, ct, refs...)
+	return s.Sequence(name, ct, items...)
 }
 
 func defineChoice(s *Syntax, name string, ct CommitType, n ...*Node) error {
@@ -236,9 +256,7 @@ func defineExpression(s *Syntax, name string, ct CommitType, expression *Node) e
 	case "char-sequence":
 		err = defineCharSequence(s, name, ct, expression.Nodes)
 	case "symbol":
-		err = defineSequence(s, name, ct, expression)
-	case "quantifier":
-		err = defineQuantifier(s, name, ct, expression.Nodes[0], expression.Nodes[1])
+		err = defineSymbol(s, name, ct, expression)
 	case "sequence":
 		err = defineSequence(s, name, ct, expression.Nodes...)
 	case "choice":

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var errInvalidDefinition = errors.New("invalid syntax definition")
@@ -29,11 +30,6 @@ func checkBootDefinitionLength(d []string) error {
 	switch d[0] {
 	case "chars", "class":
 		if len(d) < 4 {
-			return errInvalidDefinition
-		}
-
-	case "quantifier":
-		if len(d) != 6 {
 			return errInvalidDefinition
 		}
 
@@ -121,28 +117,42 @@ func defineBootCharSequence(s *Syntax, d []string) error {
 	return s.CharSequence(d[1], ct, chars)
 }
 
-func defineBootQuantifier(s *Syntax, d []string) error {
-	ct := stringToCommitType(d[2])
+func namesToSequenceItemsQuantify(n []string, quantify bool) []SequenceItem {
+	si := make([]SequenceItem, len(n))
+	for i, ni := range n {
+		var min, max int
+		if quantify {
+			nis := strings.Split(ni, ":")
+			if len(nis) == 3 {
+				ni = nis[0]
 
-	var (
-		min, max int
-		err      error
-	)
+				var err error
 
-	if min, err = strconv.Atoi(d[4]); err != nil {
-		return err
+				min, err = strconv.Atoi(nis[1])
+				if err != nil {
+					panic(err)
+				}
+
+				max, err = strconv.Atoi(nis[2])
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+
+		si[i] = SequenceItem{Name: ni, Min: min, Max: max}
 	}
 
-	if max, err = strconv.Atoi(d[5]); err != nil {
-		return err
-	}
+	return si
+}
 
-	return s.Quantifier(d[1], ct, d[3], min, max)
+func namesToSequenceItems(n []string) []SequenceItem {
+	return namesToSequenceItemsQuantify(n, false)
 }
 
 func defineBootSequence(s *Syntax, d []string) error {
 	ct := stringToCommitType(d[2])
-	return s.Sequence(d[1], ct, d[3:]...)
+	return s.Sequence(d[1], ct, namesToSequenceItemsQuantify(d[3:], true)...)
 }
 
 func defineBootChoice(s *Syntax, d []string) error {
@@ -158,8 +168,6 @@ func defineBoot(s *Syntax, d []string) error {
 		return defineBootClass(s, d)
 	case "chars":
 		return defineBootCharSequence(s, d)
-	case "quantifier":
-		return defineBootQuantifier(s, d)
 	case "sequence":
 		return defineBootSequence(s, d)
 	case "choice":
