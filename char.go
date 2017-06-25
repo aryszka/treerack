@@ -73,22 +73,22 @@ func (p *charParser) match(t rune) bool {
 }
 
 func (p *charParser) parse(t Trace, c *context) {
-	t = t.Extend(p.name)
-	t.Out1("parsing char", c.offset)
+	// t = t.Extend(p.name)
+	// t.Out1("parsing char", c.offset)
 
 	if p.commit&Documentation != 0 {
-		t.Out1("fail, doc")
+		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
-	if m, ok := c.fromCache(p.name); ok {
-		t.Out1("found in cache, match:", m)
+	if _, ok := c.fromCache(p.name); ok {
+		// t.Out1("found in cache, match:", m)
 		return
 	}
 
 	if tok, ok := c.token(); ok && p.match(tok) {
-		t.Out1("success", string(tok))
+		// t.Out1("success", string(tok))
 		n := newNode(p.name, p.commit, c.offset, c.offset+1)
 		c.cache.set(c.offset, p.name, n)
 		for _, includedBy := range p.includedBy {
@@ -98,7 +98,7 @@ func (p *charParser) parse(t Trace, c *context) {
 		c.success(n)
 		return
 	} else {
-		t.Out1("fail", string(tok))
+		// t.Out1("fail", string(tok))
 		c.cache.set(c.offset, p.name, nil)
 		c.fail(c.offset)
 		return

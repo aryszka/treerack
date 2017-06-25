@@ -187,8 +187,8 @@ func defineAllBoot(s *Syntax, defs [][]string) error {
 	return nil
 }
 
-func initBoot(t Trace, definitions [][]string) (*Syntax, error) {
-	s := NewSyntax(t)
+func initBoot(definitions [][]string) (*Syntax, error) {
+	s := NewSyntax()
 	if err := defineAllBoot(s, definitions); err != nil {
 		return nil, err
 	}
@@ -196,8 +196,8 @@ func initBoot(t Trace, definitions [][]string) (*Syntax, error) {
 	return s, s.Init()
 }
 
-func bootSyntax(t Trace) (*Syntax, error) {
-	b, err := initBoot(t, bootDefinitions)
+func bootSyntax() (*Syntax, error) {
+	b, err := initBoot(bootDefinitions)
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +214,6 @@ func bootSyntax(t Trace) (*Syntax, error) {
 		return nil, err
 	}
 
-	s := NewSyntax(t)
+	s := NewSyntax()
 	return s, define(s, doc)
 }

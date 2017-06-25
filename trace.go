@@ -6,6 +6,7 @@ import (
 )
 
 type Trace interface {
+	OutN(int, ...interface{})
 	Out(...interface{})
 	Out1(...interface{})
 	Out2(...interface{})
@@ -27,8 +28,8 @@ func NewTrace(level int) *DefaultTrace {
 	}
 }
 
-func (t *DefaultTrace) printlnLevel(l int, a ...interface{}) {
-	if l > t.level {
+func (t *DefaultTrace) OutN(level int, a ...interface{}) {
+	if level > t.level {
 		return
 	}
 
@@ -36,19 +37,19 @@ func (t *DefaultTrace) printlnLevel(l int, a ...interface{}) {
 }
 
 func (t *DefaultTrace) Out(a ...interface{}) {
-	t.printlnLevel(0, a...)
+	t.OutN(0, a...)
 }
 
 func (t *DefaultTrace) Out1(a ...interface{}) {
-	t.printlnLevel(1, a...)
+	t.OutN(1, a...)
 }
 
 func (t *DefaultTrace) Out2(a ...interface{}) {
-	t.printlnLevel(2, a...)
+	t.OutN(2, a...)
 }
 
 func (t *DefaultTrace) Out3(a ...interface{}) {
-	t.printlnLevel(3, a...)
+	t.OutN(3, a...)
 }
 
 func (t *DefaultTrace) Extend(name string) Trace {
@@ -65,8 +66,9 @@ func (t *DefaultTrace) Extend(name string) Trace {
 	}
 }
 
-func (NopTrace) Out(...interface{})    {}
-func (NopTrace) Out1(...interface{})   {}
-func (NopTrace) Out2(...interface{})   {}
-func (NopTrace) Out3(...interface{})   {}
-func (t NopTrace) Extend(string) Trace { return t }
+func (NopTrace) OutN(int, ...interface{}) {}
+func (NopTrace) Out(...interface{})       {}
+func (NopTrace) Out1(...interface{})      {}
+func (NopTrace) Out2(...interface{})      {}
+func (NopTrace) Out3(...interface{})      {}
+func (t NopTrace) Extend(string) Trace    { return t }

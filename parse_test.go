@@ -18,9 +18,7 @@ type testItem struct {
 }
 
 func testSyntaxReader(r io.Reader, traceLevel int) (*Syntax, error) {
-	trace := NewTrace(0)
-
-	b, err := bootSyntax(trace)
+	b, err := bootSyntax()
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +28,12 @@ func testSyntaxReader(r io.Reader, traceLevel int) (*Syntax, error) {
 		return nil, err
 	}
 
-	trace = NewTrace(traceLevel)
-	s := NewSyntax(trace)
+	var trace Trace = NopTrace{}
+	if traceLevel >= 0 {
+		trace = NewTrace(traceLevel)
+	}
+
+	s := NewSyntaxTrace(trace)
 	if err := define(s, doc); err != nil {
 		return nil, err
 	}
@@ -189,7 +191,7 @@ func testStringTrace(t *testing.T, s string, traceLevel int, tests []testItem) {
 }
 
 func testString(t *testing.T, s string, tests []testItem) {
-	testStringTrace(t, s, 0, tests)
+	testStringTrace(t, s, -1, tests)
 }
 
 func testTrace(t *testing.T, file, rootName string, traceLevel int, tests []testItem) {
@@ -204,7 +206,7 @@ func testTrace(t *testing.T, file, rootName string, traceLevel int, tests []test
 }
 
 func test(t *testing.T, file, rootName string, tests []testItem) {
-	testTrace(t, file, rootName, 0, tests)
+	testTrace(t, file, rootName, -1, tests)
 }
 
 func TestRecursion(t *testing.T) {
@@ -358,10 +360,9 @@ func TestSequence(t *testing.T) {
 		}},
 	)
 
-	testStringTrace(
+	testString(
 		t,
 		`A = "a" | (A?)*`,
-		1,
 		[]testItem{{
 			msg:  "sequence in choice with redundant quantifier",
 			text: "aaa",

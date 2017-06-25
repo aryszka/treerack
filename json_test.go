@@ -509,7 +509,7 @@ func TestRandomJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer(b)
 
-	s, err := testSyntax("json.parser", 0)
+	s, err := testSyntax("json.parser", -1)
 	if err != nil {
 		t.Error(err)
 		return

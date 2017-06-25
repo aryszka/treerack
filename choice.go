@@ -93,22 +93,22 @@ func (p *choiceParser) cacheIncluded(c *context, n *Node) {
 }
 
 func (p *choiceParser) parse(t Trace, c *context) {
-	t = t.Extend(p.name)
-	t.Out1("parsing choice", c.offset)
+	// t = t.Extend(p.name)
+	// t.Out1("parsing choice", c.offset)
 
 	if p.commit&Documentation != 0 {
-		t.Out1("fail, doc")
+		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
-	if m, ok := c.fromCache(p.name); ok {
-		t.Out1("found in cache, match:", m)
+	if _, ok := c.fromCache(p.name); ok {
+		// t.Out1("found in cache, match:", m)
 		return
 	}
 
 	if c.excluded(c.offset, p.name) {
-		t.Out1("excluded")
+		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -149,12 +149,12 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	if match {
-		t.Out1("choice, success")
+		// t.Out1("choice, success")
 		c.success(node)
 		return
 	}
 
-	t.Out1("fail")
+	// t.Out1("fail")
 	c.cache.set(node.from, p.name, nil)
 	c.fail(node.from)
 }

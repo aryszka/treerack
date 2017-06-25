@@ -46,9 +46,13 @@ func duplicateDefinition(name string) error {
 	return fmt.Errorf("duplicate definition: %s", name)
 }
 
-func NewSyntax(t Trace) *Syntax {
+func NewSyntax() *Syntax {
+	return NewSyntaxTrace(nil)
+}
+
+func NewSyntaxTrace(t Trace) *Syntax {
 	if t == nil {
-		t = NewTrace(0)
+		t = NopTrace{}
 	}
 
 	return &Syntax{
