@@ -197,7 +197,7 @@ func initBoot(definitions [][]string) (*Syntax, error) {
 }
 
 func bootSyntax() (*Syntax, error) {
-	b, err := initBoot(bootDefinitions)
+	b, err := initBoot(bootSyntaxDefs)
 	if err != nil {
 		return nil, err
 	}

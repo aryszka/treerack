@@ -100,13 +100,13 @@ func (p *sequenceParser) setIncludedBy(includedBy parser, path []string) {
 }
 
 func (p *sequenceParser) cacheIncluded(c *context, n *Node) {
-	if !c.excluded(n.from, p.name) {
+	if !c.excluded(n.From, p.name) {
 		return
 	}
 
-	nc := newNode(p.name, p.commit, n.from, n.to)
+	nc := newNode(p.name, n.From, n.To, p.commit)
 	nc.append(n)
-	c.cache.set(nc.from, p.name, nc)
+	c.cache.set(nc.From, p.name, nc)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.cacheIncluded(c, nc)
@@ -135,7 +135,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	items := p.items
 	ranges := p.ranges
 	var currentCount int
-	node := newNode(p.name, p.commit, c.offset, c.offset)
+	node := newNode(p.name, c.offset, c.offset, p.commit)
 
 	for len(items) > 0 {
 		m, ok := c.fromCache(items[0].nodeName())
@@ -149,8 +149,8 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		if !m {
 			if currentCount < ranges[0][0] {
 				// t.Out1("fail, item failed")
-				c.cache.set(node.from, p.name, nil)
-				c.fail(node.from)
+				c.cache.set(node.From, p.name, nil)
+				c.fail(node.From)
 				return
 			}
 
@@ -174,7 +174,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	// t.Out1("success, items parsed")
 
-	c.cache.set(node.from, p.name, node)
+	c.cache.set(node.From, p.name, node)
 	for _, includedBy := range p.includedBy {
 		includedBy.cacheIncluded(c, node)
 	}

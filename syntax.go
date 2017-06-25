@@ -36,10 +36,11 @@ var (
 	ErrInitFailed          = errors.New("init failed")
 	ErrNoParsersDefined    = errors.New("no parsers defined")
 	ErrInvalidInput        = errors.New("invalid input")
-	ErrInvalidCharacter    = errors.New("invalid character") // two use cases: utf8 and boot
+	ErrInvalidCharacter    = errors.New("invalid character") // TODO: fix two use cases, utf8 and boot
 	ErrUnexpectedCharacter = errors.New("unexpected character")
 	ErrInvalidSyntax       = errors.New("invalid syntax")
 	ErrRootAlias           = errors.New("root node cannot be an alias")
+	ErrNotImplemented      = errors.New("not implemented")
 )
 
 func duplicateDefinition(name string) error {
@@ -114,7 +115,7 @@ func (s *Syntax) Read(r io.Reader) error {
 		return ErrSyntaxInitialized
 	}
 
-	return nil
+	return ErrNotImplemented
 }
 
 func (s *Syntax) Init() error {
@@ -150,7 +151,7 @@ func (s *Syntax) Generate(w io.Writer) error {
 		return err
 	}
 
-	return nil
+	return ErrNotImplemented
 }
 
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {

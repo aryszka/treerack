@@ -33,23 +33,6 @@ func stringsContain(ss []string, s string) bool {
 	return false
 }
 
-func copyIncludes(to, from map[string]CommitType) {
-	if from == nil {
-		return
-	}
-
-	for name, ct := range from {
-		to[name] = ct
-	}
-}
-
-func mergeIncludes(left, right map[string]CommitType) map[string]CommitType {
-	m := make(map[string]CommitType)
-	copyIncludes(m, left)
-	copyIncludes(m, right)
-	return m
-}
-
 func parse(t Trace, p parser, c *context) (*Node, error) {
 	p.parse(t, c)
 	if c.readErr != nil {

@@ -1,6 +1,6 @@
 package parse
 
-var bootDefinitions = [][]string{{
+var bootSyntaxDefs = [][]string{{
 	"chars", "space", "alias", " ",
 }, {
 	"chars", "tab", "alias", "\\t",

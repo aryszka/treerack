@@ -1,5 +1,7 @@
 package parse
 
+// TODO: rename to store
+
 type cacheItem struct {
 	name string
 	node *Node
@@ -39,11 +41,11 @@ func (c *cache) get(offset int, name string) (*Node, bool, bool) {
 	return nil, false, false
 }
 
-func (c *cache) setOne(offset int, name string, n *Node) {
-}
-
 func (c *cache) set(offset int, name string, n *Node) {
-	if len(c.tokens) <= offset {
+	var tc *tokenCache
+	if len(c.tokens) > offset {
+		tc = c.tokens[offset]
+	} else {
 		if cap(c.tokens) > offset {
 			c.tokens = c.tokens[:offset+1]
 		} else {
@@ -52,10 +54,7 @@ func (c *cache) set(offset int, name string, n *Node) {
 				c.tokens = append(c.tokens, nil)
 			}
 		}
-	}
 
-	tc := c.tokens[offset]
-	if tc == nil {
 		tc = &tokenCache{}
 		c.tokens[offset] = tc
 	}

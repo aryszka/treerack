@@ -13,13 +13,13 @@ func TestKeyVal(t *testing.T) {
 		text: "a key",
 		nodes: []*Node{{
 			Name: "key-val",
-			to:   5,
+			To:   5,
 			Nodes: []*Node{{
 				Name: "key",
-				to:   5,
+				To:   5,
 				Nodes: []*Node{{
 					Name: "symbol",
-					to:   5,
+					To:   5,
 				}},
 			}},
 		}},
@@ -28,16 +28,16 @@ func TestKeyVal(t *testing.T) {
 		text: " a key",
 		nodes: []*Node{{
 			Name: "key-val",
-			from: 1,
-			to:   6,
+			From: 1,
+			To:   6,
 			Nodes: []*Node{{
 				Name: "key",
-				from: 1,
-				to:   6,
+				From: 1,
+				To:   6,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 1,
-					to:   6,
+					From: 1,
+					To:   6,
 				}},
 			}},
 		}},
@@ -50,16 +50,16 @@ func TestKeyVal(t *testing.T) {
 		`,
 		nodes: []*Node{{
 			Name: "key-val",
-			from: 20,
-			to:   25,
+			From: 20,
+			To:   25,
 			Nodes: []*Node{{
 				Name: "key",
-				from: 20,
-				to:   25,
+				From: 20,
+				To:   25,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 20,
-					to:   25,
+					From: 20,
+					To:   25,
 				}},
 			}},
 		}},
@@ -68,18 +68,18 @@ func TestKeyVal(t *testing.T) {
 		text: "a key = a value",
 		nodes: []*Node{{
 			Name: "key-val",
-			to:   15,
+			To:   15,
 			Nodes: []*Node{{
 				Name: "key",
-				to:   5,
+				To:   5,
 				Nodes: []*Node{{
 					Name: "symbol",
-					to:   5,
+					To:   5,
 				}},
 			}, {
 				Name: "value",
-				from: 8,
-				to:   15,
+				From: 8,
+				To:   15,
 			}},
 		}},
 	}, {
@@ -90,39 +90,39 @@ func TestKeyVal(t *testing.T) {
 		`,
 		nodes: []*Node{{
 			Name: "key-val",
-			from: 11,
-			to:   32,
+			From: 11,
+			To:   32,
 			Nodes: []*Node{{
 				Name: "key",
-				from: 11,
-				to:   16,
+				From: 11,
+				To:   16,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 11,
-					to:   16,
+					From: 11,
+					To:   16,
 				}},
 			}, {
 				Name: "value",
-				from: 25,
-				to:   32,
+				From: 25,
+				To:   32,
 			}},
 		}, {
 			Name: "key-val",
-			from: 61,
-			to:   88,
+			From: 61,
+			To:   88,
 			Nodes: []*Node{{
 				Name: "key",
-				from: 61,
-				to:   72,
+				From: 61,
+				To:   72,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 61,
-					to:   72,
+					From: 61,
+					To:   72,
 				}},
 			}, {
 				Name: "value",
-				from: 75,
-				to:   88,
+				From: 75,
+				To:   88,
 			}},
 		}},
 	}, {
@@ -130,11 +130,11 @@ func TestKeyVal(t *testing.T) {
 		text: "= a value",
 		nodes: []*Node{{
 			Name: "key-val",
-			to:   9,
+			To:   9,
 			Nodes: []*Node{{
 				Name: "value",
-				from: 2,
-				to:   9,
+				From: 2,
+				To:   9,
 			}},
 		}},
 	}, {
@@ -145,25 +145,25 @@ func TestKeyVal(t *testing.T) {
 		`,
 		nodes: []*Node{{
 			Name: "key-val",
-			from: 4,
-			to:   34,
+			From: 4,
+			To:   34,
 			Nodes: []*Node{{
 				Name: "comment",
-				from: 4,
-				to:   15,
+				From: 4,
+				To:   15,
 			}, {
 				Name: "key",
-				from: 19,
-				to:   24,
+				From: 19,
+				To:   24,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 19,
-					to:   24,
+					From: 19,
+					To:   24,
 				}},
 			}, {
 				Name: "value",
-				from: 27,
-				to:   34,
+				From: 27,
+				To:   34,
 			}},
 		}},
 	}, {
@@ -171,32 +171,32 @@ func TestKeyVal(t *testing.T) {
 		text: "a key . with.multiple.symbols=a value",
 		nodes: []*Node{{
 			Name: "key-val",
-			to:   37,
+			To:   37,
 			Nodes: []*Node{{
 				Name: "key",
-				from: 0,
-				to:   29,
+				From: 0,
+				To:   29,
 				Nodes: []*Node{{
 					Name: "symbol",
-					from: 0,
-					to:   5,
+					From: 0,
+					To:   5,
 				}, {
 					Name: "symbol",
-					from: 8,
-					to:   12,
+					From: 8,
+					To:   12,
 				}, {
 					Name: "symbol",
-					from: 13,
-					to:   21,
+					From: 13,
+					To:   21,
 				}, {
 					Name: "symbol",
-					from: 22,
-					to:   29,
+					From: 22,
+					To:   29,
 				}},
 			}, {
 				Name: "value",
-				from: 30,
-				to:   37,
+				From: 30,
+				To:   37,
 			}},
 		}},
 	}, {
@@ -207,20 +207,20 @@ func TestKeyVal(t *testing.T) {
 		`,
 		nodes: []*Node{{
 			Name: "group-key",
-			from: 4,
-			to:   38,
+			From: 4,
+			To:   38,
 			Nodes: []*Node{{
 				Name: "comment",
-				from: 4,
-				to:   15,
+				From: 4,
+				To:   15,
 			}, {
 				Name: "symbol",
-				from: 20,
-				to:   31,
+				From: 20,
+				To:   31,
 			}, {
 				Name: "symbol",
-				from: 32,
-				to:   37,
+				From: 32,
+				To:   37,
 			}},
 		}},
 	}, {

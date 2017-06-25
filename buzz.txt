@@ -1,0 +1,5 @@
+generator, in-process init or command line
+syntax from file or in-memory
+simple syntax with recursion
+no lexer required
+utf8, 8bit or custom tokens

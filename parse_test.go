@@ -28,7 +28,7 @@ func testSyntaxReader(r io.Reader, traceLevel int) (*Syntax, error) {
 		return nil, err
 	}
 
-	var trace Trace = NopTrace{}
+	var trace Trace
 	if traceLevel >= 0 {
 		trace = NewTrace(traceLevel)
 	}
@@ -43,10 +43,6 @@ func testSyntaxReader(r io.Reader, traceLevel int) (*Syntax, error) {
 	}
 
 	return s, nil
-}
-
-func testSyntaxString(s string, traceLevel int) (*Syntax, error) {
-	return testSyntaxReader(bytes.NewBufferString(s), traceLevel)
 }
 
 func testSyntax(file string, traceLevel int) (*Syntax, error) {
@@ -90,13 +86,13 @@ func checkNodePosition(t *testing.T, left, right *Node, position bool) {
 		return
 	}
 
-	if position && left.from != right.from {
-		t.Error("from doesn't match", left.Name, left.from, right.from)
+	if position && left.From != right.From {
+		t.Error("from doesn't match", left.Name, left.From, right.From)
 		return
 	}
 
-	if position && left.to != right.to {
-		t.Error("to doesn't match", left.Name, left.to, right.to)
+	if position && left.To != right.To {
+		t.Error("to doesn't match", left.Name, left.To, right.To)
 		return
 	}
 
@@ -177,8 +173,7 @@ func testReaderTrace(t *testing.T, r io.Reader, rootName string, traceLevel int,
 			} else {
 				cn(t, n, &Node{
 					Name:  rootName,
-					from:  0,
-					to:    len(ti.text),
+					To:    len(ti.text),
 					Nodes: ti.nodes,
 				})
 			}
@@ -294,7 +289,7 @@ func TestRecursion(t *testing.T) {
 			text: "aaa",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}},
 	)
@@ -307,7 +302,7 @@ func TestRecursion(t *testing.T) {
 			text: "aaa",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}},
 	)
@@ -320,7 +315,7 @@ func TestRecursion(t *testing.T) {
 			text: "aaa",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}},
 	)
@@ -333,7 +328,7 @@ func TestRecursion(t *testing.T) {
 			text: "aaa",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}},
 	)
@@ -348,14 +343,14 @@ func TestSequence(t *testing.T) {
 			text: "abb",
 			node: &Node{
 				Name: "AB",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "sequence with optional items, none",
 			text: "bb",
 			node: &Node{
 				Name: "AB",
-				to:   2,
+				To:   2,
 			},
 		}},
 	)
@@ -388,7 +383,7 @@ func TestSequence(t *testing.T) {
 			text: "aaa",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}},
 	)
@@ -403,7 +398,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "zero, fail",
@@ -424,7 +419,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "one, too much",
@@ -445,7 +440,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "abbba",
 			node: &Node{
 				Name: "A",
-				to:   5,
+				To:   5,
 			},
 		}, {
 			msg:  "three, too much",
@@ -462,14 +457,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or one explicit",
 			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "zero or one explicit, too much",
@@ -486,14 +481,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or one explicit, omit zero",
 			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "zero or one explicit, omit zero, too much",
@@ -510,14 +505,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or one explicit, shortcut",
 			text: "aba",
 			node: &Node{
 				Name: "A",
-				to:   3,
+				To:   3,
 			},
 		}, {
 			msg:  "zero or one explicit, shortcut, too much",
@@ -534,21 +529,21 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or three",
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}, {
 			msg:  "zero or three",
 			text: "abbba",
 			node: &Node{
 				Name: "A",
-				to:   5,
+				To:   5,
 			},
 		}, {
 			msg:  "zero or three, too much",
@@ -565,21 +560,21 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or three, omit zero",
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}, {
 			msg:  "zero or three, omit zero",
 			text: "abbba",
 			node: &Node{
 				Name: "A",
-				to:   5,
+				To:   5,
 			},
 		}, {
 			msg:  "zero or three, omit zero, too much",
@@ -600,14 +595,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}, {
 			msg:  "one or three",
 			text: "abbba",
 			node: &Node{
 				Name: "A",
-				to:   5,
+				To:   5,
 			},
 		}, {
 			msg:  "one or three, too much",
@@ -628,14 +623,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "abbbba",
 			node: &Node{
 				Name: "A",
-				to:   6,
+				To:   6,
 			},
 		}, {
 			msg:  "three or five",
 			text: "abbbbba",
 			node: &Node{
 				Name: "A",
-				to:   7,
+				To:   7,
 			},
 		}, {
 			msg:  "three or five, too much",
@@ -652,14 +647,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or more, explicit",
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}},
 	)
@@ -672,14 +667,14 @@ func TestQuantifiers(t *testing.T) {
 			text: "aa",
 			node: &Node{
 				Name: "A",
-				to:   2,
+				To:   2,
 			},
 		}, {
 			msg:  "zero or more, shortcut",
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}},
 	)
@@ -696,7 +691,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}},
 	)
@@ -713,7 +708,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "abba",
 			node: &Node{
 				Name: "A",
-				to:   4,
+				To:   4,
 			},
 		}},
 	)
@@ -730,7 +725,7 @@ func TestQuantifiers(t *testing.T) {
 			text: "abbbba",
 			node: &Node{
 				Name: "A",
-				to:   6,
+				To:   6,
 			},
 		}},
 	)

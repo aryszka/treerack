@@ -6,7 +6,7 @@ import (
 )
 
 func TestBoot(t *testing.T) {
-	b, err := initBoot(bootDefinitions)
+	b, err := initBoot(bootSyntaxDefs)
 	if err != nil {
 		t.Error(err)
 		return

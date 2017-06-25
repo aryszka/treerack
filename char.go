@@ -89,7 +89,7 @@ func (p *charParser) parse(t Trace, c *context) {
 
 	if tok, ok := c.token(); ok && p.match(tok) {
 		// t.Out1("success", string(tok))
-		n := newNode(p.name, p.commit, c.offset, c.offset+1)
+		n := newNode(p.name, c.offset, c.offset+1, p.commit)
 		c.cache.set(c.offset, p.name, n)
 		for _, includedBy := range p.includedBy {
 			includedBy.cacheIncluded(c, n)

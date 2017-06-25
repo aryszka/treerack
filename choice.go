@@ -79,13 +79,13 @@ func (p *choiceParser) setIncludedBy(includedBy parser, path []string) {
 }
 
 func (p *choiceParser) cacheIncluded(c *context, n *Node) {
-	if !c.excluded(n.from, p.name) {
+	if !c.excluded(n.From, p.name) {
 		return
 	}
 
-	nc := newNode(p.name, p.commit, n.from, n.to)
+	nc := newNode(p.name, n.From, n.To, p.commit)
 	nc.append(n)
-	c.cache.set(nc.from, p.name, nc)
+	c.cache.set(nc.From, p.name, nc)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.cacheIncluded(c, nc)
@@ -116,7 +116,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	c.exclude(c.offset, p.name)
 	defer c.include(c.offset, p.name)
 
-	node := newNode(p.name, p.commit, c.offset, c.offset)
+	node := newNode(p.name, c.offset, c.offset, p.commit)
 	var match bool
 
 	for {
@@ -126,7 +126,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		for len(elements) > 0 {
 			elements[0].parse(t, c)
 			elements = elements[1:]
-			c.offset = node.from
+			c.offset = node.From
 
 			if !c.match || match && c.node.tokenLength() <= node.tokenLength() {
 				continue
@@ -134,10 +134,10 @@ func (p *choiceParser) parse(t Trace, c *context) {
 
 			match = true
 			foundMatch = true
-			node = newNode(p.name, p.commit, c.offset, c.offset)
+			node = newNode(p.name, c.offset, c.offset, p.commit)
 			node.append(c.node)
 
-			c.cache.set(node.from, p.name, node)
+			c.cache.set(node.From, p.name, node)
 			for _, includedBy := range p.includedBy {
 				includedBy.cacheIncluded(c, node)
 			}
@@ -155,6 +155,6 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	// t.Out1("fail")
-	c.cache.set(node.from, p.name, nil)
-	c.fail(node.from)
+	c.cache.set(node.From, p.name, nil)
+	c.fail(node.From)
 }

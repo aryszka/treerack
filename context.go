@@ -73,6 +73,10 @@ func (c *context) excluded(offset int, name string) bool {
 }
 
 func (c *context) exclude(offset int, name string) {
+	if c.excluded(offset, name) {
+		return
+	}
+
 	if len(c.isExcluded) <= offset {
 		c.isExcluded = append(c.isExcluded, nil)
 		if cap(c.isExcluded) > offset {
@@ -96,6 +100,7 @@ func (c *context) include(offset int, name string) {
 	for i := len(c.isExcluded[offset]) - 1; i >= 0; i-- {
 		if c.isExcluded[offset][i] == name {
 			c.isExcluded[offset] = append(c.isExcluded[offset][:i], c.isExcluded[offset][i+1:]...)
+			return
 		}
 	}
 }
@@ -117,7 +122,7 @@ func (c *context) fromCache(name string) (bool, bool) {
 
 func (c *context) success(n *Node) {
 	c.node = n
-	c.offset = n.to
+	c.offset = n.To
 	c.match = true
 }
 
@@ -127,7 +132,7 @@ func (c *context) fail(offset int) {
 }
 
 func (c *context) finalize() error {
-	if c.node.to < c.readOffset {
+	if c.node.To < c.readOffset {
 		return ErrUnexpectedCharacter
 	}
 
@@ -142,11 +147,6 @@ func (c *context) finalize() error {
 		}
 	}
 
-	c.node.commit()
-	if c.node.commitType&Alias != 0 {
-		return nil
-	}
-
-	c.node.applyTokens(c.tokens)
+	c.node.commit(c.tokens)
 	return nil
 }
