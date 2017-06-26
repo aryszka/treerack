@@ -1,22 +1,20 @@
 package parse
 
-// TODO: rename to store
-
-type cacheItem struct {
+type storedItem struct {
 	name string
 	node *Node
 }
 
-type tokenCache struct {
-	match   []*cacheItem // TODO: potential optimization can be to use a balanced binary tree
+type storeEntry struct {
+	match   []*storedItem
 	noMatch []string
 }
 
-type cache struct {
-	tokens []*tokenCache // TODO: try with pointers, too
+type store struct {
+	tokens []*storeEntry
 }
 
-func (c *cache) get(offset int, name string) (*Node, bool, bool) {
+func (c *store) get(offset int, name string) (*Node, bool, bool) {
 	if len(c.tokens) <= offset {
 		return nil, false, false
 	}
@@ -41,8 +39,8 @@ func (c *cache) get(offset int, name string) (*Node, bool, bool) {
 	return nil, false, false
 }
 
-func (c *cache) set(offset int, name string, n *Node) {
-	var tc *tokenCache
+func (c *store) set(offset int, name string, n *Node) {
+	var tc *storeEntry
 	if len(c.tokens) > offset {
 		tc = c.tokens[offset]
 	} else {
@@ -55,7 +53,7 @@ func (c *cache) set(offset int, name string, n *Node) {
 			}
 		}
 
-		tc = &tokenCache{}
+		tc = &storeEntry{}
 		c.tokens[offset] = tc
 	}
 
@@ -86,7 +84,7 @@ func (c *cache) set(offset int, name string, n *Node) {
 		}
 	}
 
-	tc.match = append(tc.match, &cacheItem{
+	tc.match = append(tc.match, &storedItem{
 		name: name,
 		node: n,
 	})

@@ -101,7 +101,6 @@ channel = "<>" | "<" wsnlc* int wsnlc* ">";
 and-expression:doc = "and" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
 or-expression:doc  = "or" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
 
-// TODO: use collect
 argument-list:alias = static-symbol (list-sep static-symbol)*;
 collect-symbol      = "..." wsnlc* static-symbol;
 function-fact:alias = "(" (wsnlc | ",")*
@@ -128,7 +127,7 @@ range-to                 = expression;
 range-expression:alias   = range-from? wsnlc* ":" wsnlc* range-to?;
 indexer-expression:alias = expression | range-expression;
 expression-indexer:alias = primary-expression wsc* "[" wsnlc* indexer-expression wsnlc* "]";
-symbol-indexer:alias     = primary-expression wsnlc* "." wsnlc* symbol-expression; // TODO: test with a float on a new line
+symbol-indexer:alias     = primary-expression wsnlc* "." wsnlc* symbol-expression;
 indexer                  = expression-indexer | symbol-indexer;
 
 function-application = primary-expression wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
@@ -140,11 +139,10 @@ if = "if" wsnlc* expression wsnlc* block
 default            = "default" wsnlc* ":";
 default-line:alias = default (wsnlc | ";")* statement?;
 case               = "case" wsnlc* expression wsnlc* ":";
-case-line:alias    = case (wsnlc | ";")* statement?;
+case-line:alias    = case (wsc | ";")* statement?;
 switch             = "switch" wsnlc* expression? wsnlc* "{" (wsnlc | ";")*
                      ((case-line | default-line) (sep (case-line | default-line | statement))*)?
                      (wsnlc | ";")* "}";
-// TODO: empty case not handled
 
 int-type    = "int";
 float-type  = "float";
@@ -252,7 +250,7 @@ match-set:alias        = type-set | match-fact;
 match-expression:alias = match-set | static-symbol wsc* match-set;
 
 match-case               = "case" wsnlc* match-expression wsnlc* ":";
-match-case-line:alias    = match-case (wsnlc | ";")* statement?;
+match-case-line:alias    = match-case (wsc | ";")* statement?;
 match                    = "match" wsnlc* expression wsnlc* "{" (wsnlc | ";")*
                            ((match-case-line | default-line)
                            (sep (match-case-line | default-line | statement))*)?
@@ -286,7 +284,7 @@ communication-group:alias = "(" wsnlc* communication wsnlc* ")";
 communication:alias       = receive-expression | receive-statement | send | communication-group;
 
 select-case            = "case" wsnlc* communication wsnlc* ":";
-select-case-line:alias = select-case (wsnlc | ";")* statement?;
+select-case-line:alias = select-case (wsc | ";")* statement?;
 select                 = "select" wsnlc* "{" (wsnlc | ";")*
                          ((select-case-line | default-line)
                           (sep (select-case-line | default-line | statement))*)?
@@ -496,10 +494,6 @@ definition:alias = value-definition
                  | function-definition
                  | function-definition-group
                  | effect-definition-group;
-
-// TODO: cannot do:
-// type alias a int|fn () string|error
-// needs grouping of type-set
 
 type-alias      = "type" wsnlc* "alias" wsnlc* static-symbol wsnlc* type-set;
 type-constraint = "type" wsnlc* static-symbol wsnlc* type-set;

@@ -11,7 +11,7 @@ type context struct {
 	readOffset int
 	readErr    error
 	eof        bool
-	cache      *cache
+	store      *store
 	tokens     []rune
 	match      bool
 	node       *Node
@@ -21,7 +21,7 @@ type context struct {
 func newContext(r io.RuneReader) *context {
 	return &context{
 		reader: r,
-		cache:  &cache{},
+		store:  &store{},
 	}
 }
 
@@ -46,7 +46,7 @@ func (c *context) read() bool {
 	c.readOffset++
 
 	if t == unicode.ReplacementChar {
-		c.readErr = ErrInvalidCharacter
+		c.readErr = ErrInvalidUnicodeCharacter
 		return false
 	}
 
@@ -105,8 +105,8 @@ func (c *context) include(offset int, name string) {
 	}
 }
 
-func (c *context) fromCache(name string) (bool, bool) {
-	n, m, ok := c.cache.get(c.offset, name)
+func (c *context) fromStore(name string) (bool, bool) {
+	n, m, ok := c.store.get(c.offset, name)
 	if !ok {
 		return false, false
 	}

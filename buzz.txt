@@ -1,5 +1,9 @@
 generator, in-process init or command line
-syntax from file or in-memory
+syntax from text or defined during runtime, or combined
 simple syntax with recursion
 no lexer required
 utf8, 8bit or custom tokens
+abstract syntax tree from text of arbitrary syntax
+reading from streams
+context free, however support for custom tokens in the input
+custom tokens for indentation built in

@@ -99,17 +99,17 @@ func (p *sequenceParser) setIncludedBy(includedBy parser, path []string) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *sequenceParser) cacheIncluded(c *context, n *Node) {
+func (p *sequenceParser) storeIncluded(c *context, n *Node) {
 	if !c.excluded(n.From, p.name) {
 		return
 	}
 
 	nc := newNode(p.name, n.From, n.To, p.commit)
 	nc.append(n)
-	c.cache.set(nc.From, p.name, nc)
+	c.store.set(nc.From, p.name, nc)
 
 	for _, includedBy := range p.includedBy {
-		includedBy.cacheIncluded(c, nc)
+		includedBy.storeIncluded(c, nc)
 	}
 }
 
@@ -138,9 +138,9 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	node := newNode(p.name, c.offset, c.offset, p.commit)
 
 	for len(items) > 0 {
-		m, ok := c.fromCache(items[0].nodeName())
+		m, ok := c.fromStore(items[0].nodeName())
 		if ok {
-			// t.Out1("sequence item found in cache, match:", m, items[0].nodeName(), c.offset)
+			// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
 		} else {
 			items[0].parse(t, c)
 			m = c.match
@@ -149,7 +149,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		if !m {
 			if currentCount < ranges[0][0] {
 				// t.Out1("fail, item failed")
-				c.cache.set(node.From, p.name, nil)
+				c.store.set(node.From, p.name, nil)
 				c.fail(node.From)
 				return
 			}
@@ -174,9 +174,9 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	// t.Out1("success, items parsed")
 
-	c.cache.set(node.From, p.name, node)
+	c.store.set(node.From, p.name, node)
 	for _, includedBy := range p.includedBy {
-		includedBy.cacheIncluded(c, node)
+		includedBy.storeIncluded(c, node)
 	}
 
 	c.success(node)

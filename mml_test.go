@@ -1029,6 +1029,18 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
+		msg: "float on a new line",
+		text: "f()\n.9",
+		nodes: []*Node{{
+			Name: "function-application",
+			Nodes: []*Node{{
+				Name: "symbol",
+			}},
+		}, {
+			Name: "float",
+		}},
+		ignorePosition: true,
+	}, {
 		msg:  "function application",
 		text: "f()",
 		nodes: []*Node{{
@@ -1331,6 +1343,38 @@ func TestMML(t *testing.T) {
 				To:   16,
 			}},
 		}},
+	}, {
+		msg: "switch, empty cases",
+		text: `
+			switch {
+			case a:
+			case b:
+			default:
+				f()
+			}
+		`,
+		nodes: []*Node{{
+			Name: "switch",
+			Nodes: []*Node{{
+				Name: "case",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}},
+			}, {
+				Name: "case",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}},
+			}, {
+				Name: "default",
+			}, {
+				Name: "function-application",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}},
+			}},
+		}},
+		ignorePosition: true,
 	}, {
 		msg:  "switch, single case",
 		text: "switch a {case b: c}",

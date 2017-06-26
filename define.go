@@ -48,14 +48,14 @@ func unescape(escape rune, banned []rune, chars []rune) ([]rune, error) {
 		case ci == escape:
 			escaped = true
 		case runesContain(banned, ci):
-			return nil, ErrInvalidCharacter
+			return nil, ErrInvalidEscapeCharacter
 		default:
 			unescaped = append(unescaped, ci)
 		}
 	}
 
 	if escaped {
-		return nil, ErrInvalidCharacter
+		return nil, ErrInvalidEscapeCharacter
 	}
 
 	return unescaped, nil

@@ -9,25 +9,16 @@ comment               = comment-segment (ws-no-nl* "\n"? ws-no-nl* comment-segme
 
 any-char = "."; // equivalent to [^]
 
-// TODO: document matching terminal: []
-
-// TODO: handle char class equivalences
-
-// TODO: enable streaming
-
-// TODO: set route function in generated code?
-
 // caution: newline is accepted
 class-not  = "^";
 class-char = [^\\\[\]\^\-] | "\\" .;
 char-range = class-char "-" class-char;
 char-class = "[" class-not? (class-char | char-range)* "]";
 
-// caution: newline is accepted
+// newline is accepted
 sequence-char = [^\\"] | "\\" .;
 char-sequence = "\"" sequence-char* "\"";
 
-// TODO: this can be mixed up with sequence. Is it fine? fix this, see mml symbol
 terminal:alias = any-char | char-class | char-sequence;
 
 symbol = [^\\ \n\t\b\f\r\v/.\[\]\"{}\^+*?|():=;]+;
@@ -50,11 +41,11 @@ quantity:alias   = count-quantifier
                  | zero-or-one;
 
 item     = (terminal | symbol | group) quantity?;
-sequence = item (wsc* item)*; // TODO: why was this '+'?
+sequence = item (wsc* item)*;
 
 element:alias = terminal | symbol | group | sequence;
 
-// DOC: once cached, doesn't try again, even in a new context, therefore the order may matter
+// DOC: how the order matters
 choice = element (wsc* "|" wsc* element)+;
 
 // DOC: not having 'not' needs some tricks sometimes

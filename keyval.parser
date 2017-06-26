@@ -22,8 +22,6 @@ key-val           = (comment "\n" ws*)? (key | key? ws* "=" ws* value?);
 entry:alias = group-key | key-val;
 doc:root    = (entry (ws* comment-line)? | wsnlc)*;
 
-// TODO: not tested
-// set as root for streaming:
 single-entry = (entry (ws* comment-line)?
                 | wsnlc* entry (ws* comment-line)?)
                [];

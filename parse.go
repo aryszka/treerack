@@ -11,7 +11,7 @@ type definition interface {
 type parser interface {
 	nodeName() string
 	setIncludedBy(parser, []string)
-	cacheIncluded(*context, *Node)
+	storeIncluded(*context, *Node)
 	parse(Trace, *context)
 }
 

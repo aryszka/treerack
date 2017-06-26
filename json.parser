@@ -10,5 +10,3 @@ object      = "{" ws* (entry (ws* "," ws* entry)*)? ws* "}";
 array       = "[" ws* (value (ws* "," ws* value)*)? ws* "]";
 value:alias = true | false | null | string | number | object | array;
 json        = value;
-
-// TODO: value should be an alias but test it first like this

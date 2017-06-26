@@ -78,17 +78,17 @@ func (p *choiceParser) setIncludedBy(includedBy parser, path []string) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *choiceParser) cacheIncluded(c *context, n *Node) {
+func (p *choiceParser) storeIncluded(c *context, n *Node) {
 	if !c.excluded(n.From, p.name) {
 		return
 	}
 
 	nc := newNode(p.name, n.From, n.To, p.commit)
 	nc.append(n)
-	c.cache.set(nc.From, p.name, nc)
+	c.store.set(nc.From, p.name, nc)
 
 	for _, includedBy := range p.includedBy {
-		includedBy.cacheIncluded(c, nc)
+		includedBy.storeIncluded(c, nc)
 	}
 }
 
@@ -102,8 +102,8 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if _, ok := c.fromCache(p.name); ok {
-		// t.Out1("found in cache, match:", m)
+	if _, ok := c.fromStore(p.name); ok {
+		// t.Out1("found in store, match:", m)
 		return
 	}
 
@@ -137,9 +137,9 @@ func (p *choiceParser) parse(t Trace, c *context) {
 			node = newNode(p.name, c.offset, c.offset, p.commit)
 			node.append(c.node)
 
-			c.cache.set(node.From, p.name, node)
+			c.store.set(node.From, p.name, node)
 			for _, includedBy := range p.includedBy {
-				includedBy.cacheIncluded(c, node)
+				includedBy.storeIncluded(c, node)
 			}
 		}
 
@@ -155,6 +155,6 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	// t.Out1("fail")
-	c.cache.set(node.From, p.name, nil)
+	c.store.set(node.From, p.name, nil)
 	c.fail(node.From)
 }

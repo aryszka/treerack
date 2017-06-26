@@ -36,7 +36,8 @@ var (
 	ErrInitFailed          = errors.New("init failed")
 	ErrNoParsersDefined    = errors.New("no parsers defined")
 	ErrInvalidInput        = errors.New("invalid input")
-	ErrInvalidCharacter    = errors.New("invalid character") // TODO: fix two use cases, utf8 and boot
+	ErrInvalidUnicodeCharacter    = errors.New("invalid unicode character")
+	ErrInvalidEscapeCharacter    = errors.New("invalid escape character")
 	ErrUnexpectedCharacter = errors.New("unexpected character")
 	ErrInvalidSyntax       = errors.New("invalid syntax")
 	ErrRootAlias           = errors.New("root node cannot be an alias")

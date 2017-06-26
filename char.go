@@ -52,7 +52,7 @@ func (p *charParser) setIncludedBy(includedBy parser, path []string) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *charParser) cacheIncluded(*context, *Node) {
+func (p *charParser) storeIncluded(*context, *Node) {
 	panic(cannotIncludeParsers(p.name))
 }
 
@@ -82,24 +82,24 @@ func (p *charParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if _, ok := c.fromCache(p.name); ok {
-		// t.Out1("found in cache, match:", m)
+	if _, ok := c.fromStore(p.name); ok {
+		// t.Out1("found in store, match:", m)
 		return
 	}
 
 	if tok, ok := c.token(); ok && p.match(tok) {
 		// t.Out1("success", string(tok))
 		n := newNode(p.name, c.offset, c.offset+1, p.commit)
-		c.cache.set(c.offset, p.name, n)
+		c.store.set(c.offset, p.name, n)
 		for _, includedBy := range p.includedBy {
-			includedBy.cacheIncluded(c, n)
+			includedBy.storeIncluded(c, n)
 		}
 
 		c.success(n)
 		return
 	} else {
 		// t.Out1("fail", string(tok))
-		c.cache.set(c.offset, p.name, nil)
+		c.store.set(c.offset, p.name, nil)
 		c.fail(c.offset)
 		return
 	}

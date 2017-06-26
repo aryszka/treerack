@@ -2,6 +2,7 @@ cleanup
 error reporting
 custom tokens
 indentation
+streaming
 benchmarking
 code generation go
 code generation js
