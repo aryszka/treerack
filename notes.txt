@@ -1,6 +1,7 @@
 [next]
 cleanup
 error reporting
+coverage
 custom tokens
 indentation
 streaming
