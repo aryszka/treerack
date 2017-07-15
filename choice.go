@@ -92,7 +92,7 @@ func (p *choiceParser) storeIncluded(c *context, n *Node) {
 
 	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
 	nc.append(n)
-	c.store.set(nc.From, p.name, nc)
+	c.store.set(nc.From, p.id, nc)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, nc)
@@ -109,7 +109,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if _, ok := c.fromStore(p.name); ok {
+	if _, ok := c.fromStore(p.id); ok {
 		// t.Out1("found in store, match:", m)
 		return
 	}
@@ -144,7 +144,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 			node = newNode(p.name, p.id, c.offset, c.offset, p.commit)
 			node.append(c.node)
 
-			c.store.set(node.From, p.name, node)
+			c.store.set(node.From, p.id, node)
 			for _, includedBy := range p.includedBy {
 				includedBy.storeIncluded(c, node)
 			}
@@ -163,7 +163,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	// t.Out1("fail")
-	c.store.set(node.From, p.name, nil)
+	c.store.set(node.From, p.id, nil)
 	c.fail(node.From)
 	c.include(initialOffset, p.id) // TODO: test if can be optimized
 }

@@ -104,8 +104,8 @@ func (c *context) include(offset int, id int) {
 	c.isExcluded[offset].unset(id)
 }
 
-func (c *context) fromStore(name string) (bool, bool) {
-	n, m, ok := c.store.get(c.offset, name)
+func (c *context) fromStore(id int) (bool, bool) {
+	n, m, ok := c.store.get(c.offset, id)
 	if !ok {
 		return false, false
 	}

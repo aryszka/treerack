@@ -28,7 +28,7 @@ func newChar(
 
 func (p *charParser) nodeName() string { return p.name }
 func (p *charParser) nodeID() int      { return p.id }
-func (p *charParser) setID(id int)     { p.id = p.id }
+func (p *charParser) setID(id int)     { p.id = id }
 
 func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
 	if parsers.has(p.id) {
@@ -85,7 +85,7 @@ func (p *charParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if _, ok := c.fromStore(p.name); ok {
+	if _, ok := c.fromStore(p.id); ok {
 		// t.Out1("found in store, match:", m)
 		return
 	}
@@ -93,7 +93,7 @@ func (p *charParser) parse(t Trace, c *context) {
 	if tok, ok := c.token(); ok && p.match(tok) {
 		// t.Out1("success", string(tok))
 		n := newNode(p.name, p.id, c.offset, c.offset+1, p.commit)
-		c.store.set(c.offset, p.name, n)
+		c.store.set(c.offset, p.id, n)
 		for _, includedBy := range p.includedBy {
 			includedBy.storeIncluded(c, n)
 		}
@@ -102,7 +102,7 @@ func (p *charParser) parse(t Trace, c *context) {
 		return
 	} else {
 		// t.Out1("fail", string(tok))
-		c.store.set(c.offset, p.name, nil)
+		c.store.set(c.offset, p.id, nil)
 		c.fail(c.offset)
 		return
 	}

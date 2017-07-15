@@ -113,7 +113,7 @@ func (p *sequenceParser) storeIncluded(c *context, n *Node) {
 
 	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
 	nc.append(n)
-	c.store.set(nc.From, p.name, nc)
+	c.store.set(nc.From, p.id, nc)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, nc)
@@ -145,7 +145,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 
 	for len(items) > 0 {
-		m, ok := c.fromStore(items[0].nodeName())
+		m, ok := c.fromStore(items[0].nodeID())
 		if ok {
 			// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
 		} else {
@@ -156,7 +156,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		if !m {
 			if currentCount < ranges[0][0] {
 				// t.Out1("fail, item failed")
-				c.store.set(node.From, p.name, nil)
+				c.store.set(node.From, p.id, nil)
 				c.fail(node.From)
 				c.include(initialOffset, p.id)
 				return
@@ -182,7 +182,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	// t.Out1("success, items parsed")
 
-	c.store.set(node.From, p.name, node)
+	c.store.set(node.From, p.id, node)
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, node)
 	}
