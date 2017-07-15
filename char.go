@@ -30,8 +30,8 @@ func (p *charParser) nodeName() string { return p.name }
 func (p *charParser) nodeID() int      { return p.id }
 func (p *charParser) setID(id int)     { p.id = p.id }
 
-func (p *charParser) parser(r *registry, parsers []string) (parser, error) {
-	if stringsContainDeprecated(parsers, p.name) {
+func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
+	if parsers.has(p.id) {
 		panic(cannotIncludeParsers(p.name))
 	}
 
@@ -47,8 +47,8 @@ func (p *charParser) commitType() CommitType {
 	return p.commit
 }
 
-func (p *charParser) setIncludedBy(includedBy parser, parsers []string) {
-	if stringsContainDeprecated(parsers, p.name) {
+func (p *charParser) setIncludedBy(includedBy parser, parsers *idSet) {
+	if parsers.has(p.id) {
 		panic(cannotIncludeParsers(p.name))
 	}
 

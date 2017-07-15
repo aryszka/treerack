@@ -137,7 +137,7 @@ func (s *Syntax) Init() error {
 	}
 
 	var err error
-	s.parser, err = s.root.parser(s.registry, nil)
+	s.parser, err = s.root.parser(s.registry, &idSet{})
 	if err != nil {
 		s.initFailed = true
 		return err

@@ -27,7 +27,7 @@ func (d *choiceDefinition) nodeName() string { return d.name }
 func (d *choiceDefinition) nodeID() int      { return d.id }
 func (d *choiceDefinition) setID(id int)     { d.id = id }
 
-func (d *choiceDefinition) parser(r *registry, parsers []string) (parser, error) {
+func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	p, ok := r.parser(d.name)
 	if ok {
 		return p, nil
@@ -42,7 +42,8 @@ func (d *choiceDefinition) parser(r *registry, parsers []string) (parser, error)
 	r.setParser(cp)
 
 	var elements []parser
-	parsers = append(parsers, d.name)
+	parsers.set(d.id)
+	defer parsers.unset(d.id)
 	for _, e := range d.elements {
 		element, ok := r.parser(e)
 		if ok {
@@ -76,8 +77,8 @@ func (d *choiceDefinition) commitType() CommitType {
 func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 
-func (p *choiceParser) setIncludedBy(includedBy parser, parsers []string) {
-	if stringsContainDeprecated(parsers, p.name) {
+func (p *choiceParser) setIncludedBy(includedBy parser, parsers *idSet) {
+	if parsers.has(p.id) {
 		return
 	}
 
@@ -120,7 +121,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	c.exclude(c.offset, p.id)
-	defer c.include(c.offset, p.id) // TODO: test if can be optimized
+	initialOffset := c.offset
 
 	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 	var match bool
@@ -157,10 +158,12 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		// t.Out1("choice, success")
 		c.success(node)
+		c.include(initialOffset, p.id) // TODO: test if can be optimized
 		return
 	}
 
 	// t.Out1("fail")
 	c.store.set(node.From, p.name, nil)
 	c.fail(node.From)
+	c.include(initialOffset, p.id) // TODO: test if can be optimized
 }

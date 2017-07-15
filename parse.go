@@ -6,14 +6,14 @@ type definition interface {
 	nodeName() string
 	nodeID() int
 	setID(int)
-	parser(*registry, []string) (parser, error)
+	parser(*registry, *idSet) (parser, error)
 	commitType() CommitType
 }
 
 type parser interface {
 	nodeName() string
 	nodeID() int
-	setIncludedBy(parser, []string)
+	setIncludedBy(parser, *idSet)
 	storeIncluded(*context, *Node)
 	parse(Trace, *context)
 }

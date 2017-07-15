@@ -28,8 +28,8 @@ func (d *sequenceDefinition) nodeName() string { return d.name }
 func (d *sequenceDefinition) nodeID() int      { return d.id }
 func (d *sequenceDefinition) setID(id int)     { d.id = id }
 
-func (d *sequenceDefinition) parser(r *registry, parsers []string) (parser, error) {
-	if stringsContainDeprecated(parsers, d.name) {
+func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
+	if parsers.has(d.id) {
 		panic(cannotIncludeParsers(d.name))
 	}
 
@@ -51,7 +51,8 @@ func (d *sequenceDefinition) parser(r *registry, parsers []string) (parser, erro
 		ranges [][]int
 	)
 
-	parsers = append(parsers, d.name)
+	parsers.set(d.id)
+	defer parsers.unset(d.id)
 	for _, item := range d.items {
 		if item.Min == 0 && item.Max == 0 {
 			item.Min, item.Max = 1, 1
@@ -97,8 +98,8 @@ func (d *sequenceDefinition) commitType() CommitType {
 func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
 
-func (p *sequenceParser) setIncludedBy(includedBy parser, parsers []string) {
-	if stringsContainDeprecated(parsers, p.name) {
+func (p *sequenceParser) setIncludedBy(includedBy parser, parsers *idSet) {
+	if parsers.has(p.id) {
 		return
 	}
 
@@ -136,7 +137,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	c.exclude(c.offset, p.id)
-	defer c.include(c.offset, p.id)
+	initialOffset := c.offset
 
 	items := p.items
 	ranges := p.ranges
@@ -157,6 +158,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 				// t.Out1("fail, item failed")
 				c.store.set(node.From, p.name, nil)
 				c.fail(node.From)
+				c.include(initialOffset, p.id)
 				return
 			}
 
@@ -186,4 +188,5 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	c.success(node)
+	c.include(initialOffset, p.id)
 }
