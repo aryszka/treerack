@@ -150,6 +150,45 @@ string-type = "string";
 bool-type   = "bool";
 error-type  = "error";
 
+/*
+support:
+
+	go {
+		foo()
+		bar()
+	}
+
+	go { for { f() } }
+	go func() { for { f() } }()
+	fn f() { go f() }; go f()
+
+and not:
+
+	go for {foo()}
+
+or:
+
+	go for foo()
+
+because we don't know what the arguments are
+*/
+
+/*
+
+	fn foo() {
+		bar()
+		baz()
+	}
+	let qux foo()
+
+equivalent to:
+
+	let qux {
+		bar()
+		baz()
+	}
+*/
+
 primitive-type:alias = int-type
                      | float-type
                      | string-type
@@ -290,7 +329,7 @@ select                 = "select" wsnlc* "{" (wsnlc | ";")*
                           (sep (select-case-line | default-line | statement))*)?
                          (wsnlc | ";")* "}";
 
-go = "go" wsnlc* function-application;
+go = "go" wsnlc* (function-application | block);
 
 /*
 require . = "mml/foo"

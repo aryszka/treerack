@@ -1,5 +1,10 @@
-cleanup
 error reporting
+- longest parse
+- count the lines
+- print the line
+- print the deepest non-alias node name
+- print the documentation of the node name
+read, with error reporting
 custom tokens
 indentation
 streaming

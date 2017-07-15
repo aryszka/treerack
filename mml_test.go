@@ -1029,7 +1029,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "float on a new line",
+		msg:  "float on a new line",
 		text: "f()\n.9",
 		nodes: []*Node{{
 			Name: "function-application",
@@ -1979,6 +1979,28 @@ func TestMML(t *testing.T) {
 				Name: "function-application",
 				Nodes: []*Node{{
 					Name: "symbol",
+				}},
+			}},
+		}},
+		ignorePosition: true,
+	}, {
+		msg:  "go, block",
+		text: "go { for { f() } }",
+		nodes: []*Node{{
+			Name: "go",
+			Nodes: []*Node{{
+				Name: "block",
+				Nodes: []*Node{{
+					Name: "loop",
+					Nodes: []*Node{{
+						Name: "block",
+						Nodes: []*Node{{
+							Name: "function-application",
+							Nodes: []*Node{{
+								Name: "symbol",
+							}},
+						}},
+					}},
 				}},
 			}},
 		}},

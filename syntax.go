@@ -32,16 +32,16 @@ type Syntax struct {
 }
 
 var (
-	ErrSyntaxInitialized   = errors.New("syntax initialized")
-	ErrInitFailed          = errors.New("init failed")
-	ErrNoParsersDefined    = errors.New("no parsers defined")
-	ErrInvalidInput        = errors.New("invalid input")
-	ErrInvalidUnicodeCharacter    = errors.New("invalid unicode character")
-	ErrInvalidEscapeCharacter    = errors.New("invalid escape character")
-	ErrUnexpectedCharacter = errors.New("unexpected character")
-	ErrInvalidSyntax       = errors.New("invalid syntax")
-	ErrRootAlias           = errors.New("root node cannot be an alias")
-	ErrNotImplemented      = errors.New("not implemented")
+	ErrSyntaxInitialized       = errors.New("syntax initialized")
+	ErrInitFailed              = errors.New("init failed")
+	ErrNoParsersDefined        = errors.New("no parsers defined")
+	ErrInvalidInput            = errors.New("invalid input")
+	ErrInvalidUnicodeCharacter = errors.New("invalid unicode character")
+	ErrInvalidEscapeCharacter  = errors.New("invalid escape character")
+	ErrUnexpectedCharacter     = errors.New("unexpected character")
+	ErrInvalidSyntax           = errors.New("invalid syntax")
+	ErrRootAlias               = errors.New("root node cannot be an alias")
+	ErrNotImplemented          = errors.New("not implemented")
 )
 
 func duplicateDefinition(name string) error {
