@@ -5,9 +5,17 @@ error reporting
 - print the deepest non-alias node name
 - print the documentation of the node name
 read, with error reporting
+
+[next]
+cleanup
+error reporting
+coverage
 custom tokens
 indentation
 streaming
 benchmarking
 code generation go
 code generation js
+
+[problems]
+can the root be an alias? check the commit mechanism
