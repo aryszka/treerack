@@ -1,13 +1,15 @@
-package parse
+package treerack
 
 type choiceDefinition struct {
 	name     string
+	id       int
 	commit   CommitType
 	elements []string
 }
 
 type choiceParser struct {
 	name       string
+	id         int
 	commit     CommitType
 	elements   []parser
 	includedBy []parser
@@ -22,8 +24,10 @@ func newChoice(name string, ct CommitType, elements []string) *choiceDefinition 
 }
 
 func (d *choiceDefinition) nodeName() string { return d.name }
+func (d *choiceDefinition) nodeID() int      { return d.id }
+func (d *choiceDefinition) setID(id int)     { d.id = id }
 
-func (d *choiceDefinition) parser(r *registry, path []string) (parser, error) {
+func (d *choiceDefinition) parser(r *registry, parsers []string) (parser, error) {
 	p, ok := r.parser(d.name)
 	if ok {
 		return p, nil
@@ -31,18 +35,19 @@ func (d *choiceDefinition) parser(r *registry, path []string) (parser, error) {
 
 	cp := &choiceParser{
 		name:   d.name,
+		id:     d.id,
 		commit: d.commit,
 	}
 
 	r.setParser(cp)
 
 	var elements []parser
-	path = append(path, d.name)
+	parsers = append(parsers, d.name)
 	for _, e := range d.elements {
 		element, ok := r.parser(e)
 		if ok {
 			elements = append(elements, element)
-			element.setIncludedBy(cp, path)
+			element.setIncludedBy(cp, parsers)
 			continue
 		}
 
@@ -51,12 +56,12 @@ func (d *choiceDefinition) parser(r *registry, path []string) (parser, error) {
 			return nil, parserNotFound(e)
 		}
 
-		element, err := elementDefinition.parser(r, path)
+		element, err := elementDefinition.parser(r, parsers)
 		if err != nil {
 			return nil, err
 		}
 
-		element.setIncludedBy(cp, path)
+		element.setIncludedBy(cp, parsers)
 		elements = append(elements, element)
 	}
 
@@ -69,9 +74,10 @@ func (d *choiceDefinition) commitType() CommitType {
 }
 
 func (p *choiceParser) nodeName() string { return p.name }
+func (p *choiceParser) nodeID() int      { return p.id }
 
-func (p *choiceParser) setIncludedBy(includedBy parser, path []string) {
-	if stringsContain(path, p.name) {
+func (p *choiceParser) setIncludedBy(includedBy parser, parsers []string) {
+	if stringsContainDeprecated(parsers, p.name) {
 		return
 	}
 
@@ -79,11 +85,11 @@ func (p *choiceParser) setIncludedBy(includedBy parser, path []string) {
 }
 
 func (p *choiceParser) storeIncluded(c *context, n *Node) {
-	if !c.excluded(n.From, p.name) {
+	if !c.excluded(n.From, p.id) {
 		return
 	}
 
-	nc := newNode(p.name, n.From, n.To, p.commit)
+	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
 	nc.append(n)
 	c.store.set(nc.From, p.name, nc)
 
@@ -107,16 +113,16 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if c.excluded(c.offset, p.name) {
+	if c.excluded(c.offset, p.id) {
 		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
 
-	c.exclude(c.offset, p.name)
-	defer c.include(c.offset, p.name)
+	c.exclude(c.offset, p.id)
+	defer c.include(c.offset, p.id) // TODO: test if can be optimized
 
-	node := newNode(p.name, c.offset, c.offset, p.commit)
+	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 	var match bool
 
 	for {
@@ -134,7 +140,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 
 			match = true
 			foundMatch = true
-			node = newNode(p.name, c.offset, c.offset, p.commit)
+			node = newNode(p.name, p.id, c.offset, c.offset, p.commit)
 			node.append(c.node)
 
 			c.store.set(node.From, p.name, node)

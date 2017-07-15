@@ -1,15 +1,18 @@
-package parse
+package treerack
 
 import "fmt"
 
 type definition interface {
 	nodeName() string
+	nodeID() int
+	setID(int)
 	parser(*registry, []string) (parser, error)
 	commitType() CommitType
 }
 
 type parser interface {
 	nodeName() string
+	nodeID() int
 	setIncludedBy(parser, []string)
 	storeIncluded(*context, *Node)
 	parse(Trace, *context)
@@ -23,7 +26,7 @@ func cannotIncludeParsers(name string) error {
 	return fmt.Errorf("parser: %s cannot include other parsers", name)
 }
 
-func stringsContain(ss []string, s string) bool {
+func stringsContainDeprecated(ss []string, s string) bool {
 	for _, si := range ss {
 		if si == s {
 			return true

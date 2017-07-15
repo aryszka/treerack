@@ -1,4 +1,4 @@
-package parse
+package treerack
 
 var bootSyntaxDefs = [][]string{{
 	"chars", "space", "alias", " ",

@@ -1,4 +1,4 @@
-package parse
+package treerack
 
 import (
 	"io"
@@ -15,7 +15,7 @@ type context struct {
 	tokens     []rune
 	match      bool
 	node       *Node
-	isExcluded [][]string
+	isExcluded []*idSet
 }
 
 func newContext(r io.RuneReader) *context {
@@ -64,16 +64,16 @@ func (c *context) token() (rune, bool) {
 	return c.tokens[c.offset], true
 }
 
-func (c *context) excluded(offset int, name string) bool {
-	if len(c.isExcluded) <= offset {
+func (c *context) excluded(offset int, id int) bool {
+	if len(c.isExcluded) <= offset || c.isExcluded[offset] == nil {
 		return false
 	}
 
-	return stringsContain(c.isExcluded[offset], name)
+	return c.isExcluded[offset].has(id)
 }
 
-func (c *context) exclude(offset int, name string) {
-	if c.excluded(offset, name) {
+func (c *context) exclude(offset int, id int) {
+	if c.excluded(offset, id) {
 		return
 	}
 
@@ -84,25 +84,24 @@ func (c *context) exclude(offset int, name string) {
 		} else {
 			c.isExcluded = append(
 				c.isExcluded[:cap(c.isExcluded)],
-				make([][]string, offset+1-cap(c.isExcluded))...,
+				make([]*idSet, offset+1-cap(c.isExcluded))...,
 			)
 		}
 	}
 
-	c.isExcluded[offset] = append(c.isExcluded[offset], name)
+	if c.isExcluded[offset] == nil {
+		c.isExcluded[offset] = &idSet{}
+	}
+
+	c.isExcluded[offset].set(id)
 }
 
-func (c *context) include(offset int, name string) {
-	if len(c.isExcluded) <= offset {
+func (c *context) include(offset int, id int) {
+	if len(c.isExcluded) <= offset || c.isExcluded[offset] == nil {
 		return
 	}
 
-	for i := len(c.isExcluded[offset]) - 1; i >= 0; i-- {
-		if c.isExcluded[offset][i] == name {
-			c.isExcluded[offset] = append(c.isExcluded[offset][:i], c.isExcluded[offset][i+1:]...)
-			return
-		}
-	}
+	c.isExcluded[offset].unset(id)
 }
 
 func (c *context) fromStore(name string) (bool, bool) {

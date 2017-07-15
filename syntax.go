@@ -1,4 +1,4 @@
-package parse
+package treerack
 
 import (
 	"bufio"
@@ -22,13 +22,13 @@ type SequenceItem struct {
 }
 
 type Syntax struct {
-	trace       Trace
-	registry    *registry
-	initialized bool
-	initFailed  bool
-	rootSet     bool
-	root        definition
-	parser      parser
+	trace        Trace
+	registry     *registry
+	initialized  bool
+	initFailed   bool
+	explicitRoot bool
+	root         definition
+	parser       parser
 }
 
 var (
@@ -70,8 +70,8 @@ func (s *Syntax) register(d definition) error {
 
 	if d.commitType()&Root != 0 {
 		s.root = d
-		s.rootSet = true
-	} else if !s.rootSet {
+		s.explicitRoot = true
+	} else if !s.explicitRoot {
 		s.root = d
 	}
 

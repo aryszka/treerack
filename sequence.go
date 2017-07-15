@@ -1,13 +1,15 @@
-package parse
+package treerack
 
 type sequenceDefinition struct {
 	name   string
+	id     int
 	commit CommitType
 	items  []SequenceItem
 }
 
 type sequenceParser struct {
 	name       string
+	id         int
 	commit     CommitType
 	items      []parser
 	ranges     [][]int
@@ -23,9 +25,11 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 }
 
 func (d *sequenceDefinition) nodeName() string { return d.name }
+func (d *sequenceDefinition) nodeID() int      { return d.id }
+func (d *sequenceDefinition) setID(id int)     { d.id = id }
 
-func (d *sequenceDefinition) parser(r *registry, path []string) (parser, error) {
-	if stringsContain(path, d.name) {
+func (d *sequenceDefinition) parser(r *registry, parsers []string) (parser, error) {
+	if stringsContainDeprecated(parsers, d.name) {
 		panic(cannotIncludeParsers(d.name))
 	}
 
@@ -36,6 +40,7 @@ func (d *sequenceDefinition) parser(r *registry, path []string) (parser, error) 
 
 	sp := &sequenceParser{
 		name:   d.name,
+		id:     d.id,
 		commit: d.commit,
 	}
 
@@ -46,7 +51,7 @@ func (d *sequenceDefinition) parser(r *registry, path []string) (parser, error) 
 		ranges [][]int
 	)
 
-	path = append(path, d.name)
+	parsers = append(parsers, d.name)
 	for _, item := range d.items {
 		if item.Min == 0 && item.Max == 0 {
 			item.Min, item.Max = 1, 1
@@ -66,7 +71,7 @@ func (d *sequenceDefinition) parser(r *registry, path []string) (parser, error) 
 			return nil, parserNotFound(item.Name)
 		}
 
-		pi, err := itemDefinition.parser(r, path)
+		pi, err := itemDefinition.parser(r, parsers)
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +82,7 @@ func (d *sequenceDefinition) parser(r *registry, path []string) (parser, error) 
 
 	// for single items, acts like a choice
 	if len(items) == 1 && ranges[0][0] == 1 && ranges[0][1] == 1 {
-		items[0].setIncludedBy(sp, path)
+		items[0].setIncludedBy(sp, parsers)
 	}
 
 	sp.items = items
@@ -90,9 +95,10 @@ func (d *sequenceDefinition) commitType() CommitType {
 }
 
 func (p *sequenceParser) nodeName() string { return p.name }
+func (p *sequenceParser) nodeID() int      { return p.id }
 
-func (p *sequenceParser) setIncludedBy(includedBy parser, path []string) {
-	if stringsContain(path, p.name) {
+func (p *sequenceParser) setIncludedBy(includedBy parser, parsers []string) {
+	if stringsContainDeprecated(parsers, p.name) {
 		return
 	}
 
@@ -100,11 +106,11 @@ func (p *sequenceParser) setIncludedBy(includedBy parser, path []string) {
 }
 
 func (p *sequenceParser) storeIncluded(c *context, n *Node) {
-	if !c.excluded(n.From, p.name) {
+	if !c.excluded(n.From, p.id) {
 		return
 	}
 
-	nc := newNode(p.name, n.From, n.To, p.commit)
+	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
 	nc.append(n)
 	c.store.set(nc.From, p.name, nc)
 
@@ -123,19 +129,19 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if c.excluded(c.offset, p.name) {
+	if c.excluded(c.offset, p.id) {
 		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
 
-	c.exclude(c.offset, p.name)
-	defer c.include(c.offset, p.name)
+	c.exclude(c.offset, p.id)
+	defer c.include(c.offset, p.id)
 
 	items := p.items
 	ranges := p.ranges
 	var currentCount int
-	node := newNode(p.name, c.offset, c.offset, p.commit)
+	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 
 	for len(items) > 0 {
 		m, ok := c.fromStore(items[0].nodeName())

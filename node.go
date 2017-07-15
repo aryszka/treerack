@@ -1,18 +1,20 @@
-package parse
+package treerack
 
 import "fmt"
 
 type Node struct {
 	Name       string
+	id         int
 	Nodes      []*Node
 	From, To   int
 	commitType CommitType
 	tokens     []rune
 }
 
-func newNode(name string, from, to int, ct CommitType) *Node {
+func newNode(name string, id int, from, to int, ct CommitType) *Node {
 	return &Node{
 		Name:       name,
+		id:         id,
 		From:       from,
 		To:         to,
 		commitType: ct,
