@@ -7,13 +7,14 @@ error reporting
 read, with error reporting
 
 [next]
-cleanup
+optimization
+why normalization failed
+why normalization was slower?
 error reporting
 coverage
 custom tokens
 indentation
 streaming
-benchmarking
 code generation go
 code generation js
 

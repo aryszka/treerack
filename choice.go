@@ -158,12 +158,12 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		// t.Out1("choice, success")
 		c.success(node)
-		c.include(initialOffset, p.id) // TODO: test if can be optimized
+		c.include(initialOffset, p.id)
 		return
 	}
 
 	// t.Out1("fail")
 	c.store.set(node.From, p.id, nil)
 	c.fail(node.From)
-	c.include(initialOffset, p.id) // TODO: test if can be optimized
+	c.include(initialOffset, p.id)
 }

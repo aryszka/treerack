@@ -93,7 +93,7 @@ func (p *charParser) parse(t Trace, c *context) {
 	if tok, ok := c.token(); ok && p.match(tok) {
 		// t.Out1("success", string(tok))
 		n := newNode(p.name, p.id, c.offset, c.offset+1, p.commit)
-		c.store.set(c.offset, p.id, n)
+		// c.store.set(c.offset, p.id, n)
 		for _, includedBy := range p.includedBy {
 			includedBy.storeIncluded(c, n)
 		}
@@ -102,7 +102,7 @@ func (p *charParser) parse(t Trace, c *context) {
 		return
 	} else {
 		// t.Out1("fail", string(tok))
-		c.store.set(c.offset, p.id, nil)
+		// c.store.set(c.offset, p.id, nil)
 		c.fail(c.offset)
 		return
 	}

@@ -145,18 +145,20 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 
 	for len(items) > 0 {
-		m, ok := c.fromStore(items[0].nodeID())
-		if ok {
-			// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
-		} else {
-			items[0].parse(t, c)
-			m = c.match
-		}
+		var m bool
+		// var ok bool
+		// m, ok = c.fromStore(items[0].nodeID())
+		// if ok {
+		// 	// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
+		// } else {
+		items[0].parse(t, c)
+		m = c.match
+		// }
 
 		if !m {
 			if currentCount < ranges[0][0] {
 				// t.Out1("fail, item failed")
-				c.store.set(node.From, p.id, nil)
+				// c.store.set(node.From, p.id, nil)
 				c.fail(node.From)
 				c.include(initialOffset, p.id)
 				return
@@ -182,7 +184,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	// t.Out1("success, items parsed")
 
-	c.store.set(node.From, p.id, node)
+	// c.store.set(node.From, p.id, node)
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, node)
 	}

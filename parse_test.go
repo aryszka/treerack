@@ -144,12 +144,13 @@ func testReaderTrace(t *testing.T, r io.Reader, rootName string, traceLevel int,
 		return
 	}
 
-	start := time.Now()
-	defer func() { t.Log("\ntotal duration", time.Since(start)) }()
-
 	for _, ti := range tests {
 		t.Run(ti.msg, func(t *testing.T) {
-			n, err := s.Parse(bytes.NewBufferString(ti.text))
+			b := bytes.NewBufferString(ti.text)
+
+			start := time.Now()
+			n, err := s.Parse(b)
+			t.Log("parse duration:", time.Now().Sub(start))
 
 			if ti.fail && err == nil {
 				t.Error("failed to fail")

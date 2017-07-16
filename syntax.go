@@ -119,6 +119,8 @@ func (s *Syntax) Read(r io.Reader) error {
 	return ErrNotImplemented
 }
 
+// TODO: why normalization failed?
+
 func (s *Syntax) Init() error {
 	if s.initFailed {
 		return ErrInitFailed
@@ -154,6 +156,8 @@ func (s *Syntax) Generate(w io.Writer) error {
 
 	return ErrNotImplemented
 }
+
+// TODO: optimize top sequences to save memory
 
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	if err := s.Init(); err != nil {

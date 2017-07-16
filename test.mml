@@ -6,58 +6,49 @@ fn defaultCompare(a, b) {
 	}
 }
 
-let undefined {}
+let empty {}
 
 fn treeWithCompare(compare) {
 	compare: compare
-	node: undefined
+	node: empty
 }
 
 let tree treeWithCompare(defaultCompare)
 
+let hasLess hasField("less")
+let hasGreater hasField("greater")
+
 fn nextNode(compare, node, value) {
-	if node == undefined {
-		undefined
-	} else {
-		let c compare(node.value, value)
-		switch {
-		case c > 0:
-			match node {
-			case {less}: nextNode(compare, node.less, value)
-			default: node
-			}
-		default:
-			match node {
-			case {greater}: nextNode(compare, node.greater, value)
-			default: undefined
-			}
-		}
+	let greater node != empty && compare(node.value, value) > 0
+	switch {
+	case greater && hasLess(node):
+		nextNode(compare, node.less, value)
+	case greater:
+		node
+	case hasGreater(node):
+		nextNode(compare, node.greater, value)
+	default:
+		empty
 	}
 }
 
 fn prevNode(compare, node, value) {
-	if node == undefined {
-		undefined
-	} else {
-		let c compare(node.value, value)
-		switch {
-		case c < 0:
-			match node {
-			case {greater}: prevNode(compare, node.greater, value)
-			default: node
-			}
-		default:
-			match node {
-			case {less}: prevNode(compare, node.less, value)
-			default: undefined
-			}
-		}
+	let less node != empty && compare(node.value, value) < 0
+	switch {
+	case less && hasGreater(node):
+		prevNode(compare, node.greater, value)
+	case less:
+		node
+	case hasLess(node):
+		prevNode(compare, node.less, value)
+	default:
+		empty
 	}
 }
 
 fn findNode(compare, node, value) {
 	switch {
-	case node == undefined: false
+	case node == empty: false
 	case node.value == value: true
 	case compare(node.value, value) < 0:
 		findNode(compare, node.greater, value)
@@ -88,7 +79,7 @@ fn delNode(compare, node, value) {
 		case {greater}:
 			{ node...
 			  greater: delNode(compare, node.greater, node.value)
-			} /* -> udpateDepth() */ -> balance()
+			} -> balance()
 		default:
 			node
 		}
@@ -99,7 +90,7 @@ fn delNode(compare, node, value) {
 		case {less}:
 			{ node...
 			  less: delNode(compare, node.less, node.value)
-			} /* -> udpateDepth() */ -> balance()
+			} -> balance()
 		default:
 			node
 		}
@@ -114,28 +105,42 @@ fn delNode(compare, node, value) {
 		}
 	}
 
-	node == undefined ? undefined : delNode()
+	node == empty ? empty : delNode()
 }
 
 fn insertNode(compare, node, value) {
-	if node == undefined {
-		{value: value}
-	} else {
-		let c compare(node.value, value)
-		switch {
-		case c > 0:
-			{node..., greater: insertNode(compare, node.greater, value)} /* -> updateDepth() */ -> balance()
-		case c < 0:
-			{node..., less: insertNode(compare, node.less, value)} /* -> updateDepth() */ -> balance()
-		default:
-			node
+	let (
+		empty node == empty
+		c empty ? 0 : compare(node.value, value)
+		insertGreater fn() {
+			node...
+			greater: insertNode(
+				compare
+				node.greater
+				value
+			)
 		}
+		insertLess fn() {
+			node...
+			less: insertNode(
+				compare
+				node.less
+				value
+			)
+		}
+	)
+
+	switch {
+	case empty: {value: value}
+	case c > 0: insertGreater() -> balance()
+	case c < 0: insertLess() -> balance()
+	default: node
 	}
 }
 
 fn prevNextValue(f, tree, value) {
 	let node f(tree.compare, tree.node, value)
-	node == undefined ? value : node.value
+	node == empty ? value : node.value
 }
 
 fn update(f, tree, value) {
@@ -143,19 +148,19 @@ fn update(f, tree, value) {
 	node: f(tree.compare, tree.node, value)
 }
 
-type alias tree {compare: fn (a, a) int, node: {}}
-type next fn (tree, a) a
-type prev fn (tree, a) a
-type find fn (tree, a) bool
-type delete fn (tree, a) tree
-type insert fn (tree, a) tree
+type alias tree {compare: fn(a, a) int, node: {}}
+type next fn(tree, a) a
+type prev fn(tree, a) a
+type find fn(tree, a) bool
+type delete fn(tree, a) tree
+type insert fn(tree, a) tree
 
 let (
 	next = prevNextValue(prevNode)
 	prev = prevNextValue(nextNode)
 )
 
-fn find(tree, value) findNode(tree.compare, tree.node, value) != undefined
+fn find(tree, value) findNode(tree.compare, tree.node, value) != empty
 
 let (
 	del update(delNode)
