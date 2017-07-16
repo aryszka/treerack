@@ -82,6 +82,27 @@ func (c *store) set(offset int, id int, n *Node) {
 	tc.nodes = append(tc.nodes, n)
 }
 
+/*
+
+[][][]int
+
+id, length, where to start in the underlying layer, which list in the layer
+
+attibutes:
+- sequence: length, the items in the layer below
+- choice: the item below
+
+features:
+- there can be sequences or choices under choices
+
+in every position:
+- store the valid choices with the underlying parsed nodes
+
+3D table: layer, choice, sequence
+stored choice identified by: offset, layer, choice index
+
+*/
+
 func (c *store) inc() {
 }
 

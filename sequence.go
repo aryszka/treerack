@@ -170,12 +170,16 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 			continue
 		}
 
-		if c.node.tokenLength() > 0 {
+		// nil as char
+		if c.node == nil {
+			node.appendChar(c.offset)
+			currentCount++
+		} else if c.node.tokenLength() > 0 {
 			node.append(c.node)
 			currentCount++
 		}
 
-		if c.node.tokenLength() == 0 || ranges[0][1] >= 0 && currentCount == ranges[0][1] {
+		if c.node != nil && c.node.tokenLength() == 0 || ranges[0][1] >= 0 && currentCount == ranges[0][1] {
 			items = items[1:]
 			ranges = ranges[1:]
 			currentCount = 0

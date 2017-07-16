@@ -125,6 +125,12 @@ func (c *context) success(n *Node) {
 	c.match = true
 }
 
+func (c *context) successChar() {
+	c.node = nil
+	c.offset++
+	c.match = true
+}
+
 func (c *context) fail(offset int) {
 	c.offset = offset
 	c.match = false

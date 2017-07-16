@@ -82,12 +82,17 @@ func (s *Syntax) AnyChar(name string, ct CommitType) error {
 	return s.Class(name, ct, true, nil, nil)
 }
 
-func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
-	return s.register(newChar(name, ct, not, chars, ranges))
-}
-
 func childName(name string, childIndex int) string {
 	return fmt.Sprintf("%s:%d", name, childIndex)
+}
+
+func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
+	cname := childName(name, 0)
+	if err := s.register(newChar(cname, Alias, not, chars, ranges)); err != nil {
+		return err
+	}
+
+	return s.Sequence(name, ct, SequenceItem{Name: cname})
 }
 
 func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {

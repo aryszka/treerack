@@ -29,6 +29,14 @@ func (n *Node) nodeLength() int {
 	return len(n.Nodes)
 }
 
+func (n *Node) appendChar(to int) {
+	if n.tokenLength() == 0 {
+		n.From = to - 1
+	}
+
+	n.To = to
+}
+
 func (n *Node) append(p *Node) {
 	n.Nodes = append(n.Nodes, p)
 	if n.tokenLength() == 0 {

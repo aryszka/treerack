@@ -79,26 +79,26 @@ func (p *charParser) parse(t Trace, c *context) {
 	// t = t.Extend(p.name)
 	// t.Out1("parsing char", c.offset)
 
-	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
-		c.fail(c.offset)
-		return
-	}
+	// if p.commit&Documentation != 0 {
+	// 	// t.Out1("fail, doc")
+	// 	c.fail(c.offset)
+	// 	return
+	// }
 
-	if _, ok := c.fromStore(p.id); ok {
-		// t.Out1("found in store, match:", m)
-		return
-	}
+	// if _, ok := c.fromStore(p.id); ok {
+	// 	// t.Out1("found in store, match:", m)
+	// 	return
+	// }
 
 	if tok, ok := c.token(); ok && p.match(tok) {
 		// t.Out1("success", string(tok))
-		n := newNode(p.name, p.id, c.offset, c.offset+1, p.commit)
+		// n := newNode(p.name, p.id, c.offset, c.offset+1, p.commit)
 		// c.store.set(c.offset, p.id, n)
-		for _, includedBy := range p.includedBy {
-			includedBy.storeIncluded(c, n)
-		}
+		// for _, includedBy := range p.includedBy {
+		// 	includedBy.storeIncluded(c, n)
+		// }
 
-		c.success(n)
+		c.successChar()
 		return
 	} else {
 		// t.Out1("fail", string(tok))

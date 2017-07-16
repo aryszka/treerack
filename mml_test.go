@@ -2863,7 +2863,11 @@ func TestMML(t *testing.T) {
 }
 
 func TestMMLFile(t *testing.T) {
-	const n = 18
+	if testing.Short() {
+		t.Skip()
+	}
+
+	const n = 180
 
 	s, err := testSyntax("mml.parser", 0)
 	if err != nil {
