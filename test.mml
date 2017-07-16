@@ -1,0 +1,163 @@
+fn defaultCompare(a, b) {
+	switch {
+		case a < b: -1
+		case a > b: 1
+		default: 0
+	}
+}
+
+let undefined {}
+
+fn treeWithCompare(compare) {
+	compare: compare
+	node: undefined
+}
+
+let tree treeWithCompare(defaultCompare)
+
+fn nextNode(compare, node, value) {
+	if node == undefined {
+		undefined
+	} else {
+		let c compare(node.value, value)
+		switch {
+		case c > 0:
+			match node {
+			case {less}: nextNode(compare, node.less, value)
+			default: node
+			}
+		default:
+			match node {
+			case {greater}: nextNode(compare, node.greater, value)
+			default: undefined
+			}
+		}
+	}
+}
+
+fn prevNode(compare, node, value) {
+	if node == undefined {
+		undefined
+	} else {
+		let c compare(node.value, value)
+		switch {
+		case c < 0:
+			match node {
+			case {greater}: prevNode(compare, node.greater, value)
+			default: node
+			}
+		default:
+			match node {
+			case {less}: prevNode(compare, node.less, value)
+			default: undefined
+			}
+		}
+	}
+}
+
+fn findNode(compare, node, value) {
+	switch {
+	case node == undefined: false
+	case node.value == value: true
+	case compare(node.value, value) < 0:
+		findNode(compare, node.greater, value)
+	default:
+		findNode(compare, node.less, value)
+	}
+}
+
+fn delNode(compare, node, value) {
+	fn delBetween() {
+		let next nextNode(compare, node, node.value)
+		{ node...
+		  value: next.value
+		  greater: delNode(compare, node.greater, next.value)
+		} /* -> updateDepth() */ -> balance()
+	}
+
+	fn delCurrent() {
+		match node {
+		case {less, greater}: delBetween()
+		case {less}: node.less
+		case {greater}: node.greater
+		}
+	}
+
+	fn delGreater() {
+		match node {
+		case {greater}:
+			{ node...
+			  greater: delNode(compare, node.greater, node.value)
+			} /* -> udpateDepth() */ -> balance()
+		default:
+			node
+		}
+	}
+
+	fn delLess() {
+		match node {
+		case {less}:
+			{ node...
+			  less: delNode(compare, node.less, node.value)
+			} /* -> udpateDepth() */ -> balance()
+		default:
+			node
+		}
+	}
+
+	fn delNode() {
+		let c compare(node.value, value)
+		switch {
+		case c == 0: delCurrent()
+		case c < 0: delGreater()
+		default: delLess()
+		}
+	}
+
+	node == undefined ? undefined : delNode()
+}
+
+fn insertNode(compare, node, value) {
+	if node == undefined {
+		{value: value}
+	} else {
+		let c compare(node.value, value)
+		switch {
+		case c > 0:
+			{node..., greater: insertNode(compare, node.greater, value)} /* -> updateDepth() */ -> balance()
+		case c < 0:
+			{node..., less: insertNode(compare, node.less, value)} /* -> updateDepth() */ -> balance()
+		default:
+			node
+		}
+	}
+}
+
+fn prevNextValue(f, tree, value) {
+	let node f(tree.compare, tree.node, value)
+	node == undefined ? value : node.value
+}
+
+fn update(f, tree, value) {
+	tree...
+	node: f(tree.compare, tree.node, value)
+}
+
+type alias tree {compare: fn (a, a) int, node: {}}
+type next fn (tree, a) a
+type prev fn (tree, a) a
+type find fn (tree, a) bool
+type delete fn (tree, a) tree
+type insert fn (tree, a) tree
+
+let (
+	next = prevNextValue(prevNode)
+	prev = prevNextValue(nextNode)
+)
+
+fn find(tree, value) findNode(tree.compare, tree.node, value) != undefined
+
+let (
+	del update(delNode)
+	insert update(insertNode)
+)

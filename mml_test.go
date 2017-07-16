@@ -1,6 +1,12 @@
 package treerack
 
-import "testing"
+import (
+	"bytes"
+	"io"
+	"os"
+	"testing"
+	"time"
+)
 
 func TestMML(t *testing.T) {
 	test(t, "mml.parser", "mml", []testItem{{
@@ -2854,4 +2860,50 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}})
+}
+
+func TestMMLFile(t *testing.T) {
+	const n = 18
+
+	s, err := testSyntax("mml.parser", 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	s.Init()
+
+	f, err := os.Open("test.mml")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer f.Close()
+
+	var d time.Duration
+	for i := 0; i < n && !t.Failed(); i++ {
+		func() {
+			if _, err := f.Seek(0, 0); err != nil {
+				t.Error(err)
+				return
+			}
+
+			b := bytes.NewBuffer(nil)
+			if _, err := io.Copy(b, f); err != nil {
+				t.Error(err)
+				return
+			}
+
+			start := time.Now()
+			_, err = s.Parse(b)
+			d += time.Now().Sub(start)
+
+			if err != nil {
+				t.Error(err)
+			}
+		}()
+	}
+
+	t.Log("average duration:", d/n)
 }
