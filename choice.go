@@ -90,7 +90,7 @@ func (p *choiceParser) storeIncluded(c *context, from, to int) {
 		return
 	}
 
-	c.store.set(from, p.id, true, to)
+	c.store.setMatch(from, p.id, to)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, from, to)
@@ -136,7 +136,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 			foundMatch = true
 			to = nextTo
 
-			c.store.set(from, p.id, true, to)
+			c.store.setMatch(from, p.id, to)
 			for _, includedBy := range p.includedBy {
 				includedBy.storeIncluded(c, from, to)
 			}
@@ -153,7 +153,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	c.store.set(from, p.id, false, 0)
+	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)
 }

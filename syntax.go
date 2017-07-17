@@ -162,7 +162,7 @@ func (s *Syntax) Generate(w io.Writer) error {
 	return ErrNotImplemented
 }
 
-// TODO: optimize top sequences to save memory
+// TODO: optimize top sequences to save memory, or just support streaming, or combine the two
 
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	if err := s.Init(); err != nil {

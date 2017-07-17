@@ -111,7 +111,7 @@ func (p *sequenceParser) storeIncluded(c *context, from, to int) {
 		return
 	}
 
-	c.store.set(from, p.id, true, to)
+	c.store.setMatch(from, p.id, to)
 
 	for _, includedBy := range p.includedBy {
 		includedBy.storeIncluded(c, from, to)
@@ -129,6 +129,10 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		return
 	}
 
+	if c.store.hasNoMatch(c.offset, p.id) {
+		c.fail(c.offset)
+	}
+
 	c.exclude(c.offset, p.id)
 
 	itemIndex := 0
@@ -140,6 +144,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		p.items[itemIndex].parse(t, c)
 		if !c.match {
 			if currentCount < p.ranges[itemIndex][0] {
+				c.store.setNoMatch(from, p.id)
 				c.fail(from)
 				c.include(from, p.id)
 				return
@@ -167,6 +172,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		includedBy.storeIncluded(c, from, to)
 	}
 
+	c.store.setMatch(from, p.id, to)
 	c.success(to)
 	c.include(from, p.id)
 }
