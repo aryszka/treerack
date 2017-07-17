@@ -15,7 +15,7 @@ type parser interface {
 	nodeName() string
 	nodeID() int
 	setIncludedBy(parser, *idSet)
-	storeIncluded(*context, int, int)
+	storeIncluded(*context, int, int) // can be just an id set, taking what's excluded from the context
 	parse(Trace, *context)
 }
 
