@@ -105,13 +105,13 @@ func (c *context) include(offset int, id int) {
 }
 
 func (c *context) fromStore(id int) (bool, bool) {
-	n, m, ok := c.store.get(c.offset, id)
+	to, m, ok := c.store.get(c.offset, id)
 	if !ok {
 		return false, false
 	}
 
 	if m {
-		c.success(n)
+		c.success(to)
 	} else {
 		c.fail(c.offset)
 	}
@@ -119,15 +119,8 @@ func (c *context) fromStore(id int) (bool, bool) {
 	return m, true
 }
 
-func (c *context) success(n *Node) {
-	c.node = n
-	c.offset = n.To
-	c.match = true
-}
-
-func (c *context) successChar() {
-	c.node = nil
-	c.offset++
+func (c *context) success(to int) {
+	c.offset = to
 	c.match = true
 }
 
@@ -137,6 +130,8 @@ func (c *context) fail(offset int) {
 }
 
 func (c *context) finalize() error {
+	return ErrNotImplemented
+
 	if c.node.To < c.readOffset {
 		return ErrUnexpectedCharacter
 	}

@@ -48,7 +48,7 @@ fn prevNode(compare, node, value) {
 
 fn findNode(compare, node, value) {
 	switch {
-	case node == empty: false
+	case node == empty:       false
 	case node.value == value: true
 	case compare(node.value, value) < 0:
 		findNode(compare, node.greater, value)
@@ -69,8 +69,8 @@ fn delNode(compare, node, value) {
 	fn delCurrent() {
 		match node {
 		case {less, greater}: delBetween()
-		case {less}: node.less
-		case {greater}: node.greater
+		case {less}:          node.less
+		case {greater}:       node.greater
 		}
 	}
 
@@ -134,7 +134,7 @@ fn insertNode(compare, node, value) {
 	case empty: {value: value}
 	case c > 0: insertGreater() -> balance()
 	case c < 0: insertLess() -> balance()
-	default: node
+	default:    node
 	}
 }
 

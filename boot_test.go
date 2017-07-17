@@ -3,6 +3,7 @@ package treerack
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestBoot(t *testing.T) {
@@ -12,7 +13,7 @@ func TestBoot(t *testing.T) {
 		return
 	}
 
-	f, err := os.Open("syntax.parser")
+	f, err := os.Open("mml.parser")
 	if err != nil {
 		t.Error(err)
 		return
@@ -20,58 +21,65 @@ func TestBoot(t *testing.T) {
 
 	defer f.Close()
 
-	n0, err := b.Parse(f)
-	if err != nil {
+	start := time.Now()
+	_, err = b.Parse(f)
+	t.Log("duration:", time.Now().Sub(start))
+
+	if err != ErrNotImplemented {
 		t.Error(err)
-		return
 	}
 
-	s0 := NewSyntax()
-	if err := define(s0, n0); err != nil {
-		t.Error(err)
-		return
-	}
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	_, err = f.Seek(0, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// s0 := NewSyntax()
+	// if err := define(s0, n0); err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	err = s0.Init()
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// _, err = f.Seek(0, 0)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	n1, err := s0.Parse(f)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// err = s0.Init()
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	checkNode(t, n1, n0)
-	if t.Failed() {
-		return
-	}
+	// n1, err := s0.Parse(f)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	s1 := NewSyntax()
-	if err := define(s1, n1); err != nil {
-		t.Error(err)
-		return
-	}
+	// checkNode(t, n1, n0)
+	// if t.Failed() {
+	// 	return
+	// }
 
-	_, err = f.Seek(0, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// s1 := NewSyntax()
+	// if err := define(s1, n1); err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	n2, err := s1.Parse(f)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// _, err = f.Seek(0, 0)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
 
-	checkNode(t, n2, n1)
+	// n2, err := s1.Parse(f)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+
+	// checkNode(t, n2, n1)
 }

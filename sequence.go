@@ -106,93 +106,67 @@ func (p *sequenceParser) setIncludedBy(includedBy parser, parsers *idSet) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *sequenceParser) storeIncluded(c *context, n *Node) {
-	if !c.excluded(n.From, p.id) {
+func (p *sequenceParser) storeIncluded(c *context, from, to int) {
+	if !c.excluded(from, p.id) {
 		return
 	}
 
-	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
-	nc.append(n)
-	c.store.set(nc.From, p.id, nc)
+	c.store.set(from, p.id, true, to)
 
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, nc)
+		includedBy.storeIncluded(c, from, to)
 	}
 }
 
 func (p *sequenceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing sequence", c.offset)
-
 	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
 
 	c.exclude(c.offset, p.id)
-	initialOffset := c.offset
 
-	items := p.items
-	ranges := p.ranges
+	itemIndex := 0
 	var currentCount int
-	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
+	from := c.offset
+	to := c.offset
 
-	for len(items) > 0 {
-		var m bool
-		// var ok bool
-		// m, ok = c.fromStore(items[0].nodeID())
-		// if ok {
-		// 	// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
-		// } else {
-		items[0].parse(t, c)
-		m = c.match
-		// }
-
-		if !m {
-			if currentCount < ranges[0][0] {
-				// t.Out1("fail, item failed")
-				// c.store.set(node.From, p.id, nil)
-				c.fail(node.From)
-				c.include(initialOffset, p.id)
+	for itemIndex < len(p.items) {
+		p.items[itemIndex].parse(t, c)
+		if !c.match {
+			if currentCount < p.ranges[itemIndex][0] {
+				c.fail(from)
+				c.include(from, p.id)
 				return
 			}
 
-			items = items[1:]
-			ranges = ranges[1:]
+			itemIndex++
 			currentCount = 0
 			continue
 		}
 
-		// nil as char
-		if c.node == nil {
-			node.appendChar(c.offset)
-			currentCount++
-		} else if c.node.tokenLength() > 0 {
-			node.append(c.node)
+		parsed := c.offset > to
+		if parsed {
 			currentCount++
 		}
 
-		if c.node != nil && c.node.tokenLength() == 0 || ranges[0][1] >= 0 && currentCount == ranges[0][1] {
-			items = items[1:]
-			ranges = ranges[1:]
+		to = c.offset
+
+		if !parsed || p.ranges[itemIndex][1] >= 0 && currentCount == p.ranges[itemIndex][1] {
+			itemIndex++
 			currentCount = 0
 		}
 	}
 
-	// t.Out1("success, items parsed")
-
-	// c.store.set(node.From, p.id, node)
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, node)
+		includedBy.storeIncluded(c, from, to)
 	}
 
-	c.success(node)
-	c.include(initialOffset, p.id)
+	c.success(to)
+	c.include(from, p.id)
 }

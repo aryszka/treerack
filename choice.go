@@ -85,68 +85,60 @@ func (p *choiceParser) setIncludedBy(includedBy parser, parsers *idSet) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *choiceParser) storeIncluded(c *context, n *Node) {
-	if !c.excluded(n.From, p.id) {
+func (p *choiceParser) storeIncluded(c *context, from, to int) {
+	if !c.excluded(from, p.id) {
 		return
 	}
 
-	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
-	nc.append(n)
-	c.store.set(nc.From, p.id, nc)
+	c.store.set(from, p.id, true, to)
 
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, nc)
+		includedBy.storeIncluded(c, from, to)
 	}
 }
 
 func (p *choiceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing choice", c.offset)
-
 	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
 	if _, ok := c.fromStore(p.id); ok {
-		// t.Out1("found in store, match:", m)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
 
 	c.exclude(c.offset, p.id)
-	initialOffset := c.offset
+	from := c.offset
+	to := c.offset
 
-	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
 	var match bool
 
 	for {
-		elements := p.elements
+		elementIndex := 0
 		var foundMatch bool
 
-		for len(elements) > 0 {
-			elements[0].parse(t, c)
-			elements = elements[1:]
-			c.offset = node.From
+		for elementIndex < len(p.elements) {
+			p.elements[elementIndex].parse(t, c)
+			elementIndex++
+			nextTo := c.offset
+			c.offset = from
 
-			if !c.match || match && c.node.tokenLength() <= node.tokenLength() {
+			if !c.match || match && nextTo <= to {
 				continue
 			}
 
 			match = true
 			foundMatch = true
-			node = newNode(p.name, p.id, c.offset, c.offset, p.commit)
-			node.append(c.node)
+			to = nextTo
 
-			c.store.set(node.From, p.id, node)
+			c.store.set(from, p.id, true, to)
 			for _, includedBy := range p.includedBy {
-				includedBy.storeIncluded(c, node)
+				includedBy.storeIncluded(c, from, to)
 			}
 		}
 
@@ -156,14 +148,12 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	if match {
-		// t.Out1("choice, success")
-		c.success(node)
-		c.include(initialOffset, p.id)
+		c.success(to)
+		c.include(from, p.id)
 		return
 	}
 
-	// t.Out1("fail")
-	c.store.set(node.From, p.id, nil)
-	c.fail(node.From)
-	c.include(initialOffset, p.id)
+	c.store.set(from, p.id, false, 0)
+	c.fail(from)
+	c.include(from, p.id)
 }

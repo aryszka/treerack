@@ -8,14 +8,21 @@ type definition interface {
 	setID(int)
 	parser(*registry, *idSet) (parser, error)
 	commitType() CommitType
+	// builder() builder
 }
 
 type parser interface {
 	nodeName() string
 	nodeID() int
 	setIncludedBy(parser, *idSet)
-	storeIncluded(*context, *Node)
+	storeIncluded(*context, int, int)
 	parse(Trace, *context)
+}
+
+type builder interface {
+	nodeName() string
+	nodeID() int
+	build(*context) *Node
 }
 
 func parserNotFound(name string) error {
@@ -24,16 +31,6 @@ func parserNotFound(name string) error {
 
 func cannotIncludeParsers(name string) error {
 	return fmt.Errorf("parser: %s cannot include other parsers", name)
-}
-
-func stringsContainDeprecated(ss []string, s string) bool {
-	for _, si := range ss {
-		if si == s {
-			return true
-		}
-	}
-
-	return false
 }
 
 func parse(t Trace, p parser, c *context) (*Node, error) {

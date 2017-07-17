@@ -3,41 +3,41 @@ package treerack
 type storeEntry struct {
 	match   *idSet
 	noMatch *idSet
-	nodes   []*Node
+	nodes   []int
 }
 
 type store struct {
 	entries []*storeEntry
 }
 
-func (c *store) get(offset int, id int) (*Node, bool, bool) {
+func (c *store) get(offset int, id int) (int, bool, bool) {
 	if len(c.entries) <= offset {
-		return nil, false, false
+		return 0, false, false
 	}
 
 	tc := c.entries[offset]
 	if tc == nil {
-		return nil, false, false
+		return 0, false, false
 	}
 
 	if tc.noMatch.has(id) {
-		return nil, false, true
+		return 0, false, true
 	}
 
 	if !tc.match.has(id) {
-		return nil, false, false
+		return 0, false, false
 	}
 
-	for _, n := range tc.nodes {
-		if n.id == id {
-			return n, true, true
+	for i := 0; i < len(tc.nodes); i += 2 {
+		if tc.nodes[i] == id {
+			return tc.nodes[i + 1], true, true
 		}
 	}
 
-	return nil, false, false
+	return 0, false, false
 }
 
-func (c *store) set(offset int, id int, n *Node) {
+func (c *store) set(offset int, id int, match bool, to int) {
 	if len(c.entries) <= offset {
 		if cap(c.entries) > offset {
 			c.entries = c.entries[:offset+1]
@@ -59,7 +59,7 @@ func (c *store) set(offset int, id int, n *Node) {
 		c.entries[offset] = tc
 	}
 
-	if n == nil {
+	if !match {
 		if tc.match.has(id) {
 			return
 		}
@@ -69,17 +69,17 @@ func (c *store) set(offset int, id int, n *Node) {
 	}
 
 	tc.match.set(id)
-	for i, ni := range tc.nodes {
-		if ni.id == id {
-			if n.tokenLength() > ni.tokenLength() {
-				tc.nodes[i] = n
+	for i := 0; i < len(tc.nodes); i += 2 {
+		if tc.nodes[i] == id {
+			if to > tc.nodes[i + 1] {
+				tc.nodes[i + 1] = to
 			}
 
 			return
 		}
 	}
 
-	tc.nodes = append(tc.nodes, n)
+	tc.nodes = append(tc.nodes, id, to)
 }
 
 /*

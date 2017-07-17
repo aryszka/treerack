@@ -55,7 +55,7 @@ func (p *charParser) setIncludedBy(includedBy parser, parsers *idSet) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *charParser) storeIncluded(*context, *Node) {
+func (p *charParser) storeIncluded(*context, int, int) {
 	panic(cannotIncludeParsers(p.name))
 }
 
@@ -76,34 +76,13 @@ func (p *charParser) match(t rune) bool {
 }
 
 func (p *charParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing char", c.offset)
-
-	// if p.commit&Documentation != 0 {
-	// 	// t.Out1("fail, doc")
-	// 	c.fail(c.offset)
-	// 	return
-	// }
-
-	// if _, ok := c.fromStore(p.id); ok {
-	// 	// t.Out1("found in store, match:", m)
-	// 	return
-	// }
-
-	if tok, ok := c.token(); ok && p.match(tok) {
-		// t.Out1("success", string(tok))
-		// n := newNode(p.name, p.id, c.offset, c.offset+1, p.commit)
-		// c.store.set(c.offset, p.id, n)
-		// for _, includedBy := range p.includedBy {
-		// 	includedBy.storeIncluded(c, n)
-		// }
-
-		c.successChar()
-		return
-	} else {
-		// t.Out1("fail", string(tok))
-		// c.store.set(c.offset, p.id, nil)
+	if tok, ok := c.token(); !ok || !p.match(tok) {
 		c.fail(c.offset)
 		return
+	}
+
+	c.success(c.offset + 1)
+	for _, includedBy := range p.includedBy {
+		includedBy.storeIncluded(c, c.offset, c.offset + 1)
 	}
 }
