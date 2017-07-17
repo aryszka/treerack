@@ -117,15 +117,17 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	to := c.offset
 
 	var match bool
+	var nextTo int
+	var elementIndex int
 
 	for {
-		elementIndex := 0
 		var foundMatch bool
+		elementIndex = 0
 
 		for elementIndex < len(p.elements) {
 			p.elements[elementIndex].parse(t, c)
 			elementIndex++
-			nextTo := c.offset
+			nextTo = c.offset
 			c.offset = from
 
 			if !c.match || match && nextTo <= to {

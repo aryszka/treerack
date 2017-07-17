@@ -2,7 +2,7 @@ package treerack
 
 type store struct {
 	noMatch []*idSet
-	match [][]int
+	match   [][]int
 }
 
 func (s *store) hasNoMatch(offset, id int) bool {
@@ -23,7 +23,7 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 	}
 
 	var (
-		found bool
+		found  bool
 		length int
 	)
 
@@ -33,8 +33,8 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 		}
 
 		found = true
-		if s.match[offset][i + 1] > length {
-			length = s.match[offset][i + 1]
+		if s.match[offset][i+1] > length {
+			length = s.match[offset][i+1]
 		}
 	}
 
@@ -52,7 +52,7 @@ func (s *store) ensureOffset(offset int) {
 	}
 
 	s.match = s.match[:cap(s.match)]
-	for i := len(s.match); i <= offset; i++ {
+	for i := cap(s.match); i <= offset; i++ {
 		s.match = append(s.match, nil)
 	}
 }
@@ -65,10 +65,10 @@ func (s *store) setMatch(offset, id, to int) {
 func (s *store) setNoMatch(offset, id int) {
 	if len(s.noMatch) <= offset {
 		if cap(s.noMatch) > offset {
-			s.noMatch = s.noMatch[:offset + 1]
+			s.noMatch = s.noMatch[:offset+1]
 		} else {
 			s.noMatch = s.noMatch[:cap(s.noMatch)]
-			for i := len(s.noMatch); i <= offset; i++ {
+			for i := cap(s.noMatch); i <= offset; i++ {
 				s.noMatch = append(s.noMatch, nil)
 			}
 		}

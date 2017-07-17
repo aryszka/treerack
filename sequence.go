@@ -129,9 +129,9 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	if c.store.hasNoMatch(c.offset, p.id) {
-		c.fail(c.offset)
-	}
+	// if c.store.hasNoMatch(c.offset, p.id) {
+	// 	c.fail(c.offset)
+	// }
 
 	c.exclude(c.offset, p.id)
 
@@ -144,7 +144,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		p.items[itemIndex].parse(t, c)
 		if !c.match {
 			if currentCount < p.ranges[itemIndex][0] {
-				c.store.setNoMatch(from, p.id)
+				// c.store.setNoMatch(from, p.id)
 				c.fail(from)
 				c.include(from, p.id)
 				return

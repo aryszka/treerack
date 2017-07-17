@@ -83,6 +83,6 @@ func (p *charParser) parse(t Trace, c *context) {
 
 	c.success(c.offset + 1)
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, c.offset, c.offset + 1)
+		includedBy.storeIncluded(c, c.offset, c.offset+1)
 	}
 }
