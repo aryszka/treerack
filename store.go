@@ -27,7 +27,7 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 		length int
 	)
 
-	for i := 0; i < len(s.match[offset]); i++ {
+	for i := 0; i < len(s.match[offset]); i += 2 {
 		if s.match[offset][i] != id {
 			continue
 		}
