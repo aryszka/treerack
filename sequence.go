@@ -1,10 +1,11 @@
 package treerack
 
 type sequenceDefinition struct {
-	name   string
-	id     int
-	commit CommitType
-	items  []SequenceItem
+	name       string
+	id         int
+	commit     CommitType
+	items      []SequenceItem
+	includedBy []int
 }
 
 type sequenceParser struct {
@@ -13,7 +14,7 @@ type sequenceParser struct {
 	commit     CommitType
 	items      []parser
 	ranges     [][]int
-	includedBy []parser
+	includedBy []int
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -28,6 +29,42 @@ func (d *sequenceDefinition) nodeName() string { return d.name }
 func (d *sequenceDefinition) nodeID() int      { return d.id }
 func (d *sequenceDefinition) setID(id int)     { d.id = id }
 
+func (d *sequenceDefinition) includeItems() bool {
+	return len(d.items) == 1 && d.items[0].Min == 1 && d.items[0].Max == 1
+}
+
+func (d *sequenceDefinition) init(r *registry) error {
+	for _, item := range d.items {
+		if item.Min == 0 && item.Max == 0 {
+			item.Min, item.Max = 1, 1
+		} else if item.Max == 0 {
+			item.Max = -1
+		}
+	}
+
+	if !d.includeItems() {
+		return nil
+	}
+
+	parsers := &idSet{}
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, sequenceItemNames(d.items), d.id, parsers)
+}
+
+func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
+	if parsers.has(d.id) {
+		return nil
+	}
+
+	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+	if !d.includeItems() {
+		return nil
+	}
+
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, sequenceItemNames(d.items), includedBy, parsers)
+}
+
 func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	if parsers.has(d.id) {
 		panic(cannotIncludeParsers(d.name))
@@ -39,9 +76,10 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 	}
 
 	sp := &sequenceParser{
-		name:   d.name,
-		id:     d.id,
-		commit: d.commit,
+		name:       d.name,
+		id:         d.id,
+		commit:     d.commit,
+		includedBy: d.includedBy,
 	}
 
 	r.setParser(sp)
@@ -81,11 +119,6 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 		ranges = append(ranges, []int{item.Min, item.Max})
 	}
 
-	// for single items, acts like a choice
-	if len(items) == 1 && ranges[0][0] == 1 && ranges[0][1] == 1 {
-		items[0].setIncludedBy(sp, parsers)
-	}
-
 	sp.items = items
 	sp.ranges = ranges
 	return sp, nil
@@ -97,26 +130,6 @@ func (d *sequenceDefinition) commitType() CommitType {
 
 func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
-
-func (p *sequenceParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		return
-	}
-
-	p.includedBy = append(p.includedBy, includedBy)
-}
-
-func (p *sequenceParser) storeIncluded(c *context, from, to int) {
-	if !c.excluded(from, p.id) {
-		return
-	}
-
-	c.store.setMatch(from, p.id, to)
-
-	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, from, to)
-	}
-}
 
 func (p *sequenceParser) parse(t Trace, c *context) {
 	if p.commit&Documentation != 0 {
@@ -169,7 +182,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, from, to)
+		c.store.setMatch(from, includedBy, to)
 	}
 
 	c.store.setMatch(from, p.id, to)

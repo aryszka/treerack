@@ -7,7 +7,7 @@ type charParser struct {
 	not        bool
 	chars      []rune
 	ranges     [][]rune
-	includedBy []parser
+	includedBy []int
 }
 
 func newChar(
@@ -30,6 +30,13 @@ func (p *charParser) nodeName() string { return p.name }
 func (p *charParser) nodeID() int      { return p.id }
 func (p *charParser) setID(id int)     { p.id = id }
 
+func (p *charParser) init(r *registry) error { return nil }
+
+func (p *charParser) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
+	p.includedBy = appendIfMissing(p.includedBy, includedBy)
+	return nil
+}
+
 func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
 	if parsers.has(p.id) {
 		panic(cannotIncludeParsers(p.name))
@@ -45,14 +52,6 @@ func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
 
 func (p *charParser) commitType() CommitType {
 	return p.commit
-}
-
-func (p *charParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		panic(cannotIncludeParsers(p.name))
-	}
-
-	p.includedBy = append(p.includedBy, includedBy)
 }
 
 func (p *charParser) storeIncluded(*context, int, int) {
@@ -83,6 +82,6 @@ func (p *charParser) parse(t Trace, c *context) {
 
 	c.success(c.offset + 1)
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, c.offset, c.offset+1)
+		c.store.setMatch(c.offset, includedBy, c.offset+1)
 	}
 }
