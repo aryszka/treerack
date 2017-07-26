@@ -21,13 +21,25 @@ func TestBoot(t *testing.T) {
 
 	defer f.Close()
 
-	start := time.Now()
-	_, err = b.Parse(f)
-	t.Log("duration:", time.Now().Sub(start))
+	var d time.Duration
+	const n = 120
+	for i := 0; i < n; i++ {
+		if _, err := f.Seek(0, 0); err != nil {
+			t.Error(err)
+			return
+		}
 
-	if err != ErrNotImplemented {
-		t.Error(err)
+		start := time.Now()
+		_, err = b.Parse(f)
+		d += time.Now().Sub(start)
+
+		if err != ErrNotImplemented {
+			t.Error(err)
+			return
+		}
 	}
+
+	t.Log("duration:", d/n)
 
 	// if err != nil {
 	// 	t.Error(err)
