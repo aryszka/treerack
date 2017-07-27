@@ -52,7 +52,7 @@ func (s *store) ensureOffset(offset int) {
 	}
 
 	s.match = s.match[:cap(s.match)]
-	for i := cap(s.match); i <= offset; i++ {
+	for i := len(s.match); i <= offset; i++ {
 		s.match = append(s.match, nil)
 	}
 }
