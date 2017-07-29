@@ -1977,6 +1977,19 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
+		msg:            "block",
+		ignorePosition: true,
+		text:           "{ f() }",
+		nodes: []*Node{{
+			Name: "block",
+			Nodes: []*Node{{
+				Name: "function-application",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}},
+			}},
+		}},
+	}, {
 		msg:  "go",
 		text: "go f()",
 		nodes: []*Node{{
