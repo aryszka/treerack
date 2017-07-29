@@ -1,10 +1,13 @@
 package treerack
 
 type sequenceDefinition struct {
-	name   string
-	id     int
-	commit CommitType
-	items  []SequenceItem
+	name       string
+	id         int
+	commit     CommitType
+	items      []SequenceItem
+	includedBy []int
+	ranges     [][]int
+	sbuilder   *sequenceBuilder
 }
 
 type sequenceParser struct {
@@ -13,7 +16,16 @@ type sequenceParser struct {
 	commit     CommitType
 	items      []parser
 	ranges     [][]int
-	includedBy []parser
+	includedBy []int
+}
+
+type sequenceBuilder struct {
+	name       string
+	id         int
+	commit     CommitType
+	items      []builder
+	ranges     [][]int
+	includedBy []int
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -24,11 +36,79 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 	}
 }
 
-func (d *sequenceDefinition) nodeName() string { return d.name }
-func (d *sequenceDefinition) nodeID() int      { return d.id }
-func (d *sequenceDefinition) setID(id int)     { d.id = id }
+func (d *sequenceDefinition) nodeName() string       { return d.name }
+func (d *sequenceDefinition) nodeID() int            { return d.id }
+func (d *sequenceDefinition) setID(id int)           { d.id = id }
+func (d *sequenceDefinition) commitType() CommitType { return d.commit }
+
+func (d *sequenceDefinition) includeItems() bool {
+	return len(d.items) == 1 && d.items[0].Min == 1 && d.items[0].Max == 1
+}
+
+func (d *sequenceDefinition) init(r *registry) error {
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	for _, item := range d.items {
+		if item.Min == 0 && item.Max == 0 {
+			item.Min, item.Max = 1, 1
+		} else if item.Max == 0 {
+			item.Max = -1
+		}
+
+		d.ranges = append(d.ranges, []int{item.Min, item.Max})
+
+		def, ok := r.definition(item.Name)
+		if !ok {
+			return parserNotFound(item.Name)
+		}
+
+		d.sbuilder.items = append(d.sbuilder.items, def.builder())
+	}
+
+	d.sbuilder.ranges = d.ranges
+
+	if !d.includeItems() {
+		return nil
+	}
+
+	parsers := &idSet{}
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, sequenceItemNames(d.items), d.id, parsers)
+}
+
+func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
+	if parsers.has(d.id) {
+		return nil
+	}
+
+	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	d.sbuilder.includedBy = appendIfMissing(d.sbuilder.includedBy, includedBy)
+
+	if !d.includeItems() {
+		return nil
+	}
+
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, sequenceItemNames(d.items), includedBy, parsers)
+}
 
 func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
+	// TODO: what is this for? test with sequence containing a sequence through a choice
 	if parsers.has(d.id) {
 		panic(cannotIncludeParsers(d.name))
 	}
@@ -39,31 +119,21 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 	}
 
 	sp := &sequenceParser{
-		name:   d.name,
-		id:     d.id,
-		commit: d.commit,
+		name:       d.name,
+		id:         d.id,
+		commit:     d.commit,
+		includedBy: d.includedBy,
 	}
 
 	r.setParser(sp)
 
-	var (
-		items  []parser
-		ranges [][]int
-	)
-
+	var items []parser
 	parsers.set(d.id)
 	defer parsers.unset(d.id)
 	for _, item := range d.items {
-		if item.Min == 0 && item.Max == 0 {
-			item.Min, item.Max = 1, 1
-		} else if item.Max == 0 {
-			item.Max = -1
-		}
-
 		pi, ok := r.parser(item.Name)
 		if ok {
 			items = append(items, pi)
-			ranges = append(ranges, []int{item.Min, item.Max})
 			continue
 		}
 
@@ -78,47 +148,27 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 		}
 
 		items = append(items, pi)
-		ranges = append(ranges, []int{item.Min, item.Max})
-	}
-
-	// for single items, acts like a choice
-	if len(items) == 1 && ranges[0][0] == 1 && ranges[0][1] == 1 {
-		items[0].setIncludedBy(sp, parsers)
 	}
 
 	sp.items = items
-	sp.ranges = ranges
+	sp.ranges = d.ranges
 	return sp, nil
 }
 
-func (d *sequenceDefinition) commitType() CommitType {
-	return d.commit
+func (d *sequenceDefinition) builder() builder {
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	return d.sbuilder
 }
 
 func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
-
-func (p *sequenceParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	// if parsers.has(p.id) {
-	// 	return
-	// }
-
-	p.includedBy = append(p.includedBy, includedBy)
-}
-
-func (p *sequenceParser) storeIncluded(c *context, n *Node) {
-	if !c.excluded(n.From, p.id) {
-		return
-	}
-
-	nc := newNode(p.name, p.id, n.From, n.To, p.commit)
-	nc.append(n)
-	c.store.set(nc.From, p.id, nc)
-
-	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, nc)
-	}
-}
 
 func (p *sequenceParser) parse(t Trace, c *context) {
 	// t = t.Extend(p.name)
@@ -131,68 +181,119 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("excluded")
+		// t.Out1("fail, excluded")
 		c.fail(c.offset)
 		return
 	}
 
+	// if c.store.hasNoMatch(c.offset, p.id) {
+	// 	c.fail(c.offset)
+	// }
+
 	c.exclude(c.offset, p.id)
-	initialOffset := c.offset
 
-	items := p.items
-	ranges := p.ranges
+	itemIndex := 0
 	var currentCount int
-	node := newNode(p.name, p.id, c.offset, c.offset, p.commit)
+	from := c.offset
+	to := c.offset
 
-	for len(items) > 0 {
-		var m bool
-		// var ok bool
-		// m, ok = c.fromStore(items[0].nodeID())
-		// if ok {
-		// 	// t.Out1("sequence item found in store, match:", m, items[0].nodeName(), c.offset)
-		// } else {
-		items[0].parse(t, c)
-		m = c.match
-		// }
-
-		if !m {
-			if currentCount < ranges[0][0] {
-				// t.Out1("fail, item failed")
-				// c.store.set(node.From, p.id, nil)
-				c.fail(node.From)
-				c.include(initialOffset, p.id)
+	for itemIndex < len(p.items) {
+		// TODO: is it ok to parse before max range check? what if max=0
+		p.items[itemIndex].parse(t, c)
+		if !c.match {
+			if currentCount < p.ranges[itemIndex][0] {
+				// c.store.setNoMatch(from, p.id)
+				c.fail(from)
+				c.include(from, p.id)
+				// t.Out1("fail, not enough items")
 				return
 			}
 
-			items = items[1:]
-			ranges = ranges[1:]
+			itemIndex++
 			currentCount = 0
 			continue
 		}
 
-		// nil as char
-		if c.node == nil {
-			node.appendChar(c.offset)
-			currentCount++
-		} else if c.node.tokenLength() > 0 {
-			node.append(c.node)
+		parsed := c.offset > to
+		if parsed {
 			currentCount++
 		}
 
-		if c.node != nil && c.node.tokenLength() == 0 || ranges[0][1] >= 0 && currentCount == ranges[0][1] {
-			items = items[1:]
-			ranges = ranges[1:]
+		to = c.offset
+
+		if !parsed || p.ranges[itemIndex][1] >= 0 && currentCount == p.ranges[itemIndex][1] {
+			itemIndex++
 			currentCount = 0
 		}
 	}
 
-	// t.Out1("success, items parsed")
-
-	// c.store.set(node.From, p.id, node)
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, node)
+		if c.excluded(from, includedBy) {
+			// t.Out1("storing included", includedBy)
+			c.store.setMatch(from, includedBy, to)
+		}
 	}
 
-	c.success(node)
-	c.include(initialOffset, p.id)
+	// t.Out1("success")
+	c.store.setMatch(from, p.id, to)
+	c.success(to)
+	c.include(from, p.id)
+}
+
+func (b *sequenceBuilder) nodeName() string { return b.name }
+func (b *sequenceBuilder) nodeID() int      { return b.id }
+
+func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
+	to, ok := c.store.takeMatch(c.offset, b.id)
+	if !ok {
+		return nil, false
+	}
+
+	for _, ib := range b.includedBy {
+		c.store.takeMatchLength(c.offset, ib, to)
+	}
+
+	from := c.offset
+	var (
+		itemIndex    int
+		currentCount int
+		nodes        []*Node
+	)
+
+	for itemIndex < len(b.items) {
+		itemFrom := c.offset
+		n, ok := b.items[itemIndex].build(c)
+		if !ok {
+			if currentCount < b.ranges[itemIndex][0] {
+				panic(b.name + ": damaged parse result")
+			}
+
+			itemIndex++
+			currentCount = 0
+			continue
+		}
+
+		parsed := c.offset > itemFrom
+		if parsed {
+			nodes = append(nodes, n...)
+			currentCount++
+		}
+
+		if !parsed || b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
+			itemIndex++
+			currentCount = 0
+		}
+	}
+
+	if b.commit&Alias != 0 {
+		return nodes, true
+	}
+
+	return []*Node{{
+		Name:   b.name,
+		From:   from,
+		To:     to,
+		Nodes:  nodes,
+		tokens: c.tokens,
+	}}, true
 }

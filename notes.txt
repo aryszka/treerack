@@ -15,8 +15,11 @@ coverage
 custom tokens
 indentation
 streaming
-code generation go
+code generation go:
+- find things that depend on the syntax input
+- char matches can be generated into switches
 code generation js
+ws and nows flags
 
 [problems]
 can the root be an alias? check the commit mechanism

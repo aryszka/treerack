@@ -3,6 +3,7 @@ package treerack
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestBoot(t *testing.T) {
@@ -20,11 +21,26 @@ func TestBoot(t *testing.T) {
 
 	defer f.Close()
 
-	n0, err := b.Parse(f)
-	if err != nil {
-		t.Error(err)
-		return
+	var d time.Duration
+	const n = 120
+	var n0 *Node
+	for i := 0; i < n; i++ {
+		if _, err := f.Seek(0, 0); err != nil {
+			t.Error(err)
+			return
+		}
+
+		start := time.Now()
+		n0, err = b.Parse(f)
+		d += time.Now().Sub(start)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
 	}
+
+	t.Log("duration:", d/n)
 
 	s0 := NewSyntax()
 	if err := define(s0, n0); err != nil {

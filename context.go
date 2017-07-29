@@ -15,7 +15,7 @@ type context struct {
 	tokens     []rune
 	match      bool
 	node       *Node
-	isExcluded []*idSet
+	isExcluded [][]int
 }
 
 func newContext(r io.RuneReader) *context {
@@ -65,53 +65,51 @@ func (c *context) token() (rune, bool) {
 }
 
 func (c *context) excluded(offset int, id int) bool {
-	if len(c.isExcluded) <= offset || c.isExcluded[offset] == nil {
+	if len(c.isExcluded) <= id {
 		return false
 	}
 
-	return c.isExcluded[offset].has(id)
-}
-
-func (c *context) exclude(offset int, id int) {
-	if c.excluded(offset, id) {
-		return
-	}
-
-	if len(c.isExcluded) <= offset {
-		c.isExcluded = append(c.isExcluded, nil)
-		if cap(c.isExcluded) > offset {
-			c.isExcluded = c.isExcluded[:offset+1]
-		} else {
-			c.isExcluded = append(
-				c.isExcluded[:cap(c.isExcluded)],
-				make([]*idSet, offset+1-cap(c.isExcluded))...,
-			)
+	for i := range c.isExcluded[id] {
+		if c.isExcluded[id][i] == offset {
+			return true
 		}
 	}
 
-	if c.isExcluded[offset] == nil {
-		c.isExcluded[offset] = &idSet{}
+	return false
+}
+
+func (c *context) exclude(offset int, id int) {
+	if len(c.isExcluded) <= id {
+		if cap(c.isExcluded) > id {
+			c.isExcluded = c.isExcluded[:id+1]
+		} else {
+			c.isExcluded = c.isExcluded[:cap(c.isExcluded)]
+			for i := cap(c.isExcluded); i <= id; i++ {
+				c.isExcluded = append(c.isExcluded, nil)
+			}
+		}
 	}
 
-	c.isExcluded[offset].set(id)
+	c.isExcluded[id] = append(c.isExcluded[id], offset)
 }
 
 func (c *context) include(offset int, id int) {
-	if len(c.isExcluded) <= offset || c.isExcluded[offset] == nil {
-		return
+	for i := range c.isExcluded[id] {
+		if c.isExcluded[id][i] == offset {
+			c.isExcluded[id] = append(c.isExcluded[id][:i], c.isExcluded[id][i+1:]...)
+			break
+		}
 	}
-
-	c.isExcluded[offset].unset(id)
 }
 
 func (c *context) fromStore(id int) (bool, bool) {
-	n, m, ok := c.store.get(c.offset, id)
+	to, m, ok := c.store.getMatch(c.offset, id)
 	if !ok {
 		return false, false
 	}
 
 	if m {
-		c.success(n)
+		c.success(to)
 	} else {
 		c.fail(c.offset)
 	}
@@ -119,15 +117,8 @@ func (c *context) fromStore(id int) (bool, bool) {
 	return m, true
 }
 
-func (c *context) success(n *Node) {
-	c.node = n
-	c.offset = n.To
-	c.match = true
-}
-
-func (c *context) successChar() {
-	c.node = nil
-	c.offset++
+func (c *context) success(to int) {
+	c.offset = to
 	c.match = true
 }
 
@@ -136,8 +127,10 @@ func (c *context) fail(offset int) {
 	c.match = false
 }
 
-func (c *context) finalize() error {
-	if c.node.To < c.readOffset {
+func (c *context) finalize(root parser) error {
+	rootID := root.nodeID()
+	to, match, found := c.store.getMatch(0, rootID)
+	if !found || !match || to < c.readOffset {
 		return ErrUnexpectedCharacter
 	}
 
@@ -152,6 +145,5 @@ func (c *context) finalize() error {
 		}
 	}
 
-	c.node.commit(c.tokens)
 	return nil
 }
