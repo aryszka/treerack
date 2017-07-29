@@ -48,9 +48,9 @@ func (p *charParser) commitType() CommitType {
 }
 
 func (p *charParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		panic(cannotIncludeParsers(p.name))
-	}
+	// if parsers.has(p.id) {
+	// 	panic(cannotIncludeParsers(p.name))
+	// }
 
 	p.includedBy = append(p.includedBy, includedBy)
 }

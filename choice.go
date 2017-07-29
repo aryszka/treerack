@@ -78,9 +78,9 @@ func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 
 func (p *choiceParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		return
-	}
+	// if parsers.has(p.id) {
+	// 	return
+	// }
 
 	p.includedBy = append(p.includedBy, includedBy)
 }
@@ -100,22 +100,22 @@ func (p *choiceParser) storeIncluded(c *context, n *Node) {
 }
 
 func (p *choiceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing choice", c.offset)
+	t = t.Extend(p.name)
+	t.Out1("parsing choice", c.offset)
 
 	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
+		t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
-	if _, ok := c.fromStore(p.id); ok {
-		// t.Out1("found in store, match:", m)
+	if m, ok := c.fromStore(p.id); ok {
+		t.Out1("found in store, match:", m)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("excluded")
+		t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -156,13 +156,13 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	}
 
 	if match {
-		// t.Out1("choice, success")
+		t.Out1("choice, success")
 		c.success(node)
 		c.include(initialOffset, p.id)
 		return
 	}
 
-	// t.Out1("fail")
+	t.Out1("fail")
 	c.store.set(node.From, p.id, nil)
 	c.fail(node.From)
 	c.include(initialOffset, p.id)
