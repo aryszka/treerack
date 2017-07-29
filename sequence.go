@@ -227,9 +227,9 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	for _, includedBy := range p.includedBy {
-		if !c.excluded(from, includedBy) {
+		if c.excluded(from, includedBy) {
 			t.Out1("storing included", includedBy)
-			// c.store.setMatch(from, includedBy, to)
+			c.store.setMatch(from, includedBy, to)
 		}
 	}
 

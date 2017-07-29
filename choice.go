@@ -192,9 +192,9 @@ func (p *choiceParser) parse(t Trace, c *context) {
 
 			c.store.setMatch(from, p.id, to)
 			for _, includedBy := range p.includedBy {
-				if !c.excluded(from, includedBy) {
+				if c.excluded(from, includedBy) {
 					t.Out1("storing included", includedBy)
-					// c.store.setMatch(from, includedBy, to)
+					c.store.setMatch(from, includedBy, to)
 				}
 			}
 		}
