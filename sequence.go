@@ -121,17 +121,17 @@ func (p *sequenceParser) storeIncluded(c *context, n *Node) {
 }
 
 func (p *sequenceParser) parse(t Trace, c *context) {
-	t = t.Extend(p.name)
-	t.Out1("parsing sequence", c.offset)
+	// t = t.Extend(p.name)
+	// t.Out1("parsing sequence", c.offset)
 
 	if p.commit&Documentation != 0 {
-		t.Out1("fail, doc")
+		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		t.Out1("excluded")
+		// t.Out1("excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -157,7 +157,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 		if !m {
 			if currentCount < ranges[0][0] {
-				t.Out1("fail, item failed")
+				// t.Out1("fail, item failed")
 				// c.store.set(node.From, p.id, nil)
 				c.fail(node.From)
 				c.include(initialOffset, p.id)
@@ -186,7 +186,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		}
 	}
 
-	t.Out1("success, items parsed")
+	// t.Out1("success, items parsed")
 
 	// c.store.set(node.From, p.id, node)
 	for _, includedBy := range p.includedBy {
