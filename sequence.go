@@ -171,12 +171,16 @@ func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
 
 func (p *sequenceParser) parse(t Trace, c *context) {
+	t = t.Extend(p.name)
+	t.Out1("parsing", c.offset)
+
 	if p.commit&Documentation != 0 {
 		c.fail(c.offset)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
+		t.Out1("fail, excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -200,6 +204,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 				// c.store.setNoMatch(from, p.id)
 				c.fail(from)
 				c.include(from, p.id)
+				t.Out1("fail, not enough items")
 				return
 			}
 
@@ -222,9 +227,13 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	}
 
 	for _, includedBy := range p.includedBy {
-		c.store.setMatch(from, includedBy, to)
+		if !c.excluded(from, includedBy) {
+			t.Out1("storing included", includedBy)
+			// c.store.setMatch(from, includedBy, to)
+		}
 	}
 
+	t.Out1("success")
 	c.store.setMatch(from, p.id, to)
 	c.success(to)
 	c.include(from, p.id)
