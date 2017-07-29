@@ -1,5 +1,10 @@
 package treerack
 
+// TODO:
+// - store it similarly to the excluded ones? sorted by offset?
+// - use a helper field for the last accessed position to walk from there? for every offset?
+// - use a helper field to store the largest value and its index, too? for an offset?
+
 type store struct {
 	noMatch []*idSet
 	match   [][]int
