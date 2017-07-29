@@ -29,6 +29,7 @@ type Syntax struct {
 	explicitRoot bool
 	root         definition
 	parser       parser
+	builder      builder
 }
 
 var (
@@ -154,6 +155,7 @@ func (s *Syntax) Init() error {
 		return err
 	}
 
+	s.builder = s.root.builder()
 	s.initialized = true
 	return nil
 }
@@ -174,5 +176,9 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	c := newContext(bufio.NewReader(r))
-	return parse(s.trace, s.parser, c)
+	if err := parse(s.trace, s.parser, c); err != nil {
+		return nil, err
+	}
+
+	return build(s.builder, c), nil
 }

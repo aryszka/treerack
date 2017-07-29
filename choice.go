@@ -6,6 +6,7 @@ type choiceDefinition struct {
 	commit     CommitType
 	elements   []string
 	includedBy []int
+	cbuilder   *choiceBuilder
 }
 
 type choiceParser struct {
@@ -17,9 +18,10 @@ type choiceParser struct {
 }
 
 type choiceBuilder struct {
-	name string
-	id int
-	commit CommitType
+	name     string
+	id       int
+	commit   CommitType
+	elements []builder
 }
 
 func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
@@ -30,12 +32,29 @@ func newChoice(name string, ct CommitType, elements []string) *choiceDefinition 
 	}
 }
 
-func (d *choiceDefinition) nodeName() string { return d.name }
-func (d *choiceDefinition) nodeID() int      { return d.id }
-func (d *choiceDefinition) setID(id int)     { d.id = id }
+func (d *choiceDefinition) nodeName() string       { return d.name }
+func (d *choiceDefinition) nodeID() int            { return d.id }
+func (d *choiceDefinition) setID(id int)           { d.id = id }
 func (d *choiceDefinition) commitType() CommitType { return d.commit }
 
 func (d *choiceDefinition) init(r *registry) error {
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	for _, e := range d.elements {
+		def, ok := r.definition(e)
+		if !ok {
+			return parserNotFound(e)
+		}
+
+		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
+	}
+
 	parsers := &idSet{}
 	parsers.set(d.id)
 	return setItemsIncludedBy(r, d.elements, d.id, parsers)
@@ -98,7 +117,15 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 }
 
 func (d *choiceDefinition) builder() builder {
-	return &choiceBuilder{}
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	return d.cbuilder
 }
 
 func (p *choiceParser) nodeName() string { return p.name }
@@ -170,6 +197,41 @@ func (p *choiceParser) parse(t Trace, c *context) {
 func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
-func (b *choiceBuilder) build(*context) ([]*Node, bool) {
-	return nil, false
+func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
+	to, ok := c.store.takeMatch(c.offset, b.id)
+	if !ok {
+		return nil, false
+	}
+
+	var element builder
+	for _, e := range b.elements {
+		elementTo, match, _ := c.store.getMatch(c.offset, e.nodeID())
+		if match && elementTo == to {
+			element = e
+			break
+		}
+	}
+
+	if element == nil {
+		panic("damaged parse result")
+	}
+
+	from := c.offset
+
+	n, ok := element.build(c)
+	if !ok {
+		panic("damaged parse result")
+	}
+
+	if b.commit&Alias != 0 {
+		return n, true
+	}
+
+	return []*Node{{
+		Name:   b.name,
+		From:   from,
+		To:     to,
+		Nodes:  n,
+		tokens: c.tokens,
+	}}, true
 }

@@ -23,8 +23,8 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 	}
 
 	var (
-		found  bool
-		length int
+		found bool
+		to    int
 	)
 
 	for i := 0; i < len(s.match[offset]); i += 2 {
@@ -33,12 +33,46 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 		}
 
 		found = true
-		if s.match[offset][i+1] > length {
-			length = s.match[offset][i+1]
+		if s.match[offset][i+1] > to {
+			to = s.match[offset][i+1]
 		}
 	}
 
-	return length, found, found
+	return to, found, found
+}
+
+func (s *store) takeMatch(offset, id int) (int, bool) {
+	if s.hasNoMatch(offset, id) {
+		return 0, false
+	}
+
+	if len(s.match) <= offset {
+		return 0, false
+	}
+
+	var (
+		found bool
+		to    int
+		index int
+	)
+
+	for i := 0; i < len(s.match[offset]); i += 2 {
+		if s.match[offset][i] != id {
+			continue
+		}
+
+		found = true
+		if s.match[offset][i+1] > to {
+			to = s.match[offset][i+1]
+			index = i
+		}
+	}
+
+	if found {
+		s.match[offset][index] = -1
+	}
+
+	return to, found
 }
 
 func (s *store) ensureOffset(offset int) {

@@ -6,6 +6,8 @@ type sequenceDefinition struct {
 	commit     CommitType
 	items      []SequenceItem
 	includedBy []int
+	ranges     [][]int
+	sbuilder   *sequenceBuilder
 }
 
 type sequenceParser struct {
@@ -18,9 +20,11 @@ type sequenceParser struct {
 }
 
 type sequenceBuilder struct {
-	name string
-	id int
+	name   string
+	id     int
 	commit CommitType
+	items  []builder
+	ranges [][]int
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -31,9 +35,9 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 	}
 }
 
-func (d *sequenceDefinition) nodeName() string { return d.name }
-func (d *sequenceDefinition) nodeID() int      { return d.id }
-func (d *sequenceDefinition) setID(id int)     { d.id = id }
+func (d *sequenceDefinition) nodeName() string       { return d.name }
+func (d *sequenceDefinition) nodeID() int            { return d.id }
+func (d *sequenceDefinition) setID(id int)           { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType { return d.commit }
 
 func (d *sequenceDefinition) includeItems() bool {
@@ -41,13 +45,32 @@ func (d *sequenceDefinition) includeItems() bool {
 }
 
 func (d *sequenceDefinition) init(r *registry) error {
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
 	for _, item := range d.items {
 		if item.Min == 0 && item.Max == 0 {
 			item.Min, item.Max = 1, 1
 		} else if item.Max == 0 {
 			item.Max = -1
 		}
+
+		d.ranges = append(d.ranges, []int{item.Min, item.Max})
+
+		def, ok := r.definition(item.Name)
+		if !ok {
+			return parserNotFound(item.Name)
+		}
+
+		d.sbuilder.items = append(d.sbuilder.items, def.builder())
 	}
+
+	d.sbuilder.ranges = d.ranges
 
 	if !d.includeItems() {
 		return nil
@@ -92,24 +115,13 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 
 	r.setParser(sp)
 
-	var (
-		items  []parser
-		ranges [][]int
-	)
-
+	var items []parser
 	parsers.set(d.id)
 	defer parsers.unset(d.id)
 	for _, item := range d.items {
-		if item.Min == 0 && item.Max == 0 {
-			item.Min, item.Max = 1, 1
-		} else if item.Max == 0 {
-			item.Max = -1
-		}
-
 		pi, ok := r.parser(item.Name)
 		if ok {
 			items = append(items, pi)
-			ranges = append(ranges, []int{item.Min, item.Max})
 			continue
 		}
 
@@ -124,16 +136,23 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 		}
 
 		items = append(items, pi)
-		ranges = append(ranges, []int{item.Min, item.Max})
 	}
 
 	sp.items = items
-	sp.ranges = ranges
+	sp.ranges = d.ranges
 	return sp, nil
 }
 
 func (d *sequenceDefinition) builder() builder {
-	return &sequenceBuilder{}
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	return d.sbuilder
 }
 
 func (p *sequenceParser) nodeName() string { return p.name }
@@ -162,6 +181,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	to := c.offset
 
 	for itemIndex < len(p.items) {
+		// TODO: is it ok to parse before max range check? what if max=0
 		p.items[itemIndex].parse(t, c)
 		if !c.match {
 			if currentCount < p.ranges[itemIndex][0] {
@@ -201,6 +221,53 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 func (b *sequenceBuilder) nodeName() string { return b.name }
 func (b *sequenceBuilder) nodeID() int      { return b.id }
 
-func (b *sequenceBuilder) build(*context) ([]*Node, bool) {
-	return nil, false
+func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
+	to, ok := c.store.takeMatch(c.offset, b.id)
+	if !ok {
+		return nil, false
+	}
+
+	from := c.offset
+	var (
+		itemIndex    int
+		currentCount int
+		nodes        []*Node
+	)
+
+	for itemIndex < len(b.items) {
+		itemFrom := c.offset
+		n, ok := b.items[itemIndex].build(c)
+		if !ok {
+			if currentCount < b.ranges[itemIndex][0] {
+				panic("damaged parse result")
+			}
+
+			itemIndex++
+			currentCount = 0
+			continue
+		}
+
+		parsed := c.offset > itemFrom
+		if parsed {
+			nodes = append(nodes, n...)
+			currentCount++
+		}
+
+		if !parsed || b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
+			itemIndex++
+			currentCount = 0
+		}
+	}
+
+	if b.commit&Alias != 0 {
+		return nodes, true
+	}
+
+	return []*Node{{
+		Name:   b.name,
+		From:   from,
+		To:     to,
+		Nodes:  nodes,
+		tokens: c.tokens,
+	}}, true
 }

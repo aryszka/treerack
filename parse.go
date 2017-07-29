@@ -73,19 +73,29 @@ func sequenceItemNames(items []SequenceItem) []string {
 	return names
 }
 
-func parse(t Trace, p parser, c *context) (*Node, error) {
+func parse(t Trace, p parser, c *context) error {
 	p.parse(t, c)
 	if c.readErr != nil {
-		return nil, c.readErr
+		return c.readErr
 	}
 
 	if !c.match {
-		return nil, ErrInvalidInput
+		return ErrInvalidInput
 	}
 
 	if err := c.finalize(p); err != nil {
-		return nil, err
+		return err
 	}
 
-	return c.node, nil
+	return nil
+}
+
+func build(b builder, c *context) *Node {
+	c.offset = 0
+	n, ok := b.build(c)
+	if !ok || len(n) != 1 {
+		panic("damaged parse result")
+	}
+
+	return n[0]
 }

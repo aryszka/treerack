@@ -145,8 +145,5 @@ func (c *context) finalize(root parser) error {
 		}
 	}
 
-	return ErrNotImplemented
-
-	c.node.commit(c.tokens)
 	return nil
 }
