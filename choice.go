@@ -18,10 +18,11 @@ type choiceParser struct {
 }
 
 type choiceBuilder struct {
-	name     string
-	id       int
-	commit   CommitType
-	elements []builder
+	name       string
+	id         int
+	commit     CommitType
+	elements   []builder
+	includedBy []int
 }
 
 func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
@@ -66,6 +67,17 @@ func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *i
 	}
 
 	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	d.cbuilder.includedBy = appendIfMissing(d.cbuilder.includedBy, includedBy)
+
 	parsers.set(d.id)
 	return setItemsIncludedBy(r, d.elements, includedBy, parsers)
 }
@@ -201,6 +213,10 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 	to, ok := c.store.takeMatch(c.offset, b.id)
 	if !ok {
 		return nil, false
+	}
+
+	for _, ib := range b.includedBy {
+		c.store.takeMatchLength(c.offset, ib, to)
 	}
 
 	var element builder

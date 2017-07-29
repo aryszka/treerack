@@ -20,11 +20,12 @@ type sequenceParser struct {
 }
 
 type sequenceBuilder struct {
-	name   string
-	id     int
-	commit CommitType
-	items  []builder
-	ranges [][]int
+	name       string
+	id         int
+	commit     CommitType
+	items      []builder
+	ranges     [][]int
+	includedBy []int
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -87,6 +88,17 @@ func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers 
 	}
 
 	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+
+	if d.sbuilder == nil {
+		d.sbuilder = &sequenceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	d.sbuilder.includedBy = appendIfMissing(d.sbuilder.includedBy, includedBy)
+
 	if !d.includeItems() {
 		return nil
 	}
@@ -227,6 +239,10 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		return nil, false
 	}
 
+	for _, ib := range b.includedBy {
+		c.store.takeMatchLength(c.offset, ib, to)
+	}
+
 	from := c.offset
 	var (
 		itemIndex    int
@@ -239,7 +255,7 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		n, ok := b.items[itemIndex].build(c)
 		if !ok {
 			if currentCount < b.ranges[itemIndex][0] {
-				panic("damaged parse result")
+				panic(b.name + ": damaged parse result")
 			}
 
 			itemIndex++
