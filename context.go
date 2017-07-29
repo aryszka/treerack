@@ -127,10 +127,10 @@ func (c *context) fail(offset int) {
 	c.match = false
 }
 
-func (c *context) finalize() error {
-	return ErrNotImplemented
-
-	if c.node.To < c.readOffset {
+func (c *context) finalize(root parser) error {
+	rootID := root.nodeID()
+	to, match, found := c.store.getMatch(0, rootID)
+	if !found || !match || to < c.readOffset {
 		return ErrUnexpectedCharacter
 	}
 
@@ -145,6 +145,5 @@ func (c *context) finalize() error {
 		}
 	}
 
-	c.node.commit(c.tokens)
 	return nil
 }

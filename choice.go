@@ -1,10 +1,12 @@
 package treerack
 
 type choiceDefinition struct {
-	name     string
-	id       int
-	commit   CommitType
-	elements []string
+	name       string
+	id         int
+	commit     CommitType
+	elements   []string
+	includedBy []int
+	cbuilder   *choiceBuilder
 }
 
 type choiceParser struct {
@@ -12,7 +14,15 @@ type choiceParser struct {
 	id         int
 	commit     CommitType
 	elements   []parser
-	includedBy []parser
+	includedBy []int
+}
+
+type choiceBuilder struct {
+	name       string
+	id         int
+	commit     CommitType
+	elements   []builder
+	includedBy []int
 }
 
 func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
@@ -23,9 +33,58 @@ func newChoice(name string, ct CommitType, elements []string) *choiceDefinition 
 	}
 }
 
-func (d *choiceDefinition) nodeName() string { return d.name }
-func (d *choiceDefinition) nodeID() int      { return d.id }
-func (d *choiceDefinition) setID(id int)     { d.id = id }
+func (d *choiceDefinition) nodeName() string       { return d.name }
+func (d *choiceDefinition) nodeID() int            { return d.id }
+func (d *choiceDefinition) setID(id int)           { d.id = id }
+func (d *choiceDefinition) commitType() CommitType { return d.commit }
+
+func (d *choiceDefinition) init(r *registry) error {
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	for _, e := range d.elements {
+		def, ok := r.definition(e)
+		if !ok {
+			return parserNotFound(e)
+		}
+
+		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
+	}
+
+	parsers := &idSet{}
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, d.elements, d.id, parsers)
+}
+
+func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
+	if parsers.has(d.id) {
+		return nil
+	}
+
+	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	d.cbuilder.includedBy = appendIfMissing(d.cbuilder.includedBy, includedBy)
+
+	parsers.set(d.id)
+	return setItemsIncludedBy(r, d.elements, includedBy, parsers)
+}
+
+// TODO:
+// - it may be possible to initialize the parsers non-recursively
+// - maybe the whole definition, parser and builder can be united
 
 func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	p, ok := r.parser(d.name)
@@ -34,9 +93,10 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	}
 
 	cp := &choiceParser{
-		name:   d.name,
-		id:     d.id,
-		commit: d.commit,
+		name:       d.name,
+		id:         d.id,
+		commit:     d.commit,
+		includedBy: d.includedBy,
 	}
 
 	r.setParser(cp)
@@ -48,7 +108,6 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 		element, ok := r.parser(e)
 		if ok {
 			elements = append(elements, element)
-			element.setIncludedBy(cp, parsers)
 			continue
 		}
 
@@ -62,7 +121,6 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 			return nil, err
 		}
 
-		element.setIncludedBy(cp, parsers)
 		elements = append(elements, element)
 	}
 
@@ -70,32 +128,20 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	return cp, nil
 }
 
-func (d *choiceDefinition) commitType() CommitType {
-	return d.commit
+func (d *choiceDefinition) builder() builder {
+	if d.cbuilder == nil {
+		d.cbuilder = &choiceBuilder{
+			name:   d.name,
+			id:     d.id,
+			commit: d.commit,
+		}
+	}
+
+	return d.cbuilder
 }
 
 func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
-
-func (p *choiceParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		return
-	}
-
-	p.includedBy = append(p.includedBy, includedBy)
-}
-
-func (p *choiceParser) storeIncluded(c *context, from, to int) {
-	if !c.excluded(from, p.id) {
-		return
-	}
-
-	c.store.setMatch(from, p.id, to)
-
-	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, from, to)
-	}
-}
 
 func (p *choiceParser) parse(t Trace, c *context) {
 	if p.commit&Documentation != 0 {
@@ -140,7 +186,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 
 			c.store.setMatch(from, p.id, to)
 			for _, includedBy := range p.includedBy {
-				includedBy.storeIncluded(c, from, to)
+				c.store.setMatch(from, includedBy, to)
 			}
 		}
 
@@ -158,4 +204,50 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)
+}
+
+func (b *choiceBuilder) nodeName() string { return b.name }
+func (b *choiceBuilder) nodeID() int      { return b.id }
+
+func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
+	to, ok := c.store.takeMatch(c.offset, b.id)
+	if !ok {
+		return nil, false
+	}
+
+	for _, ib := range b.includedBy {
+		c.store.takeMatchLength(c.offset, ib, to)
+	}
+
+	var element builder
+	for _, e := range b.elements {
+		elementTo, match, _ := c.store.getMatch(c.offset, e.nodeID())
+		if match && elementTo == to {
+			element = e
+			break
+		}
+	}
+
+	if element == nil {
+		panic("damaged parse result")
+	}
+
+	from := c.offset
+
+	n, ok := element.build(c)
+	if !ok {
+		panic("damaged parse result")
+	}
+
+	if b.commit&Alias != 0 {
+		return n, true
+	}
+
+	return []*Node{{
+		Name:   b.name,
+		From:   from,
+		To:     to,
+		Nodes:  n,
+		tokens: c.tokens,
+	}}, true
 }

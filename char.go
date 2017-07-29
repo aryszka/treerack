@@ -3,32 +3,37 @@ package treerack
 type charParser struct {
 	name       string
 	id         int
-	commit     CommitType
 	not        bool
 	chars      []rune
 	ranges     [][]rune
-	includedBy []parser
+	includedBy []int
 }
 
 func newChar(
 	name string,
-	ct CommitType,
 	not bool,
 	chars []rune,
 	ranges [][]rune,
 ) *charParser {
 	return &charParser{
 		name:   name,
-		commit: ct,
 		not:    not,
 		chars:  chars,
 		ranges: ranges,
 	}
 }
 
-func (p *charParser) nodeName() string { return p.name }
-func (p *charParser) nodeID() int      { return p.id }
-func (p *charParser) setID(id int)     { p.id = id }
+func (p *charParser) nodeName() string       { return p.name }
+func (p *charParser) nodeID() int            { return p.id }
+func (p *charParser) setID(id int)           { p.id = id }
+func (p *charParser) commitType() CommitType { return Alias }
+
+func (p *charParser) init(r *registry) error { return nil }
+
+func (p *charParser) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
+	p.includedBy = appendIfMissing(p.includedBy, includedBy)
+	return nil
+}
 
 func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
 	if parsers.has(p.id) {
@@ -43,20 +48,8 @@ func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
 	return p, nil
 }
 
-func (p *charParser) commitType() CommitType {
-	return p.commit
-}
-
-func (p *charParser) setIncludedBy(includedBy parser, parsers *idSet) {
-	if parsers.has(p.id) {
-		panic(cannotIncludeParsers(p.name))
-	}
-
-	p.includedBy = append(p.includedBy, includedBy)
-}
-
-func (p *charParser) storeIncluded(*context, int, int) {
-	panic(cannotIncludeParsers(p.name))
+func (p *charParser) builder() builder {
+	return p
 }
 
 func (p *charParser) match(t rune) bool {
@@ -83,6 +76,21 @@ func (p *charParser) parse(t Trace, c *context) {
 
 	c.success(c.offset + 1)
 	for _, includedBy := range p.includedBy {
-		includedBy.storeIncluded(c, c.offset, c.offset+1)
+		c.store.setMatch(c.offset, includedBy, c.offset+1)
 	}
+}
+
+func (p *charParser) build(c *context) ([]*Node, bool) {
+	t, ok := c.token()
+	if !ok {
+		panic("damaged parser context")
+	}
+
+	if !p.match(t) {
+		return nil, false
+	}
+
+	// always alias
+	c.offset++
+	return nil, true
 }

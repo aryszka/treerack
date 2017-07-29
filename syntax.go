@@ -29,6 +29,7 @@ type Syntax struct {
 	explicitRoot bool
 	root         definition
 	parser       parser
+	builder      builder
 }
 
 var (
@@ -88,7 +89,7 @@ func childName(name string, childIndex int) string {
 
 func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
 	cname := childName(name, 0)
-	if err := s.register(newChar(cname, Alias, not, chars, ranges)); err != nil {
+	if err := s.register(newChar(cname, not, chars, ranges)); err != nil {
 		return err
 	}
 
@@ -100,7 +101,7 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 	for i, ci := range chars {
 		ref := childName(name, i)
 		refs = append(refs, ref)
-		if err := s.register(newChar(ref, Alias, false, []rune{ci}, nil)); err != nil {
+		if err := s.register(newChar(ref, false, []rune{ci}, nil)); err != nil {
 			return err
 		}
 	}
@@ -143,6 +144,10 @@ func (s *Syntax) Init() error {
 		return ErrRootAlias
 	}
 
+	for _, p := range s.registry.definitions {
+		p.init(s.registry)
+	}
+
 	var err error
 	s.parser, err = s.root.parser(s.registry, &idSet{})
 	if err != nil {
@@ -150,6 +155,7 @@ func (s *Syntax) Init() error {
 		return err
 	}
 
+	s.builder = s.root.builder()
 	s.initialized = true
 	return nil
 }
@@ -170,5 +176,9 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	c := newContext(bufio.NewReader(r))
-	return parse(s.trace, s.parser, c)
+	if err := parse(s.trace, s.parser, c); err != nil {
+		return nil, err
+	}
+
+	return build(s.builder, c), nil
 }

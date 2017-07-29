@@ -1,12 +1,12 @@
 // JSON (http://www.json.org)
-ws:ws       = [ \b\f\n\r\t];
+ws:alias    = [ \b\f\n\r\t];
 true        = "true";
 false       = "false";
 null        = "null";
-string:nows = "\"" ([^\\"\b\f\n\r\t] | "\\" (["\\/bfnrt] | "u" [0-9a-f]{4}))* "\"";
-number:nows = "-"? ("0" | [1-9][0-9]*) ("." [0-9]+)? ([eE] [+\-]? [0-9]+)?;
-entry       = string ":" value;
-object      = "{" (entry ("," entry)*)? "}";
-array       = "[" (value ("," value)*)? "]";
+string      = "\"" ([^\\"\b\f\n\r\t] | "\\" (["\\/bfnrt] | "u" [0-9a-f]{4}))* "\"";
+number      = "-"? ("0" | [1-9][0-9]*) ("." [0-9]+)? ([eE] [+\-]? [0-9]+)?;
+entry       = string ws* ":" ws* value;
+object      = "{" ws* (entry ws* ("," ws* entry)*)? ws* "}";
+array       = "[" ws* (value ws* ("," ws* value)*)? ws* "]";
 value:alias = true | false | null | string | number | object | array;
 json:root   = value;
