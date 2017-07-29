@@ -172,9 +172,8 @@ func (p *sequenceParser) nodeID() int      { return p.id }
 
 func (p *sequenceParser) parse(t Trace, c *context) {
 	t = t.Extend(p.name)
-	t.Out1("parsing", c.offset)
-
 	if p.commit&Documentation != 0 {
+		t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}

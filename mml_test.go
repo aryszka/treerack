@@ -9,7 +9,7 @@ import (
 )
 
 func TestMML(t *testing.T) {
-	testTrace(t, "mml.parser", "mml", 0, []testItem{{
+	testTrace(t, "mml.parser", "mml", 1, []testItem{{
 		msg:  "empty",
 		node: &Node{Name: "mml"},
 	}, {

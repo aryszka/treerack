@@ -145,16 +145,17 @@ func (p *choiceParser) nodeID() int      { return p.id }
 
 func (p *choiceParser) parse(t Trace, c *context) {
 	t = t.Extend(p.name)
-	t.Out1("parsing", c.offset)
+	t.Out1("parsing choice", c.offset)
 
 	// TODO: don't add documentation
 	if p.commit&Documentation != 0 {
+		t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
 	if m, ok := c.fromStore(p.id); ok {
-		t.Out1("found in cache", m)
+		t.Out1("found in store, match:", m)
 		return
 	}
 
@@ -207,7 +208,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		c.success(to)
 		c.include(from, p.id)
-		t.Out1("success")
+		t.Out1("choice, success")
 		return
 	}
 
