@@ -58,6 +58,10 @@ func (s *store) ensureOffset(offset int) {
 }
 
 func (s *store) setMatch(offset, id, to int) {
+	if toe, match, ok := s.getMatch(offset, id); ok && match && toe == to {
+		return
+	}
+
 	s.ensureOffset(offset)
 	s.match[offset] = append(s.match[offset], id, to)
 }

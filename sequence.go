@@ -17,6 +17,12 @@ type sequenceParser struct {
 	includedBy []int
 }
 
+type sequenceBuilder struct {
+	name string
+	id int
+	commit CommitType
+}
+
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
 	return &sequenceDefinition{
 		name:   name,
@@ -28,6 +34,7 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 func (d *sequenceDefinition) nodeName() string { return d.name }
 func (d *sequenceDefinition) nodeID() int      { return d.id }
 func (d *sequenceDefinition) setID(id int)     { d.id = id }
+func (d *sequenceDefinition) commitType() CommitType { return d.commit }
 
 func (d *sequenceDefinition) includeItems() bool {
 	return len(d.items) == 1 && d.items[0].Min == 1 && d.items[0].Max == 1
@@ -66,6 +73,7 @@ func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers 
 }
 
 func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
+	// TODO: what is this for? test with sequence containing a sequence through a choice
 	if parsers.has(d.id) {
 		panic(cannotIncludeParsers(d.name))
 	}
@@ -124,8 +132,8 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 	return sp, nil
 }
 
-func (d *sequenceDefinition) commitType() CommitType {
-	return d.commit
+func (d *sequenceDefinition) builder() builder {
+	return &sequenceBuilder{}
 }
 
 func (p *sequenceParser) nodeName() string { return p.name }
@@ -188,4 +196,11 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	c.store.setMatch(from, p.id, to)
 	c.success(to)
 	c.include(from, p.id)
+}
+
+func (b *sequenceBuilder) nodeName() string { return b.name }
+func (b *sequenceBuilder) nodeID() int      { return b.id }
+
+func (b *sequenceBuilder) build(*context) ([]*Node, bool) {
+	return nil, false
 }

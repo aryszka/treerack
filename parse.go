@@ -5,12 +5,12 @@ import "fmt"
 type definition interface {
 	nodeName() string
 	nodeID() int
+	commitType() CommitType
 	setID(int)
 	init(*registry) error
 	setIncludedBy(*registry, int, *idSet) error
 	parser(*registry, *idSet) (parser, error)
-	commitType() CommitType
-	// builder() builder
+	builder() builder
 }
 
 type parser interface {
@@ -22,7 +22,7 @@ type parser interface {
 type builder interface {
 	nodeName() string
 	nodeID() int
-	build(*context) *Node
+	build(*context) ([]*Node, bool)
 }
 
 func parserNotFound(name string) error {
@@ -83,7 +83,7 @@ func parse(t Trace, p parser, c *context) (*Node, error) {
 		return nil, ErrInvalidInput
 	}
 
-	if err := c.finalize(); err != nil {
+	if err := c.finalize(p); err != nil {
 		return nil, err
 	}
 

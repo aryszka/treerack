@@ -88,7 +88,7 @@ func childName(name string, childIndex int) string {
 
 func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
 	cname := childName(name, 0)
-	if err := s.register(newChar(cname, Alias, not, chars, ranges)); err != nil {
+	if err := s.register(newChar(cname, not, chars, ranges)); err != nil {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 	for i, ci := range chars {
 		ref := childName(name, i)
 		refs = append(refs, ref)
-		if err := s.register(newChar(ref, Alias, false, []rune{ci}, nil)); err != nil {
+		if err := s.register(newChar(ref, false, []rune{ci}, nil)); err != nil {
 			return err
 		}
 	}

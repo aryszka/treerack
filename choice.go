@@ -16,6 +16,12 @@ type choiceParser struct {
 	includedBy []int
 }
 
+type choiceBuilder struct {
+	name string
+	id int
+	commit CommitType
+}
+
 func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
 	return &choiceDefinition{
 		name:     name,
@@ -27,6 +33,7 @@ func newChoice(name string, ct CommitType, elements []string) *choiceDefinition 
 func (d *choiceDefinition) nodeName() string { return d.name }
 func (d *choiceDefinition) nodeID() int      { return d.id }
 func (d *choiceDefinition) setID(id int)     { d.id = id }
+func (d *choiceDefinition) commitType() CommitType { return d.commit }
 
 func (d *choiceDefinition) init(r *registry) error {
 	parsers := &idSet{}
@@ -43,6 +50,10 @@ func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *i
 	parsers.set(d.id)
 	return setItemsIncludedBy(r, d.elements, includedBy, parsers)
 }
+
+// TODO:
+// - it may be possible to initialize the parsers non-recursively
+// - maybe the whole definition, parser and builder can be united
 
 func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	p, ok := r.parser(d.name)
@@ -86,8 +97,8 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	return cp, nil
 }
 
-func (d *choiceDefinition) commitType() CommitType {
-	return d.commit
+func (d *choiceDefinition) builder() builder {
+	return &choiceBuilder{}
 }
 
 func (p *choiceParser) nodeName() string { return p.name }
@@ -154,4 +165,11 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)
+}
+
+func (b *choiceBuilder) nodeName() string { return b.name }
+func (b *choiceBuilder) nodeID() int      { return b.id }
+
+func (b *choiceBuilder) build(*context) ([]*Node, bool) {
+	return nil, false
 }
