@@ -144,23 +144,23 @@ func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 
 func (p *choiceParser) parse(t Trace, c *context) {
-	t = t.Extend(p.name)
-	t.Out1("parsing choice", c.offset)
+	// t = t.Extend(p.name)
+	// t.Out1("parsing choice", c.offset)
 
 	// TODO: don't add documentation
 	if p.commit&Documentation != 0 {
-		t.Out1("fail, doc")
+		// t.Out1("fail, doc")
 		c.fail(c.offset)
 		return
 	}
 
-	if m, ok := c.fromStore(p.id); ok {
-		t.Out1("found in store, match:", m)
+	if _, ok := c.fromStore(p.id); ok {
+		// t.Out1("found in store, match:", m)
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		t.Out1("fail, excluded")
+		// t.Out1("fail, excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -194,7 +194,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 			c.store.setMatch(from, p.id, to)
 			for _, includedBy := range p.includedBy {
 				if c.excluded(from, includedBy) {
-					t.Out1("storing included", includedBy)
+					// t.Out1("storing included", includedBy)
 					c.store.setMatch(from, includedBy, to)
 				}
 			}
@@ -208,11 +208,11 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		c.success(to)
 		c.include(from, p.id)
-		t.Out1("choice, success")
+		// t.Out1("choice, success")
 		return
 	}
 
-	t.Out1("fail")
+	// t.Out1("fail")
 	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)
