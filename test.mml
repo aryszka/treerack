@@ -60,9 +60,10 @@ fn findNode(compare, node, value) {
 fn delNode(compare, node, value) {
 	fn delBetween() {
 		let next nextNode(compare, node, node.value)
-		{ node...
-		  value: next.value
-		  greater: delNode(compare, node.greater, next.value)
+		{
+			node...
+			value: next.value
+			greater: delNode(compare, node.greater, next.value)
 		} /* -> updateDepth() */ -> balance()
 	}
 
@@ -77,8 +78,9 @@ fn delNode(compare, node, value) {
 	fn delGreater() {
 		match node {
 		case {greater}:
-			{ node...
-			  greater: delNode(compare, node.greater, node.value)
+			{
+				node...
+				greater: delNode(compare, node.greater, node.value)
 			} -> balance()
 		default:
 			node
@@ -88,8 +90,9 @@ fn delNode(compare, node, value) {
 	fn delLess() {
 		match node {
 		case {less}:
-			{ node...
-			  less: delNode(compare, node.less, node.value)
+			{
+				node...
+				less: delNode(compare, node.less, node.value)
 			} -> balance()
 		default:
 			node
