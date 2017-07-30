@@ -68,22 +68,6 @@ func (p *charParser) match(t rune) bool {
 	return p.not
 }
 
-func (p *charParser) matchBuild(t rune) bool {
-	for _, ci := range p.chars {
-		if ci == t {
-			return !p.not
-		}
-	}
-
-	for _, ri := range p.ranges {
-		if t >= ri[0] && t <= ri[1] {
-			return !p.not
-		}
-	}
-
-	return p.not
-}
-
 func (p *charParser) parse(t Trace, c *context) {
 	// t = t.Extend(p.name)
 	// t.Out1("parsing", c.offset)
@@ -102,17 +86,18 @@ func (p *charParser) parse(t Trace, c *context) {
 }
 
 func (p *charParser) build(c *context) ([]*Node, bool) {
-	// TODO: how to remove this check
-	t, ok := c.token()
-	if !ok {
-		panic("damaged parser context")
-	}
+	panic("called char build")
+	// // TODO: how to remove this check
+	// t, ok := c.token()
+	// if !ok {
+	// 	panic("damaged parser context")
+	// }
 
-	if !p.matchBuild(t) {
-		return nil, false
-	}
+	// if !p.match(t) {
+	// 	return nil, false
+	// }
 
-	// always alias
-	c.offset++
-	return nil, true
+	// // always alias
+	// c.offset++
+	// return nil, true
 }
