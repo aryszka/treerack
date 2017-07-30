@@ -9,4 +9,4 @@ entry       = string ws* ":" ws* value;
 object      = "{" ws* (entry ws* ("," ws* entry)*)? ws* "}";
 array       = "[" ws* (value ws* ("," ws* value)*)? ws* "]";
 value:alias = true | false | null | string | number | object | array;
-json:root   = value;
+json:root   = ws* value ws*;
