@@ -90,13 +90,21 @@ func (c *context) exclude(offset int, id int) {
 		}
 	}
 
+	for i := range c.isExcluded[id] {
+		if c.isExcluded[id][i] == -1 {
+			c.isExcluded[id][i] = offset
+			return
+		}
+	}
+
 	c.isExcluded[id] = append(c.isExcluded[id], offset)
 }
 
 func (c *context) include(offset int, id int) {
 	for i := range c.isExcluded[id] {
 		if c.isExcluded[id][i] == offset {
-			c.isExcluded[id] = append(c.isExcluded[id][:i], c.isExcluded[id][i+1:]...)
+			// c.isExcluded[id] = append(c.isExcluded[id][:i], c.isExcluded[id][i+1:]...)
+			c.isExcluded[id][i] = -1
 			break
 		}
 	}

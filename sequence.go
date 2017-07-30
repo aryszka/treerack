@@ -25,7 +25,8 @@ type sequenceBuilder struct {
 	commit     CommitType
 	items      []builder
 	ranges     [][]int
-	includedBy []int
+	includedBy *idSet
+	allChars   bool
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -48,12 +49,14 @@ func (d *sequenceDefinition) includeItems() bool {
 func (d *sequenceDefinition) init(r *registry) error {
 	if d.sbuilder == nil {
 		d.sbuilder = &sequenceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
+	allChars := true
 	for _, item := range d.items {
 		if item.Min == 0 && item.Max == 0 {
 			item.Min, item.Max = 1, 1
@@ -69,9 +72,16 @@ func (d *sequenceDefinition) init(r *registry) error {
 		}
 
 		d.sbuilder.items = append(d.sbuilder.items, def.builder())
+
+		if allChars {
+			if _, isChar := def.(*charParser); !isChar {
+				allChars = false
+			}
+		}
 	}
 
 	d.sbuilder.ranges = d.ranges
+	d.sbuilder.allChars = allChars
 
 	if !d.includeItems() {
 		return nil
@@ -91,13 +101,14 @@ func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers 
 
 	if d.sbuilder == nil {
 		d.sbuilder = &sequenceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
-	d.sbuilder.includedBy = appendIfMissing(d.sbuilder.includedBy, includedBy)
+	d.sbuilder.includedBy.set(includedBy)
 
 	if !d.includeItems() {
 		return nil
@@ -158,9 +169,10 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 func (d *sequenceDefinition) builder() builder {
 	if d.sbuilder == nil {
 		d.sbuilder = &sequenceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
@@ -186,16 +198,13 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		return
 	}
 
-	// if c.store.hasNoMatch(c.offset, p.id) {
-	// 	c.fail(c.offset)
-	// }
-
 	c.exclude(c.offset, p.id)
 
 	itemIndex := 0
 	var currentCount int
 	from := c.offset
 	to := c.offset
+	var parsed bool
 
 	for itemIndex < len(p.items) {
 		// TODO: is it ok to parse before max range check? what if max=0
@@ -214,7 +223,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 			continue
 		}
 
-		parsed := c.offset > to
+		parsed = c.offset > to
 		if parsed {
 			currentCount++
 		}
@@ -244,13 +253,24 @@ func (b *sequenceBuilder) nodeName() string { return b.name }
 func (b *sequenceBuilder) nodeID() int      { return b.id }
 
 func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.store.takeMatch(c.offset, b.id)
+	to, ok := c.store.takeMatch(c.offset, b.id, b.includedBy)
 	if !ok {
 		return nil, false
 	}
 
-	for _, ib := range b.includedBy {
-		c.store.takeMatchLength(c.offset, ib, to)
+	if b.allChars {
+		from := c.offset
+		c.offset = to
+		if b.commit&Alias != 0 {
+			return nil, true
+		}
+
+		return []*Node{{
+			Name:   b.name,
+			From:   from,
+			To:     to,
+			tokens: c.tokens,
+		}}, true
 	}
 
 	from := c.offset

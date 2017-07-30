@@ -14,4 +14,15 @@ check: build
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
 
+cpu.out: $(SOURCES)
+	go test -v -run TestMMLFile -cpuprofile cpu.out
+
+cpu: cpu.out
+	go tool pprof -top cpu.out
+
 precommit: fmt build check
+
+clean:
+	@rm -f *.test
+	@rm -f cpu.out
+	@go clean -i ./...

@@ -10,16 +10,8 @@ type store struct {
 	match   [][]int
 }
 
-func (s *store) hasNoMatch(offset, id int) bool {
-	if len(s.noMatch) <= offset || s.noMatch[offset] == nil {
-		return false
-	}
-
-	return s.noMatch[offset].has(id)
-}
-
 func (s *store) getMatch(offset, id int) (int, bool, bool) {
-	if s.hasNoMatch(offset, id) {
+	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
 		return 0, false, true
 	}
 
@@ -46,11 +38,29 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 	return to, found, found
 }
 
-func (s *store) takeMatch(offset, id int) (int, bool) {
-	if s.hasNoMatch(offset, id) {
-		return 0, false
+func (s *store) hasMatchTo(offset, id, to int) bool {
+	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
+		return false
 	}
 
+	if len(s.match) <= offset {
+		return false
+	}
+
+	for i := 0; i < len(s.match[offset]); i += 2 {
+		if s.match[offset][i] != id {
+			continue
+		}
+
+		if s.match[offset][i+1] == to {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *store) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
 	if len(s.match) <= offset {
 		return 0, false
 	}
@@ -75,43 +85,27 @@ func (s *store) takeMatch(offset, id int) (int, bool) {
 
 	if found {
 		s.match[offset][index] = -1
+		for i := 0; i < len(s.match[offset]); i += 2 {
+			if includedBy.has(s.match[offset][i]) && s.match[offset][i+1] == to {
+				s.match[offset][i] = -1
+			}
+		}
 	}
 
 	return to, found
 }
 
-func (s *store) takeMatchLength(offset, id, to int) (int, bool) {
-	if s.hasNoMatch(offset, id) {
-		return 0, false
-	}
-
+func (s *store) takeMatchLength(offset, id, to int) {
 	if len(s.match) <= offset {
-		return 0, false
+		return
 	}
-
-	var (
-		found bool
-		// index int
-	)
 
 	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] != id {
-			continue
-		}
-
-		found = true
-		if s.match[offset][i+1] == to {
+		if s.match[offset][i] == id && s.match[offset][i+1] == to {
 			s.match[offset][i] = -1
-			return to, true
-			//eindex = i
+			return
 		}
 	}
-
-	if found {
-		// s.match[offset][index] = -1
-	}
-
-	return to, found
 }
 
 func (s *store) ensureOffset(offset int) {
@@ -131,15 +125,29 @@ func (s *store) ensureOffset(offset int) {
 }
 
 func (s *store) setMatch(offset, id, to int) {
-	if toe, match, ok := s.getMatch(offset, id); ok && match && toe == to {
+	s.ensureOffset(offset)
+	for i := 0; i < len(s.match[offset]); i += 2 {
+		if s.match[offset][i] != id || s.match[offset][i+1] != to {
+			continue
+		}
+
 		return
 	}
 
-	s.ensureOffset(offset)
 	s.match[offset] = append(s.match[offset], id, to)
 }
 
 func (s *store) setNoMatch(offset, id int) {
+	if len(s.match) > offset {
+		for i := 0; i < len(s.match[offset]); i += 2 {
+			if s.match[offset][i] != id {
+				continue
+			}
+
+			return
+		}
+	}
+
 	if len(s.noMatch) <= offset {
 		if cap(s.noMatch) > offset {
 			s.noMatch = s.noMatch[:offset+1]

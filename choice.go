@@ -22,7 +22,7 @@ type choiceBuilder struct {
 	id         int
 	commit     CommitType
 	elements   []builder
-	includedBy []int
+	includedBy *idSet
 }
 
 func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
@@ -41,9 +41,10 @@ func (d *choiceDefinition) commitType() CommitType { return d.commit }
 func (d *choiceDefinition) init(r *registry) error {
 	if d.cbuilder == nil {
 		d.cbuilder = &choiceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
@@ -70,13 +71,14 @@ func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *i
 
 	if d.cbuilder == nil {
 		d.cbuilder = &choiceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
-	d.cbuilder.includedBy = appendIfMissing(d.cbuilder.includedBy, includedBy)
+	d.cbuilder.includedBy.set(includedBy)
 
 	parsers.set(d.id)
 	return setItemsIncludedBy(r, d.elements, includedBy, parsers)
@@ -131,9 +133,10 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 func (d *choiceDefinition) builder() builder {
 	if d.cbuilder == nil {
 		d.cbuilder = &choiceBuilder{
-			name:   d.name,
-			id:     d.id,
-			commit: d.commit,
+			name:       d.name,
+			id:         d.id,
+			commit:     d.commit,
+			includedBy: &idSet{},
 		}
 	}
 
@@ -172,9 +175,10 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	var match bool
 	var nextTo int
 	var elementIndex int
+	var foundMatch bool
 
 	for {
-		var foundMatch bool
+		foundMatch = false
 		elementIndex = 0
 
 		for elementIndex < len(p.elements) {
@@ -222,19 +226,14 @@ func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
 func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.store.takeMatch(c.offset, b.id)
+	to, ok := c.store.takeMatch(c.offset, b.id, b.includedBy)
 	if !ok {
 		return nil, false
 	}
 
-	for _, ib := range b.includedBy {
-		c.store.takeMatchLength(c.offset, ib, to)
-	}
-
 	var element builder
 	for _, e := range b.elements {
-		elementTo, match, _ := c.store.getMatch(c.offset, e.nodeID())
-		if match && elementTo == to {
+		if c.store.hasMatchTo(c.offset, e.nodeID(), to) {
 			element = e
 			break
 		}
