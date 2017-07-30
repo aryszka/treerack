@@ -309,7 +309,7 @@ receive-assignment           = "set" wsnlc* receive-assign-capture;
 receive-assignment-equal     = assignable wsnlc* "=" wsnlc* receive-expression;
 receive-capture:alias        = symbol-expression wsnlc* ("=" wsnlc*)? receive-expression;
 receive-definition           = "let" wsnlc* receive-capture;
-receive-mutable-definition   = "let" wcnl* "~" wsnlc* receive-capture;
+receive-mutable-definition   = "let" wsnlc* "~" wsnlc* receive-capture;
 receive-statement:alias      = receive-assignment | receive-definition;
 
 send-call:alias       = "send" wsc* "(" (wsnlc | ",")* expression list-sep expression (wsnlc | ",")* ")";
