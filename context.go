@@ -110,10 +110,10 @@ func (c *context) include(offset int, id int) {
 	}
 }
 
-func (c *context) fromStore(id int) (bool, bool) {
+func (c *context) fromStore(id int) bool {
 	to, m, ok := c.store.getMatch(c.offset, id)
 	if !ok {
-		return false, false
+		return false
 	}
 
 	if m {
@@ -122,7 +122,7 @@ func (c *context) fromStore(id int) (bool, bool) {
 		c.fail(c.offset)
 	}
 
-	return m, true
+	return true
 }
 
 func (c *context) success(to int) {

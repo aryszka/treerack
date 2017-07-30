@@ -1,4 +1,5 @@
 SOURCES = $(shell find . -name '*.go')
+PARSERS = $(shell find . -name '*.parser')
 
 default: build
 
@@ -8,13 +9,13 @@ imports:
 build: $(SOURCES)
 	go build ./...
 
-check: build
+check: build $(PARSERS)
 	go test ./... -test.short -run ^Test
 
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
 
-cpu.out: $(SOURCES)
+cpu.out: $(SOURCES) $(PARSERS)
 	go test -v -run TestMMLFile -cpuprofile cpu.out
 
 cpu: cpu.out

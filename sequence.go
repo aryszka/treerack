@@ -8,6 +8,7 @@ type sequenceDefinition struct {
 	includedBy []int
 	ranges     [][]int
 	sbuilder   *sequenceBuilder
+	allChars   bool
 }
 
 type sequenceParser struct {
@@ -17,6 +18,7 @@ type sequenceParser struct {
 	items      []parser
 	ranges     [][]int
 	includedBy []int
+	allChars   bool
 }
 
 type sequenceBuilder struct {
@@ -82,6 +84,7 @@ func (d *sequenceDefinition) init(r *registry) error {
 
 	d.sbuilder.ranges = d.ranges
 	d.sbuilder.allChars = allChars
+	d.allChars = allChars
 
 	if !d.includeItems() {
 		return nil
@@ -134,6 +137,7 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 		id:         d.id,
 		commit:     d.commit,
 		includedBy: d.includedBy,
+		allChars:   d.allChars,
 	}
 
 	r.setParser(sp)
@@ -186,11 +190,11 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	// t = t.Extend(p.name)
 	// t.Out1("parsing sequence", c.offset)
 
-	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
-		c.fail(c.offset)
-		return
-	}
+	// if p.commit&Documentation != 0 {
+	// 	// t.Out1("fail, doc")
+	// 	c.fail(c.offset)
+	// 	return
+	// }
 
 	if c.excluded(c.offset, p.id) {
 		// t.Out1("fail, excluded")

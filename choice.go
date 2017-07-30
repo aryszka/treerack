@@ -151,14 +151,14 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	// t.Out1("parsing choice", c.offset)
 
 	// TODO: don't add documentation
-	if p.commit&Documentation != 0 {
-		// t.Out1("fail, doc")
-		c.fail(c.offset)
-		return
-	}
+	// if p.commit&Documentation != 0 {
+	// 	// t.Out1("fail, doc")
+	// 	c.fail(c.offset)
+	// 	return
+	// }
 
-	if _, ok := c.fromStore(p.id); ok {
-		// t.Out1("found in store, match:", m)
+	if c.fromStore(p.id) {
+		// t.Out1("found in store, match:")
 		return
 	}
 
@@ -173,9 +173,10 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	to := c.offset
 
 	var match bool
-	var nextTo int
 	var elementIndex int
 	var foundMatch bool
+
+	var excludedIncluded []int
 
 	for {
 		foundMatch = false
@@ -184,22 +185,28 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		for elementIndex < len(p.elements) {
 			p.elements[elementIndex].parse(t, c)
 			elementIndex++
-			nextTo = c.offset
-			c.offset = from
 
-			if !c.match || match && nextTo <= to {
+			if !c.match || match && c.offset <= to {
+				c.offset = from
 				continue
 			}
 
 			match = true
 			foundMatch = true
-			to = nextTo
+			to = c.offset
+			c.offset = from
 
 			c.store.setMatch(from, p.id, to)
-			for _, includedBy := range p.includedBy {
-				if c.excluded(from, includedBy) {
-					// t.Out1("storing included", includedBy)
+			if match {
+				for _, includedBy := range excludedIncluded {
 					c.store.setMatch(from, includedBy, to)
+				}
+			} else {
+				for _, includedBy := range p.includedBy {
+					if c.excluded(from, includedBy) {
+						excludedIncluded = append(excludedIncluded, includedBy)
+						c.store.setMatch(from, includedBy, to)
+					}
 				}
 			}
 		}

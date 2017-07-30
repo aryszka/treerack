@@ -98,8 +98,8 @@ mutable-struct    = "~" wsnlc* struct-fact;
 
 channel = "<>" | "<" wsnlc* int wsnlc* ">";
 
-and-expression:doc = "and" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
-or-expression:doc  = "or" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
+// and-expression:doc = "and" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
+// or-expression:doc  = "or" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
 
 argument-list:alias = static-symbol (list-sep static-symbol)*;
 collect-symbol      = "..." wsnlc* static-symbol;
@@ -373,8 +373,8 @@ primary-expression:alias = int
                          | struct
                          | mutable-struct
                          | channel
-                         | and-expression // only documentation
-                         | or-expression // only documentation
+                         // | and-expression // only documentation
+                         // | or-expression // only documentation
                          | function
                          | effect
                          | indexer
