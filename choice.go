@@ -176,8 +176,6 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	var elementIndex int
 	var foundMatch bool
 
-	var excludedIncluded []int
-
 	for {
 		foundMatch = false
 		elementIndex = 0
@@ -197,18 +195,6 @@ func (p *choiceParser) parse(t Trace, c *context) {
 			c.offset = from
 
 			c.store.setMatch(from, p.id, to)
-			if match {
-				for _, includedBy := range excludedIncluded {
-					c.store.setMatch(from, includedBy, to)
-				}
-			} else {
-				for _, includedBy := range p.includedBy {
-					if c.excluded(from, includedBy) {
-						excludedIncluded = append(excludedIncluded, includedBy)
-						c.store.setMatch(from, includedBy, to)
-					}
-				}
-			}
 		}
 
 		if !foundMatch {
