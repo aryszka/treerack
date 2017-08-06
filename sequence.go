@@ -44,6 +44,16 @@ func (d *sequenceDefinition) nodeID() int            { return d.id }
 func (d *sequenceDefinition) setID(id int)           { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType { return d.commit }
 
+func (d *sequenceDefinition) validate(r *registry, path *idSet) error {
+	for i := range d.items {
+		if _, ok := r.definition(d.items[i].Name); !ok {
+			return parserNotFound(d.items[i].Name)
+		}
+	}
+
+	return nil
+}
+
 func (d *sequenceDefinition) normalize(r *registry, path *idSet) error {
 	if path.has(d.id) {
 		return nil
@@ -51,12 +61,12 @@ func (d *sequenceDefinition) normalize(r *registry, path *idSet) error {
 
 	path.set(d.id)
 	for i := range d.items {
-		element, ok := r.definition(d.items[i].Name)
+		item, ok := r.definition(d.items[i].Name)
 		if !ok {
 			return parserNotFound(d.items[i].Name)
 		}
 
-		element.normalize(r, path)
+		item.normalize(r, path)
 	}
 
 	return nil

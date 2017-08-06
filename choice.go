@@ -38,6 +38,16 @@ func (d *choiceDefinition) nodeID() int            { return d.id }
 func (d *choiceDefinition) setID(id int)           { d.id = id }
 func (d *choiceDefinition) commitType() CommitType { return d.commit }
 
+func (d *choiceDefinition) validate(r *registry, path *idSet) error {
+	for i := range d.elements {
+		if _, ok := r.definition(d.elements[i]); !ok {
+			return parserNotFound(d.elements[i])
+		}
+	}
+
+	return nil
+}
+
 func (d *choiceDefinition) normalize(r *registry, path *idSet) error {
 	if path.has(d.id) {
 		return nil

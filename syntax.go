@@ -144,6 +144,10 @@ func (s *Syntax) Init() error {
 		return ErrRootAlias
 	}
 
+	if err := s.root.validate(s.registry, &idSet{}); err != nil {
+		return err
+	}
+
 	if err := s.root.normalize(s.registry, &idSet{}); err != nil {
 		return err
 	}
