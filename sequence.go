@@ -196,13 +196,15 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	// 	return
 	// }
 
-	if c.excluded(c.offset, p.id) {
-		// t.Out1("fail, excluded")
-		c.fail(c.offset)
-		return
-	}
+	if !p.allChars {
+		if c.excluded(c.offset, p.id) {
+			// t.Out1("fail, excluded")
+			c.fail(c.offset)
+			return
+		}
 
-	c.exclude(c.offset, p.id)
+		c.exclude(c.offset, p.id)
+	}
 
 	itemIndex := 0
 	var currentCount int
@@ -217,7 +219,11 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 			if currentCount < p.ranges[itemIndex][0] {
 				// c.store.setNoMatch(from, p.id)
 				c.fail(from)
-				c.include(from, p.id)
+
+				if !p.allChars {
+					c.include(from, p.id)
+				}
+
 				// t.Out1("fail, not enough items")
 				return
 			}
@@ -240,17 +246,22 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 		}
 	}
 
-	for _, includedBy := range p.includedBy {
-		if c.excluded(from, includedBy) {
-			// t.Out1("storing included", includedBy)
-			c.store.setMatch(from, includedBy, to)
+	if !p.allChars {
+		for _, includedBy := range p.includedBy {
+			if c.excluded(from, includedBy) {
+				// t.Out1("storing included", includedBy)
+				c.store.setMatch(from, includedBy, to)
+			}
 		}
 	}
 
 	// t.Out1("success")
 	c.store.setMatch(from, p.id, to)
 	c.success(to)
-	c.include(from, p.id)
+
+	if !p.allChars {
+		c.include(from, p.id)
+	}
 }
 
 func (b *sequenceBuilder) nodeName() string { return b.name }
