@@ -7,6 +7,7 @@ type definition interface {
 	nodeID() int
 	commitType() CommitType
 	setID(int)
+	normalize(*registry, *idSet) error
 	init(*registry) error
 	setIncludedBy(*registry, int, *idSet) error
 	parser(*registry, *idSet) (parser, error)

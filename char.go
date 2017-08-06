@@ -23,10 +23,11 @@ func newChar(
 	}
 }
 
-func (p *charParser) nodeName() string       { return p.name }
-func (p *charParser) nodeID() int            { return p.id }
-func (p *charParser) setID(id int)           { p.id = id }
-func (p *charParser) commitType() CommitType { return Alias }
+func (p *charParser) nodeName() string                  { return p.name }
+func (p *charParser) nodeID() int                       { return p.id }
+func (p *charParser) setID(id int)                      { p.id = id }
+func (p *charParser) commitType() CommitType            { return Alias }
+func (p *charParser) normalize(*registry, *idSet) error { return nil }
 
 func (p *charParser) init(r *registry) error { return nil }
 

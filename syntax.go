@@ -144,6 +144,10 @@ func (s *Syntax) Init() error {
 		return ErrRootAlias
 	}
 
+	if err := s.root.normalize(s.registry, &idSet{}); err != nil {
+		return err
+	}
+
 	for _, p := range s.registry.definitions {
 		p.init(s.registry)
 	}
