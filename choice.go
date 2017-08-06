@@ -40,7 +40,7 @@ func (d *choiceDefinition) commitType() CommitType { return d.commit }
 
 func (d *choiceDefinition) validate(r *registry, path *idSet) error {
 	for i := range d.elements {
-		if _, ok := r.definition(d.elements[i]); !ok {
+		if _, ok := r.definitions[d.elements[i]]; !ok {
 			return parserNotFound(d.elements[i])
 		}
 	}
@@ -55,12 +55,7 @@ func (d *choiceDefinition) normalize(r *registry, path *idSet) error {
 
 	path.set(d.id)
 	for i := range d.elements {
-		element, ok := r.definition(d.elements[i])
-		if !ok {
-			return parserNotFound(d.elements[i])
-		}
-
-		element.normalize(r, path)
+		r.definitions[d.elements[i]].normalize(r, path)
 	}
 
 	return nil
@@ -77,12 +72,7 @@ func (d *choiceDefinition) init(r *registry) error {
 	}
 
 	for _, e := range d.elements {
-		def, ok := r.definition(e)
-		if !ok {
-			return parserNotFound(e)
-		}
-
-		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
+		d.cbuilder.elements = append(d.cbuilder.elements, r.definitions[e].builder())
 	}
 
 	parsers := &idSet{}
@@ -141,12 +131,7 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 			continue
 		}
 
-		elementDefinition, ok := r.definition(e)
-		if !ok {
-			return nil, parserNotFound(e)
-		}
-
-		element, err := elementDefinition.parser(r, parsers)
+		element, err := r.definitions[e].parser(r, parsers)
 		if err != nil {
 			return nil, err
 		}
@@ -175,8 +160,8 @@ func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 
 func (p *choiceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing choice", c.offset)
+	t = t.Extend(p.name)
+	t.Out1("parsing choice", c.offset)
 
 	// TODO: don't add documentation
 	// if p.commit&Documentation != 0 {
@@ -186,12 +171,12 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	// }
 
 	if c.fromStore(p.id) {
-		// t.Out1("found in store, match:")
+		t.Out1("found in store, match:")
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("fail, excluded")
+		t.Out1("fail, excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -207,6 +192,8 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	for {
 		foundMatch = false
 		elementIndex = 0
+
+		// TODO: avoid double parsing by setting first-from-store in the context
 
 		for elementIndex < len(p.elements) {
 			p.elements[elementIndex].parse(t, c)
@@ -233,11 +220,11 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		c.success(to)
 		c.include(from, p.id)
-		// t.Out1("choice, success")
+		t.Out1("choice, success")
 		return
 	}
 
-	// t.Out1("fail")
+	t.Out1("fail")
 	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)

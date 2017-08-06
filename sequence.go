@@ -54,19 +54,26 @@ func (d *sequenceDefinition) validate(r *registry, path *idSet) error {
 	return nil
 }
 
+func (d *sequenceDefinition) normalizeItems() {
+	for i := range d.items {
+		if d.items[i].Min == 0 && d.items[i].Max == 0 {
+			d.items[i].Min, d.items[i].Max = 1, 1
+		} else if d.items[i].Max == 0 {
+			d.items[i].Max = -1
+		}
+	}
+}
+
 func (d *sequenceDefinition) normalize(r *registry, path *idSet) error {
 	if path.has(d.id) {
 		return nil
 	}
 
+	// d.normalizeItems()
+
 	path.set(d.id)
 	for i := range d.items {
-		item, ok := r.definition(d.items[i].Name)
-		if !ok {
-			return parserNotFound(d.items[i].Name)
-		}
-
-		item.normalize(r, path)
+		r.definitions[d.items[i].Name].normalize(r, path)
 	}
 
 	return nil
@@ -96,11 +103,7 @@ func (d *sequenceDefinition) init(r *registry) error {
 
 		d.ranges = append(d.ranges, []int{item.Min, item.Max})
 
-		def, ok := r.definition(item.Name)
-		if !ok {
-			return parserNotFound(item.Name)
-		}
-
+		def := r.definitions[item.Name]
 		d.sbuilder.items = append(d.sbuilder.items, def.builder())
 
 		if allChars {
@@ -180,12 +183,7 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 			continue
 		}
 
-		itemDefinition, ok := r.definition(item.Name)
-		if !ok {
-			return nil, parserNotFound(item.Name)
-		}
-
-		pi, err := itemDefinition.parser(r, parsers)
+		pi, err := r.definitions[item.Name].parser(r, parsers)
 		if err != nil {
 			return nil, err
 		}
@@ -215,8 +213,8 @@ func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
 
 func (p *sequenceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing sequence", c.offset)
+	t = t.Extend(p.name)
+	t.Out1("parsing sequence", c.offset)
 
 	// if p.commit&Documentation != 0 {
 	// 	// t.Out1("fail, doc")
@@ -226,7 +224,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	if !p.allChars {
 		if c.excluded(c.offset, p.id) {
-			// t.Out1("fail, excluded")
+			t.Out1("fail, excluded")
 			c.fail(c.offset)
 			return
 		}
@@ -252,7 +250,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 					c.include(from, p.id)
 				}
 
-				// t.Out1("fail, not enough items")
+				t.Out1("fail, not enough items")
 				return
 			}
 
@@ -277,13 +275,13 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	if !p.allChars {
 		for _, includedBy := range p.includedBy {
 			if c.excluded(from, includedBy) {
-				// t.Out1("storing included", includedBy)
+				t.Out1("storing included", includedBy)
 				c.store.setMatch(from, includedBy, to)
 			}
 		}
 	}
 
-	// t.Out1("success")
+	t.Out1("success")
 	c.store.setMatch(from, p.id, to)
 	c.success(to)
 

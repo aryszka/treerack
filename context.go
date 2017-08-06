@@ -61,6 +61,10 @@ func (c *context) token() (rune, bool) {
 		}
 	}
 
+	if len(c.tokens) <= c.offset {
+		println(len(c.tokens), c.offset)
+	}
+
 	return c.tokens[c.offset], true
 }
 
