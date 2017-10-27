@@ -196,6 +196,10 @@ func initBoot(definitions [][]string) (*Syntax, error) {
 	return s, s.Init()
 }
 
+func createBoot() (*Syntax, error) {
+	return initBoot(bootSyntaxDefs)
+}
+
 func bootSyntax() (*Syntax, error) {
 	b, err := initBoot(bootSyntaxDefs)
 	if err != nil {

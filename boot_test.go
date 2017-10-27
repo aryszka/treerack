@@ -1,12 +1,51 @@
 package treerack
 
 import (
+	"io"
 	"os"
 	"testing"
 )
 
+func parseWithSyntax(s *Syntax, f io.ReadSeeker) (*Node, error) {
+	if _, err := f.Seek(0, 0); err != nil {
+		return nil, err
+	}
+
+	return s.Parse(f)
+}
+
+func syntaxFromTree(n *Node) (*Syntax, error) {
+	s := NewSyntax()
+	if err := define(s, n); err != nil {
+		return nil, err
+	}
+
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func testParseFromTree(t *testing.T, n *Node, f io.ReadSeeker) *Node {
+	s, err := syntaxFromTree(n)
+	if err != nil {
+		t.Error(err)
+		return nil
+	}
+
+	nn, err := parseWithSyntax(s, f)
+	if err != nil {
+		t.Error(err)
+		return nil
+	}
+
+	checkNode(t, nn, n)
+	return nn
+}
+
 func TestBoot(t *testing.T) {
-	b, err := initBoot(bootSyntaxDefs)
+	b, err := createBoot()
 	if err != nil {
 		t.Error(err)
 		return
@@ -20,56 +59,16 @@ func TestBoot(t *testing.T) {
 
 	defer f.Close()
 
-	n0, err := b.Parse(f)
+	n0, err := parseWithSyntax(b, f)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	s0 := NewSyntax()
-	if err := define(s0, n0); err != nil {
-		t.Error(err)
-		return
-	}
-	
-	if err := s0.Init(); err != nil {
-		t.Error(err)
-		return
-	}
-
-	if _, err := f.Seek(0, 0); err != nil {
-		t.Error(err)
-		return
-	}
-
-	n1, err := s0.Parse(f)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	checkNode(t, n1, n0)
+	n1 := testParseFromTree(t, n0, f)
 	if t.Failed() {
 		return
 	}
 
-	s1 := NewSyntax()
-	if err := define(s1, n1); err != nil {
-		t.Error(err)
-		return
-	}
-
-	_, err = f.Seek(0, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	n2, err := s1.Parse(f)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	checkNode(t, n2, n1)
+	testParseFromTree(t, n1, f)
 }
