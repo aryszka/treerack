@@ -3,14 +3,14 @@ package treerack
 import "testing"
 
 func TestKeyVal(t *testing.T) {
-	test(t, "keyval.parser", "doc", []testItem{{
-		msg: "empty",
+	runTestsFile(t, "keyval.parser", []testItem{{
+		title: "empty",
 	}, {
-		msg:  "a comment",
-		text: "# a comment",
+		title: "a comment",
+		text:  "# a comment",
 	}, {
-		msg:  "a key",
-		text: "a key",
+		title: "a key",
+		text:  "a key",
 		nodes: []*Node{{
 			Name: "key-val",
 			To:   5,
@@ -24,8 +24,8 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "a key with a preceeding whitespace",
-		text: " a key",
+		title: "a key with a preceeding whitespace",
+		text:  " a key",
 		nodes: []*Node{{
 			Name: "key-val",
 			From: 1,
@@ -42,7 +42,7 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "a key and a comment",
+		title: "a key and a comment",
 		text: `
 			# a comment
 
@@ -64,8 +64,8 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "a key value pair",
-		text: "a key = a value",
+		title: "a key value pair",
+		text:  "a key = a value",
 		nodes: []*Node{{
 			Name: "key-val",
 			To:   15,
@@ -83,7 +83,7 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "key value pairs with a comment at the end of line",
+		title: "key value pairs with a comment at the end of line",
 		text: `
 		        a key       = a value       # a comment
 		        another key = another value # another comment
@@ -126,8 +126,8 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "value without a key",
-		text: "= a value",
+		title: "value without a key",
+		text:  "= a value",
 		nodes: []*Node{{
 			Name: "key-val",
 			To:   9,
@@ -138,7 +138,7 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "a key value pair with comment",
+		title: "a key value pair with comment",
 		text: `
 			# a comment
 			a key = a value
@@ -167,8 +167,8 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "a key with multiple symbols",
-		text: "a key . with.multiple.symbols=a value",
+		title: "a key with multiple symbols",
+		text:  "a key . with.multiple.symbols=a value",
 		nodes: []*Node{{
 			Name: "key-val",
 			To:   37,
@@ -200,7 +200,7 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "a group key",
+		title: "a group key",
 		text: `
 			# a comment
 			[a group key.empty]
@@ -224,7 +224,7 @@ func TestKeyVal(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "a group key with multiple values",
+		title: "a group key with multiple values",
 		text: `
 			[foo.bar.baz]
 			= one
@@ -258,8 +258,8 @@ func TestKeyVal(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "a group key with multiple values, in a single line",
-		text: "[foo.bar.baz] = one = two = three",
+		title: "a group key with multiple values, in a single line",
+		text:  "[foo.bar.baz] = one = two = three",
 		nodes: []*Node{{
 			Name: "group-key",
 			Nodes: []*Node{{
@@ -287,7 +287,7 @@ func TestKeyVal(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "full example",
+		title: "full example",
 		text: `
 			# a keyval document
 

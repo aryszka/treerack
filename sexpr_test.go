@@ -3,37 +3,37 @@ package treerack
 import "testing"
 
 func TestSExpr(t *testing.T) {
-	test(t, "sexpr.parser", "s-expression", []testItem{{
-		msg:  "number",
-		text: "42",
+	runTestsFile(t, "sexpr.parser", []testItem{{
+		title: "number",
+		text:  "42",
 		nodes: []*Node{{
 			Name: "number",
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "string",
-		text: "\"foo\"",
+		title: "string",
+		text:  "\"foo\"",
 		nodes: []*Node{{
 			Name: "string",
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "symbol",
-		text: "foo",
+		title: "symbol",
+		text:  "foo",
 		nodes: []*Node{{
 			Name: "symbol",
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "nil",
-		text: "()",
+		title: "nil",
+		text:  "()",
 		nodes: []*Node{{
 			Name: "list",
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "list",
-		text: "(foo bar baz)",
+		title: "list",
+		text:  "(foo bar baz)",
 		nodes: []*Node{{
 			Name: "list",
 			Nodes: []*Node{{
@@ -46,8 +46,8 @@ func TestSExpr(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "embedded list",
-		text: "(foo (bar (baz)) qux)",
+		title: "embedded list",
+		text:  "(foo (bar (baz)) qux)",
 		nodes: []*Node{{
 			Name: "list",
 			Nodes: []*Node{{

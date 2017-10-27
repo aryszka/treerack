@@ -187,21 +187,17 @@ func defineAllBoot(s *Syntax, defs [][]string) error {
 	return nil
 }
 
-func initBoot(definitions [][]string) (*Syntax, error) {
+func createBoot() (*Syntax, error) {
 	s := NewSyntax()
-	if err := defineAllBoot(s, definitions); err != nil {
+	if err := defineAllBoot(s, bootSyntaxDefs); err != nil {
 		return nil, err
 	}
 
 	return s, s.Init()
 }
 
-func createBoot() (*Syntax, error) {
-	return initBoot(bootSyntaxDefs)
-}
-
 func bootSyntax() (*Syntax, error) {
-	b, err := initBoot(bootSyntaxDefs)
+	b, err := createBoot()
 	if err != nil {
 		return nil, err
 	}

@@ -40,7 +40,7 @@ func testParseFromTree(t *testing.T, n *Node, f io.ReadSeeker) *Node {
 		return nil
 	}
 
-	checkNode(t, nn, n)
+	checkNode(t, false, nn, n)
 	return nn
 }
 

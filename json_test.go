@@ -285,9 +285,9 @@ func jsonTreeToJSON(n *Node) (interface{}, error) {
 }
 
 func TestJSON(t *testing.T) {
-	test(t, "json.parser", "value", []testItem{{
-		msg:  "true",
-		text: "true",
+	runTestsFile(t, "json.parser", []testItem{{
+		title: "true",
+		text:  "true",
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -296,8 +296,8 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg:  "false",
-		text: "false",
+		title: "false",
+		text:  "false",
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -306,8 +306,8 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg:  "null",
-		text: "null",
+		title: "null",
+		text:  "null",
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -316,8 +316,8 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg:  "string",
-		text: `"\"\\n\b\t\uabcd"`,
+		title: "string",
+		text:  `"\"\\n\b\t\uabcd"`,
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -326,8 +326,8 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg:  "number",
-		text: "6.62e-34",
+		title: "number",
+		text:  "6.62e-34",
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -336,7 +336,7 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg: "object",
+		title: "object",
 		text: `{
 			"true": true,
 			"false": false,
@@ -404,7 +404,7 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg: "array",
+		title: "array",
 		text: `[true, false, null, "string", 42, {
 			"true": true,
 			"false": false,
@@ -487,8 +487,8 @@ func TestJSON(t *testing.T) {
 		},
 		ignorePosition: true,
 	}, {
-		msg:  "bugfix, 100",
-		text: "100",
+		title: "bugfix, 100",
+		text:  "100",
 		node: &Node{
 			Name: "json",
 			Nodes: []*Node{{
@@ -509,7 +509,7 @@ func TestRandomJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer(b)
 
-	s, err := testSyntax("json.parser", -1)
+	s, err := openSyntaxFile("json.parser")
 	if err != nil {
 		t.Error(err)
 		return

@@ -3,10 +3,10 @@ package treerack
 import "testing"
 
 func TestScheme(t *testing.T) {
-	test(t, "scheme.parser", "scheme", []testItem{{
-		msg: "empty",
+	runTestsFile(t, "scheme.parser", []testItem{{
+		title: "empty",
 	}, {
-		msg: "a function",
+		title: "a function",
 		text: `
 			(define (foo a b c)
 			  (let ([bar (+ a b c)]

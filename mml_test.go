@@ -9,12 +9,12 @@ import (
 )
 
 func TestMML(t *testing.T) {
-	testTrace(t, "mml.parser", "mml", 1, []testItem{{
-		msg:  "empty",
-		node: &Node{Name: "mml"},
+	runTestsFile(t, "mml.parser", []testItem{{
+		title: "empty",
+		node:  &Node{Name: "mml"},
 	}, {
-		msg:  "single line comment",
-		text: "// foo bar baz",
+		title: "single line comment",
+		text:  "// foo bar baz",
 		nodes: []*Node{{
 			Name: "comment",
 			To:   14,
@@ -25,8 +25,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "multiple line comments",
-		text: "// foo bar\n// baz qux",
+		title: "multiple line comments",
+		text:  "// foo bar\n// baz qux",
 		nodes: []*Node{{
 			Name: "comment",
 			To:   21,
@@ -41,8 +41,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "block comment",
-		text: "/* foo bar baz */",
+		title: "block comment",
+		text:  "/* foo bar baz */",
 		nodes: []*Node{{
 			Name: "comment",
 			To:   17,
@@ -53,8 +53,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "block comments",
-		text: "/* foo bar */\n/* baz qux */",
+		title: "block comments",
+		text:  "/* foo bar */\n/* baz qux */",
 		nodes: []*Node{{
 			Name: "comment",
 			To:   27,
@@ -69,8 +69,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "mixed comments",
-		text: "// foo\n/* bar */\n// baz",
+		title: "mixed comments",
+		text:  "// foo\n/* bar */\n// baz",
 		nodes: []*Node{{
 			Name: "comment",
 			To:   23,
@@ -89,15 +89,15 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "int",
-		text: "42",
+		title: "int",
+		text:  "42",
 		nodes: []*Node{{
 			Name: "int",
 			To:   2,
 		}},
 	}, {
-		msg:  "ints",
-		text: "1; 2; 3",
+		title: "ints",
+		text:  "1; 2; 3",
 		nodes: []*Node{{
 			Name: "int",
 			To:   1,
@@ -111,134 +111,134 @@ func TestMML(t *testing.T) {
 			To:   7,
 		}},
 	}, {
-		msg:  "int, octal",
-		text: "052",
+		title: "int, octal",
+		text:  "052",
 		nodes: []*Node{{
 			Name: "int",
 			To:   3,
 		}},
 	}, {
-		msg:  "int, hexa",
-		text: "0x2a",
+		title: "int, hexa",
+		text:  "0x2a",
 		nodes: []*Node{{
 			Name: "int",
 			To:   4,
 		}},
 	}, {
-		msg:  "float, 0.",
-		text: "0.",
+		title: "float, 0.",
+		text:  "0.",
 		nodes: []*Node{{
 			Name: "float",
 			To:   2,
 		}},
 	}, {
-		msg:  "float, 72.40",
-		text: "72.40",
+		title: "float, 72.40",
+		text:  "72.40",
 		nodes: []*Node{{
 			Name: "float",
 			To:   5,
 		}},
 	}, {
-		msg:  "float, 072.40",
-		text: "072.40",
+		title: "float, 072.40",
+		text:  "072.40",
 		nodes: []*Node{{
 			Name: "float",
 			To:   6,
 		}},
 	}, {
-		msg:  "float, 2.71828",
-		text: "2.71828",
+		title: "float, 2.71828",
+		text:  "2.71828",
 		nodes: []*Node{{
 			Name: "float",
 			To:   7,
 		}},
 	}, {
-		msg:  "float, 6.67428e-11",
-		text: "6.67428e-11",
+		title: "float, 6.67428e-11",
+		text:  "6.67428e-11",
 		nodes: []*Node{{
 			Name: "float",
 			To:   11,
 		}},
 	}, {
-		msg:  "float, 1E6",
-		text: "1E6",
+		title: "float, 1E6",
+		text:  "1E6",
 		nodes: []*Node{{
 			Name: "float",
 			To:   3,
 		}},
 	}, {
-		msg:  "float, .25",
-		text: ".25",
+		title: "float, .25",
+		text:  ".25",
 		nodes: []*Node{{
 			Name: "float",
 			To:   3,
 		}},
 	}, {
-		msg:  "float, .12345E+5",
-		text: ".12345E+5",
+		title: "float, .12345E+5",
+		text:  ".12345E+5",
 		nodes: []*Node{{
 			Name: "float",
 			To:   9,
 		}},
 	}, {
-		msg:  "string, empty",
-		text: "\"\"",
+		title: "string, empty",
+		text:  "\"\"",
 		nodes: []*Node{{
 			Name: "string",
 			To:   2,
 		}},
 	}, {
-		msg:  "string",
-		text: "\"foo\"",
+		title: "string",
+		text:  "\"foo\"",
 		nodes: []*Node{{
 			Name: "string",
 			To:   5,
 		}},
 	}, {
-		msg:  "string, with new line",
-		text: "\"foo\nbar\"",
+		title: "string, with new line",
+		text:  "\"foo\nbar\"",
 		nodes: []*Node{{
 			Name: "string",
 			To:   9,
 		}},
 	}, {
-		msg:  "string, with escaped new line",
-		text: "\"foo\\nbar\"",
+		title: "string, with escaped new line",
+		text:  "\"foo\\nbar\"",
 		nodes: []*Node{{
 			Name: "string",
 			To:   10,
 		}},
 	}, {
-		msg:  "string, with quotes",
-		text: "\"foo \\\"bar\\\" baz\"",
+		title: "string, with quotes",
+		text:  "\"foo \\\"bar\\\" baz\"",
 		nodes: []*Node{{
 			Name: "string",
 			To:   17,
 		}},
 	}, {
-		msg:  "bool, true",
-		text: "true",
+		title: "bool, true",
+		text:  "true",
 		nodes: []*Node{{
 			Name: "true",
 			To:   4,
 		}},
 	}, {
-		msg:  "bool, false",
-		text: "false",
+		title: "bool, false",
+		text:  "false",
 		nodes: []*Node{{
 			Name: "false",
 			To:   5,
 		}},
 	}, {
-		msg:  "symbol",
-		text: "foo",
+		title: "symbol",
+		text:  "foo",
 		nodes: []*Node{{
 			Name: "symbol",
 			To:   3,
 		}},
 	}, {
-		msg:  "dynamic-symbol",
-		text: "symbol(a)",
+		title: "dynamic-symbol",
+		text:  "symbol(a)",
 		nodes: []*Node{{
 			Name: "dynamic-symbol",
 			To:   9,
@@ -249,15 +249,15 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "empty list",
-		text: "[]",
+		title: "empty list",
+		text:  "[]",
 		nodes: []*Node{{
 			Name: "list",
 			To:   2,
 		}},
 	}, {
-		msg:  "list",
-		text: "[a, b, c]",
+		title: "list",
+		text:  "[a, b, c]",
 		nodes: []*Node{{
 			Name: "list",
 			To:   9,
@@ -276,7 +276,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "list, new lines",
+		title: "list, new lines",
 		text: `[
 			a
 			b
@@ -300,8 +300,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "list, complex",
-		text: "[a, b, c..., [d, e], [f, [g]]...]",
+		title: "list, complex",
+		text:  "[a, b, c..., [d, e], [f, [g]]...]",
 		nodes: []*Node{{
 			Name: "list",
 			To:   33,
@@ -361,8 +361,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "mutable list",
-		text: "~[a, b, c]",
+		title: "mutable list",
+		text:  "~[a, b, c]",
 		nodes: []*Node{{
 			Name: "mutable-list",
 			To:   10,
@@ -381,15 +381,15 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "empty struct",
-		text: "{}",
+		title: "empty struct",
+		text:  "{}",
 		nodes: []*Node{{
 			Name: "struct",
 			To:   2,
 		}},
 	}, {
-		msg:  "struct",
-		text: "{foo: 1, \"bar\": 2, symbol(baz): 3, [qux]: 4}",
+		title: "struct",
+		text:  "{foo: 1, \"bar\": 2, symbol(baz): 3, [qux]: 4}",
 		nodes: []*Node{{
 			Name: "struct",
 			To:   44,
@@ -458,8 +458,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "struct, complex",
-		text: "{foo: 1, {bar: 2}..., {baz: {}}...}",
+		title: "struct, complex",
+		text:  "{foo: 1, {bar: 2}..., {baz: {}}...}",
 		nodes: []*Node{{
 			Name: "struct",
 			To:   35,
@@ -525,8 +525,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "struct with indexer key",
-		text: "{[a]: b}",
+		title: "struct with indexer key",
+		text:  "{[a]: b}",
 		nodes: []*Node{{
 			Name: "struct",
 			To:   8,
@@ -551,8 +551,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "mutable struct",
-		text: "~{foo: 1}",
+		title: "mutable struct",
+		text:  "~{foo: 1}",
 		nodes: []*Node{{
 			Name: "mutable-struct",
 			To:   9,
@@ -572,15 +572,15 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "channel",
-		text: "<>",
+		title: "channel",
+		text:  "<>",
 		nodes: []*Node{{
 			Name: "channel",
 			To:   2,
 		}},
 	}, {
-		msg:  "buffered channel",
-		text: "<42>",
+		title: "buffered channel",
+		text:  "<42>",
 		nodes: []*Node{{
 			Name: "channel",
 			To:   4,
@@ -591,8 +591,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "and expression",
-		text: "and(a, b, c)",
+		title: "and expression",
+		text:  "and(a, b, c)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   12,
@@ -614,8 +614,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "or expression",
-		text: "or(a, b, c)",
+		title: "or expression",
+		text:  "or(a, b, c)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   11,
@@ -637,8 +637,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function",
-		text: "fn () 42",
+		title: "function",
+		text:  "fn () 42",
 		nodes: []*Node{{
 			Name: "function",
 			To:   8,
@@ -649,8 +649,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function, noop",
-		text: "fn () {;}",
+		title: "function, noop",
+		text:  "fn () {;}",
 		nodes: []*Node{{
 			Name: "function",
 			To:   9,
@@ -661,8 +661,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function with args",
-		text: "fn (a, b, c) [a, b, c]",
+		title: "function with args",
+		text:  "fn (a, b, c) [a, b, c]",
 		nodes: []*Node{{
 			Name: "function",
 			To:   22,
@@ -698,7 +698,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "function with args in new lines",
+		title: "function with args in new lines",
 		text: `fn (
 			a
 			b
@@ -739,8 +739,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function with spread arg",
-		text: "fn (a, b, ...c) [a, b, c]",
+		title: "function with spread arg",
+		text:  "fn (a, b, ...c) [a, b, c]",
 		nodes: []*Node{{
 			Name: "function",
 			To:   25,
@@ -781,8 +781,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "effect",
-		text: "fn ~ () 42",
+		title: "effect",
+		text:  "fn ~ () 42",
 		nodes: []*Node{{
 			Name: "effect",
 			To:   10,
@@ -793,8 +793,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "indexer",
-		text: "a[42]",
+		title: "indexer",
+		text:  "a[42]",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   5,
@@ -808,8 +808,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "range indexer",
-		text: "a[3:9]",
+		title: "range indexer",
+		text:  "a[3:9]",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   6,
@@ -837,8 +837,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "range indexer, lower unbound",
-		text: "a[:9]",
+		title: "range indexer, lower unbound",
+		text:  "a[:9]",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   5,
@@ -857,8 +857,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "range indexer, upper unbound",
-		text: "a[3:]",
+		title: "range indexer, upper unbound",
+		text:  "a[3:]",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   5,
@@ -877,8 +877,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "indexer, chained",
-		text: "a[b][c][d]",
+		title: "indexer, chained",
+		text:  "a[b][c][d]",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   10,
@@ -908,8 +908,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "symbol indexer",
-		text: "a.b",
+		title: "symbol indexer",
+		text:  "a.b",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   3,
@@ -923,8 +923,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "symbol indexer, with string",
-		text: "a.\"b\"",
+		title: "symbol indexer, with string",
+		text:  "a.\"b\"",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   5,
@@ -938,8 +938,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "symbol indexer, with dynamic symbol",
-		text: "a.symbol(b)",
+		title: "symbol indexer, with dynamic symbol",
+		text:  "a.symbol(b)",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   11,
@@ -958,8 +958,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "chained symbol indexer",
-		text: "a.b.c.d",
+		title: "chained symbol indexer",
+		text:  "a.b.c.d",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   7,
@@ -989,8 +989,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "chained symbol indexer on new line",
-		text: "a\n.b\n.c",
+		title: "chained symbol indexer on new line",
+		text:  "a\n.b\n.c",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   7,
@@ -1012,8 +1012,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "chained symbol indexer on new line after dot",
-		text: "a.\nb.\nc",
+		title: "chained symbol indexer on new line after dot",
+		text:  "a.\nb.\nc",
 		nodes: []*Node{{
 			Name: "indexer",
 			To:   7,
@@ -1035,8 +1035,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "float on a new line",
-		text: "f()\n.9",
+		title: "float on a new line",
+		text:  "f()\n.9",
 		nodes: []*Node{{
 			Name: "function-application",
 			Nodes: []*Node{{
@@ -1047,8 +1047,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "function application",
-		text: "f()",
+		title: "function application",
+		text:  "f()",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   3,
@@ -1058,8 +1058,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function application, single arg",
-		text: "f(a)",
+		title: "function application, single arg",
+		text:  "f(a)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   4,
@@ -1073,8 +1073,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function application, multiple args",
-		text: "f(a, b, c)",
+		title: "function application, multiple args",
+		text:  "f(a, b, c)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   10,
@@ -1096,8 +1096,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function application, multiple args, new line",
-		text: "f(a\nb\nc\n)",
+		title: "function application, multiple args, new line",
+		text:  "f(a\nb\nc\n)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   9,
@@ -1119,8 +1119,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "function application, spread",
-		text: "f(a, b..., c, d...)",
+		title: "function application, spread",
+		text:  "f(a, b..., c, d...)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   19,
@@ -1156,8 +1156,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "chained function application",
-		text: "f(a)(b)(c)",
+		title: "chained function application",
+		text:  "f(a)(b)(c)",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   10,
@@ -1187,8 +1187,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "embedded function application",
-		text: "f(g(h(a)))",
+		title: "embedded function application",
+		text:  "f(g(h(a)))",
 		nodes: []*Node{{
 			Name: "function-application",
 			To:   10,
@@ -1220,8 +1220,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "if",
-		text: "if a { b() }",
+		title: "if",
+		text:  "if a { b() }",
 		nodes: []*Node{{
 			Name: "if",
 			To:   12,
@@ -1246,8 +1246,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "if, else",
-		text: "if a { b } else { c }",
+		title: "if, else",
+		text:  "if a { b } else { c }",
 		nodes: []*Node{{
 			Name: "if",
 			To:   21,
@@ -1276,7 +1276,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "if, else if, else if, else",
+		title: "if, else if, else if, else",
 		text: `
 			if a { b }
 			else if c { d }
@@ -1338,8 +1338,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "switch, empty",
-		text: "switch {default:}",
+		title: "switch, empty",
+		text:  "switch {default:}",
 		nodes: []*Node{{
 			Name: "switch",
 			To:   17,
@@ -1350,7 +1350,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "switch, empty cases",
+		title: "switch, empty cases",
 		text: `
 			switch {
 			case a:
@@ -1382,8 +1382,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "switch, single case",
-		text: "switch a {case b: c}",
+		title: "switch, single case",
+		text:  "switch a {case b: c}",
 		nodes: []*Node{{
 			Name: "switch",
 			To:   20,
@@ -1407,8 +1407,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "switch",
-		text: "switch a {case b: c; case d: e; default: f}",
+		title: "switch",
+		text:  "switch a {case b: c; case d: e; default: f}",
 		nodes: []*Node{{
 			Name: "switch",
 			To:   43,
@@ -1453,7 +1453,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "switch, all new lines",
+		title: "switch, all new lines",
 		text: `switch
 			a
 			{
@@ -1513,8 +1513,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "match expression, empty",
-		text: "match a {}",
+		title: "match expression, empty",
+		text:  "match a {}",
 		nodes: []*Node{{
 			Name: "match",
 			To:   10,
@@ -1525,7 +1525,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "match expression",
+		title: "match expression",
 		text: `match a {
 			case [first, ...rest]: first
 		}`,
@@ -1581,7 +1581,7 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg: "match expression, multiple cases",
+		title: "match expression, multiple cases",
 		text: `match a {
 			case [0]: []
 			case [2:]: a[2:]
@@ -1647,7 +1647,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "match function",
+		title: "match function",
 		text: `match a {
 			case fn () int: a()
 			default: 42
@@ -1677,7 +1677,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "match expression, combined",
+		title: "match expression, combined",
 		text: `match a {
 			case [fn (int)]: a[0]()
 			default: 42
@@ -1721,7 +1721,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "match expression, complex",
+		title: "match expression, complex",
 		text: `match a {
 				case [first T int|string, op fn ([T, int, ...T]) int, ...rest T]:
 					op([first, now(), rest...])
@@ -1832,8 +1832,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "receive op",
-		text: "<-chan",
+		title: "receive op",
+		text:  "<-chan",
 		nodes: []*Node{{
 			Name: "unary-expression",
 			Nodes: []*Node{{
@@ -1845,8 +1845,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "send op",
-		text: "chan <- a",
+		title: "send op",
+		text:  "chan <- a",
 		nodes: []*Node{{
 			Name: "send",
 			Nodes: []*Node{{
@@ -1857,7 +1857,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "select, empty",
+		title: "select, empty",
 		text: `select {
 		}`,
 		nodes: []*Node{{
@@ -1865,7 +1865,7 @@ func TestMML(t *testing.T) {
 			To:   12,
 		}},
 	}, {
-		msg: "select",
+		title: "select",
 		text: `select {
 			case let a <-r: s <- a
 			case s <- f(): g()
@@ -1922,7 +1922,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "select, call",
+		title: "select, call",
 		text: `select {
 			case let a receive(r): f()
 			case send(s, g()): h()
@@ -1977,7 +1977,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:            "block",
+		title:          "block",
 		ignorePosition: true,
 		text:           "{ f() }",
 		nodes: []*Node{{
@@ -1990,8 +1990,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "go",
-		text: "go f()",
+		title: "go",
+		text:  "go f()",
 		nodes: []*Node{{
 			Name: "go",
 			Nodes: []*Node{{
@@ -2003,8 +2003,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "go, block",
-		text: "go { for { f() } }",
+		title: "go, block",
+		text:  "go { for { f() } }",
 		nodes: []*Node{{
 			Name: "go",
 			Nodes: []*Node{{
@@ -2025,8 +2025,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "require, dot, equal",
-		text: "require . = \"mml/foo\"",
+		title: "require, dot, equal",
+		text:  "require . = \"mml/foo\"",
 		nodes: []*Node{{
 			Name: "require",
 			Nodes: []*Node{{
@@ -2040,8 +2040,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "require, symbol, equal",
-		text: "require bar = \"mml/foo\"",
+		title: "require, symbol, equal",
+		text:  "require bar = \"mml/foo\"",
 		nodes: []*Node{{
 			Name: "require",
 			Nodes: []*Node{{
@@ -2055,8 +2055,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "require, symbol",
-		text: "require bar \"mml/foo\"",
+		title: "require, symbol",
+		text:  "require bar \"mml/foo\"",
 		nodes: []*Node{{
 			Name: "require",
 			Nodes: []*Node{{
@@ -2070,8 +2070,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "require",
-		text: "require \"mml/foo\"",
+		title: "require",
+		text:  "require \"mml/foo\"",
 		nodes: []*Node{{
 			Name: "require",
 			Nodes: []*Node{{
@@ -2083,7 +2083,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "require, group",
+		title: "require, group",
 		text: `require (
 			. = "mml/foo"
 			bar = "mml/foo"
@@ -2130,8 +2130,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "expression group",
-		text: "(fn (a) a)(a)",
+		title: "expression group",
+		text:  "(fn (a) a)(a)",
 		nodes: []*Node{{
 			Name: "function-application",
 			Nodes: []*Node{{
@@ -2147,8 +2147,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "unary operator",
-		text: "!foo",
+		title: "unary operator",
+		text:  "!foo",
 		nodes: []*Node{{
 			Name: "unary-expression",
 			Nodes: []*Node{{
@@ -2159,8 +2159,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "binary 0",
-		text: "a * b",
+		title: "binary 0",
+		text:  "a * b",
 		nodes: []*Node{{
 			Name: "binary0",
 			Nodes: []*Node{{
@@ -2173,8 +2173,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "binary 1",
-		text: "a * b + c * d",
+		title: "binary 1",
+		text:  "a * b + c * d",
 		nodes: []*Node{{
 			Name: "binary1",
 			Nodes: []*Node{{
@@ -2201,8 +2201,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "binary 2",
-		text: "a * b + c * d == e * f",
+		title: "binary 2",
+		text:  "a * b + c * d == e * f",
 		nodes: []*Node{{
 			Name: "binary2",
 			Nodes: []*Node{{
@@ -2243,8 +2243,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "binary 3, 4, 5",
-		text: "a * b + c * d == e * f && g || h -> f()",
+		title: "binary 3, 4, 5",
+		text:  "a * b + c * d == e * f && g || h -> f()",
 		nodes: []*Node{{
 			Name: "binary5",
 			Nodes: []*Node{{
@@ -2309,8 +2309,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "ternary expression",
-		text: "a ? b : c",
+		title: "ternary expression",
+		text:  "a ? b : c",
 		nodes: []*Node{{
 			Name: "ternary-expression",
 			To:   9,
@@ -2328,8 +2328,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "multiple ternary expressions, consequence",
-		text: "a ? b ? c : d : e",
+		title: "multiple ternary expressions, consequence",
+		text:  "a ? b ? c : d : e",
 		nodes: []*Node{{
 			Name: "ternary-expression",
 			To:   17,
@@ -2360,8 +2360,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "multiple ternary expressions, alternative",
-		text: "a ? b : c ? d : e",
+		title: "multiple ternary expressions, alternative",
+		text:  "a ? b : c ? d : e",
 		nodes: []*Node{{
 			Name: "ternary-expression",
 			To:   17,
@@ -2392,8 +2392,8 @@ func TestMML(t *testing.T) {
 			}},
 		}},
 	}, {
-		msg:  "infinite loop",
-		text: "for {}",
+		title: "infinite loop",
+		text:  "for {}",
 		nodes: []*Node{{
 			Name: "loop",
 			Nodes: []*Node{{
@@ -2402,8 +2402,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "conditional loop",
-		text: "for foo {}",
+		title: "conditional loop",
+		text:  "for foo {}",
 		nodes: []*Node{{
 			Name: "loop",
 			Nodes: []*Node{{
@@ -2417,8 +2417,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "in list loop",
-		text: "for i in [1, 2, 3] {}",
+		title: "in list loop",
+		text:  "for i in [1, 2, 3] {}",
 		nodes: []*Node{{
 			Name: "loop",
 			Nodes: []*Node{{
@@ -2444,8 +2444,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "in range loop",
-		text: "for i in -3:42 {}",
+		title: "in range loop",
+		text:  "for i in -3:42 {}",
 		nodes: []*Node{{
 			Name: "loop",
 			Nodes: []*Node{{
@@ -2477,7 +2477,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "loop control",
+		title: "loop control",
 		text: `for i in l {
 			if i % 2 == 0 {
 				break
@@ -2526,8 +2526,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "assign, eq",
-		text: "a = b",
+		title: "assign, eq",
+		text:  "a = b",
 		nodes: []*Node{{
 			Name: "assignment",
 			Nodes: []*Node{{
@@ -2541,8 +2541,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "assign, set, eq",
-		text: "set a = b",
+		title: "assign, set, eq",
+		text:  "set a = b",
 		nodes: []*Node{{
 			Name: "assignment",
 			Nodes: []*Node{{
@@ -2556,8 +2556,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "assign, set",
-		text: "set a b",
+		title: "assign, set",
+		text:  "set a b",
 		nodes: []*Node{{
 			Name: "assignment",
 			Nodes: []*Node{{
@@ -2571,7 +2571,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "assign, group",
+		title: "assign, group",
 		text: `set (
 			a = b
 			c d
@@ -2596,8 +2596,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define, eq",
-		text: "let a = b",
+		title: "define, eq",
+		text:  "let a = b",
 		nodes: []*Node{{
 			Name: "value-definition",
 			Nodes: []*Node{{
@@ -2611,8 +2611,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define",
-		text: "let a b",
+		title: "define",
+		text:  "let a b",
 		nodes: []*Node{{
 			Name: "value-definition",
 			Nodes: []*Node{{
@@ -2626,8 +2626,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define mutable, eq",
-		text: "let ~ a = b",
+		title: "define mutable, eq",
+		text:  "let ~ a = b",
 		nodes: []*Node{{
 			Name: "value-definition",
 			Nodes: []*Node{{
@@ -2641,8 +2641,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define mutable",
-		text: "let ~ a b",
+		title: "define mutable",
+		text:  "let ~ a b",
 		nodes: []*Node{{
 			Name: "value-definition",
 			Nodes: []*Node{{
@@ -2656,7 +2656,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "mixed define group",
+		title: "mixed define group",
 		text: `let (
 			a = b
 			c d
@@ -2697,7 +2697,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "mutable define group",
+		title: "mutable define group",
 		text: `let ~ (
 			a = b
 			c d
@@ -2722,8 +2722,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define function",
-		text: "fn a() b",
+		title: "define function",
+		text:  "fn a() b",
 		nodes: []*Node{{
 			Name: "function-definition",
 			Nodes: []*Node{{
@@ -2737,8 +2737,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "define effect",
-		text: "fn ~ a() b",
+		title: "define effect",
+		text:  "fn ~ a() b",
 		nodes: []*Node{{
 			Name: "function-definition",
 			Nodes: []*Node{{
@@ -2752,7 +2752,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "define function group",
+		title: "define function group",
 		text: `fn (
 			a() b
 			~ c() d
@@ -2777,7 +2777,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "define effect group",
+		title: "define effect group",
 		text: `fn ~ (
 			a() b
 			c() d
@@ -2802,7 +2802,7 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg: "type constraint",
+		title: "type constraint",
 		text: `
 			type a fn ([]) int
 			fn a(l) len(l)
@@ -2842,8 +2842,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "type alias",
-		text: "type alias a int|(fn () int|string)|string",
+		title: "type alias",
+		text:  "type alias a int|(fn () int|string)|string",
 		nodes: []*Node{{
 			Name: "type-alias",
 			Nodes: []*Node{{
@@ -2863,8 +2863,8 @@ func TestMML(t *testing.T) {
 		}},
 		ignorePosition: true,
 	}, {
-		msg:  "statement group",
-		text: "(for {})",
+		title: "statement group",
+		text:  "(for {})",
 		nodes: []*Node{{
 			Name: "loop",
 			Nodes: []*Node{{
@@ -2882,7 +2882,7 @@ func TestMMLFile(t *testing.T) {
 
 	const n = 180
 
-	s, err := testSyntax("mml.parser", 0)
+	s, err := openSyntaxFile("mml.parser")
 	if err != nil {
 		t.Error(err)
 		return

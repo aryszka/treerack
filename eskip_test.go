@@ -724,10 +724,12 @@ func eskipTreeToEskip(n *Node) ([]*eskip.Route, error) {
 }
 
 func TestEskip(t *testing.T) {
-	r := generateEskip(1 << 9)
+	const count = 1 << 9
+
+	r := generateEskip(count)
 	e := eskip.Print(true, r...)
 	b := bytes.NewBufferString(e)
-	s, err := testSyntax("eskip.parser", -1)
+	s, err := openSyntaxFile("eskip.parser")
 	if err != nil {
 		t.Error(err)
 		return
