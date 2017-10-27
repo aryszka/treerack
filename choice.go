@@ -193,7 +193,10 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		foundMatch = false
 		elementIndex = 0
 
-		// TODO: avoid double parsing by setting first-from-store in the context
+		// TODO:
+		// - avoid double parsing by setting first-from-store in the context, prepare in advance to
+		// know whether it can be it's own item
+		// - it is also important to figure why disabling the failed elements breaks the parsing
 
 		for elementIndex < len(p.elements) {
 			p.elements[elementIndex].parse(t, c)
