@@ -509,7 +509,7 @@ filters:
 	return r, nil
 }
 
-func treeToEskip(n []*Node) ([]*eskip.Route, error) {
+func eskipTreeToEskip(n []*Node) ([]*eskip.Route, error) {
 	r := make([]*eskip.Route, 0, len(n))
 	for _, ni := range n {
 		d, err := nodeToEskipDefinition(ni)
@@ -719,16 +719,13 @@ func checkEskip(t *testing.T, got, expected []*eskip.Route) {
 	}
 }
 
-func eskipTreeToEskip(n *Node) ([]*eskip.Route, error) {
-	return treeToEskip(n.Nodes)
-}
-
 func TestEskip(t *testing.T) {
 	const count = 1 << 9
 
 	r := generateEskip(count)
 	e := eskip.Print(true, r...)
 	b := bytes.NewBufferString(e)
+
 	s, err := openSyntaxFile("eskip.parser")
 	if err != nil {
 		t.Error(err)
@@ -741,7 +738,7 @@ func TestEskip(t *testing.T) {
 		return
 	}
 
-	rback, err := eskipTreeToEskip(n)
+	rback, err := eskipTreeToEskip(n.Nodes)
 	if err != nil {
 		t.Error(err)
 		return
