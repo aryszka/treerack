@@ -67,5 +67,31 @@ func TestSExpr(t *testing.T) {
 			}},
 		}},
 		ignorePosition: true,
+	}, {
+		title: "comment and expression",
+		text: `; some comment
+		       (some expression)`,
+		ignorePosition: true,
+		nodes: []*Node{{
+			Name: "list",
+			Nodes: []*Node{{
+				Name: "symbol",
+			}, {
+				Name: "symbol",
+			}},
+		}},
+	}, {
+		title: "empty comment and expression",
+		text: `;
+		       (some expression)`,
+		ignorePosition: true,
+		nodes: []*Node{{
+			Name: "list",
+			Nodes: []*Node{{
+				Name: "symbol",
+			}, {
+				Name: "symbol",
+			}},
+		}},
 	}})
 }

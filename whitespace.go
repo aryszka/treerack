@@ -2,6 +2,7 @@ package treerack
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -59,6 +60,8 @@ func patchName(s ...string) string {
 	return strings.Join(s, ":")
 }
 
+// TODO: check what's more useful: update quantified char classes or not
+
 func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 	var (
 		defs  []definition
@@ -78,7 +81,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 
 		singleItem := SequenceItem{Name: item.Name, Min: 1, Max: 1}
 
-		restName := patchName(item.Name, s.nodeName(), "wsrest")
+		restName := patchName(item.Name, s.nodeName(), "wsrest", strconv.Itoa(i))
 		restDef := newSequence(restName, Alias, []SequenceItem{whitespace, singleItem})
 		defs = append(defs, restDef)
 
@@ -99,7 +102,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 			continue
 		}
 
-		optName := patchName(item.Name, s.nodeName(), "wsopt")
+		optName := patchName(item.Name, s.nodeName(), "wsopt", strconv.Itoa(i))
 		optDef := newSequence(optName, Alias, []SequenceItem{whitespace, singleItem, restItems})
 		defs = append(defs, optDef)
 		items = append(items, SequenceItem{Name: optName, Min: 0, Max: 1})

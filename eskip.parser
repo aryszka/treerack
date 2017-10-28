@@ -2,56 +2,49 @@
 Eskip routing configuration format for Skipper: https://github.com/zalando/skipper
 */
 
-// TODO: definition with comment, doc = comment, or just replace comment
-
 eskip:root = (expression | definitions)?;
 
-comment-line:alias = "//" [^\n]*;
-space:alias        = [ \b\f\r\t\v];
-comment:alias      = comment-line (space* "\n" space* comment-line)*;
-
-wsc:alias = [ \b\f\n\r\t\v] | comment;
+space:ws   = [ \n\b\f\r\t\v];
+comment:ws = "//" [^\n]*;
 
 decimal-digit:alias = [0-9];
 octal-digit:alias   = [0-7];
 hexa-digit:alias    = [0-9a-fA-F];
 
-decimal:alias = [1-9] decimal-digit*;
-octal:alias   = "0" octal-digit*;
-hexa:alias    = "0" [xX] hexa-digit+;
-int           = decimal | octal | hexa;
+decimal:alias:nows = [1-9] decimal-digit*;
+octal:alias:nows   = "0" octal-digit*;
+hexa:alias:nows    = "0" [xX] hexa-digit+;
+int                = decimal | octal | hexa;
 
-exponent:alias = [eE] [+\-]? decimal-digit+;
-float          = decimal-digit+ "." decimal-digit* exponent?
-               | "." decimal-digit+ exponent?
-               | decimal-digit+ exponent;
+exponent:alias:nows = [eE] [+\-]? decimal-digit+;
+float:nows          = decimal-digit+ "." decimal-digit* exponent?
+                    | "." decimal-digit+ exponent?
+                    | decimal-digit+ exponent;
 
-number:alias = "-"? (int | float);
+number:alias:nows = "-"? (int | float);
 
-string = "\"" ([^\\"] | "\\" .)* "\"";
-regexp = "/" ([^\\/] | "\\" .)* "/";
-symbol = [a-zA-Z_] [a-zA-z0-9_]*;
+string:nows = "\"" ([^\\"] | "\\" .)* "\"";
+regexp:nows = "/" ([^\\/] | "\\" .)* "/";
+symbol:nows = [a-zA-Z_] [a-zA-z0-9_]*;
 
 arg:alias  = number | string | regexp;
-args:alias = arg (wsc* "," wsc* arg)*;
-term:alias = symbol wsc* "(" wsc* args? wsc* ")";
+args:alias = arg ("," arg)*;
+term:alias = symbol "(" args? ")";
 
 predicate        = term;
-predicates:alias = "*" | predicate (wsc* "&&" wsc* predicate)*;
+predicates:alias = "*" | predicate ("&&" predicate)*;
 
 filter        = term;
-filters:alias = filter (wsc* "->" wsc* filter)*;
+filters:alias = filter ("->" filter)*;
 
 address:alias = string;
 shunt         = "<shunt>";
 loopback      = "<loopback>";
 backend:alias = address | shunt | loopback;
 
-expression = predicates (wsc* "->" wsc* filters)? wsc* "->" wsc* backend;
+expression = predicates ("->" filters)? "->" backend;
 
 id:alias   = symbol;
-definition = id wsc* ":" wsc* expression;
+definition = id ":" expression;
 
-free-sep:alias    = (wsc | ";");
-sep:alias         = wsc* ";" free-sep*;
-definitions:alias = free-sep* definition (sep definition)* free-sep*;
+definitions:alias = ";"* definition (";"+ definition)* ";"*;
