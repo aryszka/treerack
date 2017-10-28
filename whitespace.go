@@ -65,12 +65,13 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 		items []SequenceItem
 	)
 
+	whitespace := SequenceItem{Name: whitespaceName, Min: 0, Max: -1}
 	for i, item := range s.items {
-		if i > 0 {
-			items = append(items, SequenceItem{Name: whitespaceName, Min: 0, Max: -1})
-		}
-
 		if item.Max >= 0 && item.Max <= 1 {
+			if i > 0 {
+				items = append(items, whitespace)
+			}
+
 			items = append(items, item)
 			continue
 		}
@@ -78,7 +79,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 		singleItem := SequenceItem{Name: item.Name, Min: 1, Max: 1}
 
 		restName := patchName(item.Name, s.nodeName(), "wsrest")
-		restDef := newSequence(restName, Alias, []SequenceItem{{Name: whitespaceName, Min: 0, Max: -1}, singleItem})
+		restDef := newSequence(restName, Alias, []SequenceItem{whitespace, singleItem})
 		defs = append(defs, restDef)
 
 		restItems := SequenceItem{Name: restName, Min: 0, Max: -1}
@@ -90,12 +91,16 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 		}
 
 		if item.Min > 0 {
+			if i > 0 {
+				items = append(items, whitespace)
+			}
+
 			items = append(items, singleItem, restItems)
 			continue
 		}
 
 		optName := patchName(item.Name, s.nodeName(), "wsopt")
-		optDef := newSequence(optName, Alias, []SequenceItem{singleItem, restItems})
+		optDef := newSequence(optName, Alias, []SequenceItem{whitespace, singleItem, restItems})
 		defs = append(defs, optDef)
 		items = append(items, SequenceItem{Name: optName, Min: 0, Max: 1})
 	}

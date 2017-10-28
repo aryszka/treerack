@@ -7,11 +7,10 @@ quoted:alias:nows   = "\"" ([^\\"] | "\\" .)* "\"";
 word:alias:nows     = ([^\\"\n=#.\[\] \b\f\r\t\v] | "\\" .)+;
 symbol              = word+ | quoted;
 
-key-form:alias = symbol | symbol ("." symbol)+;
+key-form:alias = symbol ("." symbol)*;
 key            = key-form;
 
-group-key-form:alias = "[" key-form "]";
-group-key            = (comment "\n")? group-key-form | group-key-form;
+group-key = (comment "\n")? "[" key-form "]";
 
 value-chars:alias:nows = ([^\\"\n=# \b\f\r\t\v] | "\\" .)+;
 value                  = value-chars+ | quoted;
