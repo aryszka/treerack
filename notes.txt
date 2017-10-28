@@ -1,3 +1,14 @@
+[whitespace]
+1. merge whitespaces
+2. set ws to alias
+3. apply whitespace to expressions
+- a a -> a ws* a
+- a | b -> a | b
+- a? -> a{0, 1} -> a{0, 1}
+- a+ -> a{1,} -> a (ws* a){,}
+- a* -> a{0,} -> (a (ws* a){,}){,}
+- root -> ws* root ws*
+
 error reporting
 - longest parse
 - count the lines

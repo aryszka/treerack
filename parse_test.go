@@ -1,6 +1,7 @@
 package treerack
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -159,7 +160,7 @@ func TestSequence(t *testing.T) {
 		t,
 		`A = "a" | (A?)*`,
 		[]testItem{{
-			title: "sequence in choice with redundant quantifier",
+			title: "recursive sequence in choice with redundant quantifier",
 			text:  "aaa",
 			node: &Node{
 				Name: "A",
@@ -185,6 +186,35 @@ func TestSequence(t *testing.T) {
 				Name: "A",
 				To:   3,
 			},
+		}},
+	)
+}
+
+func TestSequenceBug(t *testing.T) {
+	runTests(
+		t,
+		`A = "a" | A*`,
+		[]testItem{{
+			title: "BUG: recursive sequence in choice",
+			text:  "aaa",
+			node: &Node{
+				Name: "A",
+				Nodes: []*Node{{
+					Name: "A",
+				}, {
+					Name: "A",
+					Nodes: []*Node{{
+						Name: "A",
+					}, {
+						Name: "A",
+					}, {
+						Name: "A",
+					}},
+				}, {
+					Name: "A",
+				}},
+			},
+			ignorePosition: true,
 		}},
 	)
 }
@@ -526,6 +556,75 @@ func TestQuantifiers(t *testing.T) {
 			node: &Node{
 				Name: "A",
 				To:   6,
+			},
+		}},
+	)
+}
+
+func TestUndefined(t *testing.T) {
+	s, err := bootSyntax()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	n, err := s.Parse(bytes.NewBufferString("a = b"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	stest := NewSyntax()
+	err = define(stest, n)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := stest.Init(); err == nil {
+		t.Error("failed to fail")
+	}
+}
+
+func TestEmpty(t *testing.T) {
+	runTests(
+		t,
+		`A = "1"`,
+		[]testItem{{
+			title: "empty primitive, fail",
+			fail:  true,
+		}},
+	)
+
+	runTests(
+		t,
+		`A = "1"?`,
+		[]testItem{{
+			title: "empty primitive, succeed",
+		}},
+	)
+
+	runTests(
+		t,
+		`a = "1"?; A = a a`,
+		[]testItem{{
+			title: "empty document with quantifiers in the item",
+			node: &Node{
+				Name: "A",
+				Nodes: []*Node{{
+					Name: "a",
+				}, {
+					Name: "a",
+				}},
+			},
+		}},
+	)
+
+	runTests(
+		t,
+		`a = "1"; A = a? a?`,
+		[]testItem{{
+			title: "empty document with quantifiers in the reference",
+			node: &Node{
+				Name: "A",
 			},
 		}},
 	)

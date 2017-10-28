@@ -299,6 +299,11 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		return nil, false
 	}
 
+	// maybe something like this:
+	if to-c.offset == 0 && b.commit&Alias != 0 {
+		return nil, true
+	}
+
 	if b.allChars {
 		from := c.offset
 		c.offset = to
@@ -334,8 +339,10 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 			continue
 		}
 
+		// maybe can handle the commit type differently
+
 		parsed := c.offset > itemFrom
-		if parsed {
+		if parsed || len(n) > 0 {
 			nodes = append(nodes, n...)
 			currentCount++
 		}

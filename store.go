@@ -71,14 +71,15 @@ func (s *store) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
 			continue
 		}
 
-		found = true
-		if s.match[offset][i+1] > to {
+		if s.match[offset][i+1] > to || !found {
 			to = s.match[offset][i+1]
 			index = i
 		}
+
+		found = true
 	}
 
-	if found {
+	if found && to-offset > 0 {
 		s.match[offset][index] = -1
 		for i := 0; i < len(s.match[offset]); i += 2 {
 			if includedBy.has(s.match[offset][i]) && s.match[offset][i+1] == to {

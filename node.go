@@ -64,7 +64,7 @@ func (n *Node) commit(t []rune) {
 
 func (n *Node) String() string {
 	if n.From >= len(n.tokens) || n.To > len(n.tokens) {
-		return n.Name + ":incomplete"
+		return n.Name + ":invalid"
 	}
 
 	return fmt.Sprintf("%s:%d:%d:%s", n.Name, n.From, n.To, n.Text())
