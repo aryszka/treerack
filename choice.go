@@ -74,6 +74,7 @@ func (d *choiceDefinition) init(r *registry) error {
 	}
 
 	for _, e := range d.elements {
+		// TODO: handle undefined reference
 		d.cbuilder.elements = append(d.cbuilder.elements, r.definitions[e].builder())
 	}
 

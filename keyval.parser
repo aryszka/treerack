@@ -1,27 +1,21 @@
-ws:alias   = [ \b\f\r\t\v];
-wsnl:alias = ws | "\n";
+whitespace:ws = [ \b\f\r\t\v];
 
 comment-line:alias = "#" [^\n]*;
-comment            = comment-line (ws* "\n" ws* comment-line)*;
+comment            = comment-line ("\n" comment-line)*;
 
-wsc:alias   = ws | comment-line;
-wsnlc:alias = wsnl | comment-line;
+quoted:alias:nows   = "\"" ([^\\"] | "\\" .)* "\"";
+word:alias:nows     = ([^\\"\n=#.\[\] \b\f\r\t\v] | "\\" .)+;
+symbol              = word+ | quoted;
 
-quoted:alias        = "\"" ([^\\"] | "\\" .)* "\"";
-symbol-non-ws:alias = ([^\\"\n=#.\[\] \b\f\r\t\v] | "\\" .)+;
-symbol              = symbol-non-ws (ws* symbol-non-ws)* | quoted;
-
-key-form:alias = symbol (ws* "." ws* symbol)*;
+key-form:alias = symbol | symbol ("." symbol)+;
 key            = key-form;
-group-key      = (comment "\n" ws*)? "[" ws* key-form ws* "]";
 
-value-chars:alias = ([^\\"\n=# \b\f\r\t\v] | "\\" .)+;
-value             = value-chars (ws* value-chars)* | quoted;
-key-val           = (comment "\n" ws*)? (key | key? ws* "=" ws* value?);
+group-key-form:alias = "[" key-form "]";
+group-key            = (comment "\n")? group-key-form | group-key-form;
 
+value-chars:alias:nows = ([^\\"\n=# \b\f\r\t\v] | "\\" .)+;
+value                  = value-chars+ | quoted;
+
+key-val     = (comment "\n")? (key | key? "=" value?) comment-line?;
 entry:alias = group-key | key-val;
-doc:root    = (entry (ws* comment-line)? | wsnlc)*;
-
-single-entry = (entry (ws* comment-line)?
-                | wsnlc* entry (ws* comment-line)?)
-               [];
+doc:root    = (entry | comment-line | "\n")*;
