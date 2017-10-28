@@ -1,6 +1,9 @@
 package treerack
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const whitespaceName = ":ws"
 
@@ -52,6 +55,10 @@ func mergeWhitespaceDefs(ws []definition) definition {
 
 // TODO: validate min and max
 
+func patchName(s ...string) string {
+	return strings.Join(s, ":")
+}
+
 func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 	var (
 		defs  []definition
@@ -70,7 +77,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 
 		singleItem := SequenceItem{Name: item.Name, Min: 1, Max: 1}
 
-		restName := item.Name + ":wsrest"
+		restName := patchName(item.Name, s.nodeName(), "wsrest")
 		restDef := newSequence(restName, Alias, []SequenceItem{{Name: whitespaceName, Min: 0, Max: -1}, singleItem})
 		defs = append(defs, restDef)
 
@@ -87,7 +94,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 			continue
 		}
 
-		optName := item.Name + ":wsopt"
+		optName := patchName(item.Name, s.nodeName(), "wsopt")
 		optDef := newSequence(optName, Alias, []SequenceItem{singleItem, restItems})
 		defs = append(defs, optDef)
 		items = append(items, SequenceItem{Name: optName, Min: 0, Max: 1})
@@ -120,7 +127,7 @@ func applyWhitespace(defs []definition) []definition {
 
 func applyWhitespaceRoot(root definition) (definition, definition) {
 	original, name := root, root.nodeName()
-	wsName := ":wsroot:" + name
+	wsName := patchName(name, "wsroot")
 
 	original.setNodeName(wsName)
 	original.setCommitType(original.commitType() &^ Root)

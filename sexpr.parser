@@ -1,5 +1,5 @@
 whitespace:ws    = [ \b\f\n\r\t\v];
-comment:alias:ws = ";" [^\n]*;
+comment:ws       = ";" [^\n]*;
 number:nows      = "-"? ("0" | [1-9][0-9]*) ("." [0-9]+)? ([eE] [+\-]? [0-9]+)?;
 string:nows      = "\"" ([^\\"] | "\\" .)* "\"";
 symbol:nows      = ([^\\ \n\t\b\f\r\v\"()] | "\\" .)+;
