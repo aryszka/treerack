@@ -629,3 +629,18 @@ func TestEmpty(t *testing.T) {
 		}},
 	)
 }
+
+func TestCharAsRoot(t *testing.T) {
+	runTests(
+		t,
+		`A = "a"`,
+		[]testItem{{
+			title:          "char as root",
+			text:           "a",
+			ignorePosition: true,
+			node: &Node{
+				Name: "A",
+			},
+		}},
+	)
+}

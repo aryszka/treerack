@@ -127,7 +127,7 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 		}
 	}
 
-	return s.Sequence(name, ct, namesToSequenceItems(refs)...)
+	return s.Sequence(name, ct|NoWhitespace, namesToSequenceItems(refs)...)
 }
 
 func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) error {
