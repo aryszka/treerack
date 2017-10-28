@@ -12,6 +12,8 @@ type CommitType int
 const (
 	None  CommitType = 0
 	Alias CommitType = 1 << iota
+	Whitespace
+	NoWhitespace
 	Documentation
 	Root
 )
@@ -42,7 +44,9 @@ var (
 	ErrUnexpectedCharacter     = errors.New("unexpected character")
 	ErrInvalidSyntax           = errors.New("invalid syntax")
 	ErrRootAlias               = errors.New("root node cannot be an alias")
+	ErrRootWhitespace          = errors.New("root node cannot be a whitespace")
 	ErrNotImplemented          = errors.New("not implemented")
+	ErrMultipleRoots           = errors.New("multiple roots")
 )
 
 func duplicateDefinition(name string) error {
@@ -70,11 +74,28 @@ func (s *Syntax) register(d definition) error {
 	}
 
 	if d.commitType()&Root != 0 {
+		if s.explicitRoot {
+			return ErrMultipleRoots
+		}
+
+		if s.root != nil {
+			s.root.setCommitType(s.root.commitType() &^ Root)
+		}
+
 		s.root = d
+		s.root.setCommitType(s.root.commitType() | Root)
 		s.explicitRoot = true
 	} else if !s.explicitRoot {
+		if s.root != nil {
+			s.root.setCommitType(s.root.commitType() &^ Root)
+		}
+
 		s.root = d
+		s.root.setCommitType(s.root.commitType() | Root)
 	}
+
+	// TODO: verify that definition names match the symbol criteria, or figure a better naming for the
+	// whitespace
 
 	return s.registry.setDefinition(d)
 }
@@ -142,6 +163,19 @@ func (s *Syntax) Init() error {
 
 	if s.root.commitType()&Alias != 0 {
 		return ErrRootAlias
+	}
+
+	if s.root.commitType()&Whitespace != 0 {
+		return ErrRootWhitespace
+	}
+
+	s.registry = initWhitespace(s.registry)
+
+	for _, def := range s.registry.definitions {
+		if def.commitType()&Root != 0 {
+			s.root = def
+			break
+		}
 	}
 
 	if err := s.root.validate(s.registry, &idSet{}); err != nil {

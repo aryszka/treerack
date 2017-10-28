@@ -33,10 +33,12 @@ func newChoice(name string, ct CommitType, elements []string) *choiceDefinition 
 	}
 }
 
-func (d *choiceDefinition) nodeName() string       { return d.name }
-func (d *choiceDefinition) nodeID() int            { return d.id }
-func (d *choiceDefinition) setID(id int)           { d.id = id }
-func (d *choiceDefinition) commitType() CommitType { return d.commit }
+func (d *choiceDefinition) nodeName() string            { return d.name }
+func (d *choiceDefinition) setNodeName(n string)        { d.name = n }
+func (d *choiceDefinition) nodeID() int                 { return d.id }
+func (d *choiceDefinition) setID(id int)                { d.id = id }
+func (d *choiceDefinition) commitType() CommitType      { return d.commit }
+func (d *choiceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
 func (d *choiceDefinition) validate(r *registry, path *idSet) error {
 	for i := range d.elements {

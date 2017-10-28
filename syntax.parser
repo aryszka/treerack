@@ -1,5 +1,5 @@
-ws:alias  = " " | "\t" | "\n" | "\b" | "\f" | "\r" | "\v";
-wsc:alias = ws | comment;
+wschar:alias  = " " | "\t" | "\n" | "\b" | "\f" | "\r" | "\v";
+wsc:alias     = wschar | comment;
 
 block-comment:alias   = "/*" ("*" [^/] | [^*])* "*/";
 line-comment:alias    = "//" [^\n]*;
@@ -57,9 +57,11 @@ expression:alias = terminal
                  | choice;
 
 alias      = "alias";
+ws         = "ws";
+nows       = "nows";
 doc        = "doc";
 root       = "root";
-flag:alias = alias | doc | root;
+flag:alias = alias | ws | nows | doc | root;
 definition = symbol (":" flag)* wsc* "=" wsc* expression;
 
 definitions:alias = definition (wsc* ";" (wsc | ";")* definition)*;

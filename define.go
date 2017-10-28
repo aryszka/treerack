@@ -83,6 +83,10 @@ func flagsToCommitType(n []*Node) CommitType {
 		switch ni.Name {
 		case "alias":
 			ct |= Alias
+		case "ws":
+			ct |= Whitespace
+		case "nows":
+			ct |= NoWhitespace
 		case "doc":
 			ct |= Documentation
 		case "root":

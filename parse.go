@@ -4,8 +4,10 @@ import "fmt"
 
 type definition interface {
 	nodeName() string
+	setNodeName(string)
 	nodeID() int
 	commitType() CommitType
+	setCommitType(CommitType)
 	setID(int)
 	validate(*registry, *idSet) error
 	normalize(*registry, *idSet) error

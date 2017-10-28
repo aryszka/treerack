@@ -39,10 +39,12 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 	}
 }
 
-func (d *sequenceDefinition) nodeName() string       { return d.name }
-func (d *sequenceDefinition) nodeID() int            { return d.id }
-func (d *sequenceDefinition) setID(id int)           { d.id = id }
-func (d *sequenceDefinition) commitType() CommitType { return d.commit }
+func (d *sequenceDefinition) nodeName() string            { return d.name }
+func (d *sequenceDefinition) setNodeName(n string)        { d.name = n }
+func (d *sequenceDefinition) nodeID() int                 { return d.id }
+func (d *sequenceDefinition) setID(id int)                { d.id = id }
+func (d *sequenceDefinition) commitType() CommitType      { return d.commit }
+func (d *sequenceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
 func (d *sequenceDefinition) validate(r *registry, path *idSet) error {
 	for i := range d.items {
@@ -153,7 +155,6 @@ func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers 
 }
 
 func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
-	// TODO: what is this for? test with sequence containing a sequence through a choice
 	if parsers.has(d.id) {
 		panic(cannotIncludeParsers(d.name))
 	}
