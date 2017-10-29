@@ -9,7 +9,7 @@ import (
 )
 
 func TestMML(t *testing.T) {
-	s, err := openSyntaxFile("mml.parser")
+	s, err := openSyntaxFile("mml.treerack")
 	if err != nil {
 		t.Error(err)
 		return
@@ -2969,7 +2969,7 @@ func TestMMLFile(t *testing.T) {
 
 	const n = 180
 
-	s, err := openSyntaxFile("mml.parser")
+	s, err := openSyntaxFile("mml.treerack")
 	if err != nil {
 		t.Error(err)
 		return

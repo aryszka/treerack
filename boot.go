@@ -206,7 +206,7 @@ func bootSyntax() (*Syntax, error) {
 		return nil, err
 	}
 
-	f, err := os.Open("syntax.parser")
+	f, err := os.Open("treerack.treerack")
 	if err != nil {
 		return nil, err
 	}

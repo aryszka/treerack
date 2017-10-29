@@ -285,7 +285,7 @@ func jsonTreeToJSON(n *Node) (interface{}, error) {
 }
 
 func TestJSON(t *testing.T) {
-	runTestsFile(t, "json.parser", []testItem{{
+	runTestsFile(t, "json.treerack", []testItem{{
 		title: "true",
 		text:  "true",
 		node: &Node{
@@ -509,7 +509,7 @@ func TestRandomJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer(b)
 
-	s, err := openSyntaxFile("json.parser")
+	s, err := openSyntaxFile("json.treerack")
 	if err != nil {
 		t.Error(err)
 		return

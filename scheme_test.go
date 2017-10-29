@@ -3,7 +3,7 @@ package treerack
 import "testing"
 
 func TestScheme(t *testing.T) {
-	runTestsFile(t, "scheme.parser", []testItem{{
+	runTestsFile(t, "scheme.treerack", []testItem{{
 		title: "empty",
 	}, {
 		title: "a function",
