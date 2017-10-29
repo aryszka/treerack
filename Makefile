@@ -1,5 +1,5 @@
 SOURCES = $(shell find . -name '*.go')
-PARSERS = $(shell find . -name '*.parser')
+PARSERS = $(shell find . -name '*.treerack')
 
 default: build
 
