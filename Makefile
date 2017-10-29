@@ -12,6 +12,9 @@ build: $(SOURCES)
 check: build $(PARSERS)
 	go test ./... -test.short -run ^Test
 
+check-all: build $(PARSERS)
+	go test ./...
+
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
 
@@ -21,7 +24,7 @@ cpu.out: $(SOURCES) $(PARSERS)
 cpu: cpu.out
 	go tool pprof -top cpu.out
 
-precommit: fmt build check
+precommit: fmt build check-all
 
 clean:
 	@rm -f *.test
