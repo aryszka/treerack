@@ -108,6 +108,15 @@ func childName(name string, childIndex int) string {
 	return fmt.Sprintf("%s:%d", name, childIndex)
 }
 
+func namesToSequenceItems(n []string) []SequenceItem {
+	si := make([]SequenceItem, len(n))
+	for i := range n {
+		si[i] = SequenceItem{Name: n[i]}
+	}
+
+	return si
+}
+
 func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
 	cname := childName(name, 0)
 	if err := s.register(newChar(cname, not, chars, ranges)); err != nil {

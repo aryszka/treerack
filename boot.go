@@ -32,12 +32,7 @@ func checkBootDefinitionLength(d []string) error {
 	}
 
 	switch d[0] {
-	case "chars", "class":
-		if len(d) < 4 {
-			return errInvalidDefinition
-		}
-
-	case "sequence", "choice":
+	case "chars", "class", "sequence", "choice":
 		if len(d) < 4 {
 			return errInvalidDefinition
 		}
@@ -46,19 +41,19 @@ func checkBootDefinitionLength(d []string) error {
 	return nil
 }
 
-func parseClass(c []rune) (not bool, chars []rune, ranges [][]rune, err error) {
-	if c[0] == '^' {
+func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err error) {
+	if class[0] == '^' {
 		not = true
-		c = c[1:]
+		class = class[1:]
 	}
 
 	for {
-		if len(c) == 0 {
+		if len(class) == 0 {
 			return
 		}
 
 		var c0 rune
-		c0, c = c[0], c[1:]
+		c0, class = class[0], class[1:]
 		switch c0 {
 		case '[', ']', '^', '-':
 			err = errInvalidDefinition
@@ -66,28 +61,34 @@ func parseClass(c []rune) (not bool, chars []rune, ranges [][]rune, err error) {
 		}
 
 		if c0 == '\\' {
-			if len(c) == 0 {
+			if len(class) == 0 {
 				err = errInvalidDefinition
 				return
 			}
 
-			c0, c = unescapeChar(c[0]), c[1:]
+			c0, class = unescapeChar(class[0]), class[1:]
 		}
 
-		if len(c) < 2 || c[0] != '-' {
+		if len(class) < 2 || class[0] != '-' {
 			chars = append(chars, c0)
 			continue
 		}
 
 		var c1 rune
-		c1, c = c[1], c[2:]
+		c1, class = class[1], class[2:]
+		switch c1 {
+		case '[', ']', '^', '-':
+			err = errInvalidDefinition
+			return
+		}
+
 		if c1 == '\\' {
-			if len(c) == 0 {
+			if len(class) == 0 {
 				err = errInvalidDefinition
 				return
 			}
 
-			c1, c = unescapeChar(c[0]), c[1:]
+			c1, class = unescapeChar(class[0]), class[1:]
 		}
 
 		ranges = append(ranges, []rune{c0, c1})
@@ -100,6 +101,7 @@ func defineBootAnything(s *Syntax, d []string) error {
 }
 
 func defineBootClass(s *Syntax, d []string) error {
+	name := d[1]
 	ct := stringToCommitType(d[2])
 
 	not, chars, ranges, err := parseClass([]rune(d[3]))
@@ -107,75 +109,78 @@ func defineBootClass(s *Syntax, d []string) error {
 		return err
 	}
 
-	return s.Class(d[1], ct, not, chars, ranges)
+	return s.Class(name, ct, not, chars, ranges)
 }
 
 func defineBootCharSequence(s *Syntax, d []string) error {
+	name := d[1]
 	ct := stringToCommitType(d[2])
 
-	chars, err := unescape('\\', []rune{'"', '\\'}, []rune(d[3]))
+	chars, err := unescapeCharSequence(d[3])
 	if err != nil {
 		return err
 	}
 
-	return s.CharSequence(d[1], ct, chars)
+	return s.CharSequence(name, ct, chars)
 }
 
-func namesToSequenceItemsQuantify(n []string, quantify bool) []SequenceItem {
+func splitQuantifiedSymbol(s string) (string, int, int) {
+	ssplit := strings.Split(s, ":")
+	if len(ssplit) != 3 {
+		return s, 0, 0
+	}
+
+	name := ssplit[0]
+
+	min, err := strconv.Atoi(ssplit[1])
+	if err != nil {
+		panic(err)
+	}
+
+	max, err := strconv.Atoi(ssplit[2])
+	if err != nil {
+		panic(err)
+	}
+
+	return name, min, max
+}
+
+func namesToSequenceItemsQuantify(n []string) []SequenceItem {
 	si := make([]SequenceItem, len(n))
 	for i, ni := range n {
-		var min, max int
-		if quantify {
-			nis := strings.Split(ni, ":")
-			if len(nis) == 3 {
-				ni = nis[0]
-
-				var err error
-
-				min, err = strconv.Atoi(nis[1])
-				if err != nil {
-					panic(err)
-				}
-
-				max, err = strconv.Atoi(nis[2])
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-
-		si[i] = SequenceItem{Name: ni, Min: min, Max: max}
+		name, min, max := splitQuantifiedSymbol(ni)
+		si[i] = SequenceItem{Name: name, Min: min, Max: max}
 	}
 
 	return si
 }
 
-func namesToSequenceItems(n []string) []SequenceItem {
-	return namesToSequenceItemsQuantify(n, false)
+func defineBootSequence(s *Syntax, defs []string) error {
+	name := defs[1]
+	ct := stringToCommitType(defs[2])
+	items := namesToSequenceItemsQuantify(defs[3:])
+	return s.Sequence(name, ct, items...)
 }
 
-func defineBootSequence(s *Syntax, d []string) error {
-	ct := stringToCommitType(d[2])
-	return s.Sequence(d[1], ct, namesToSequenceItemsQuantify(d[3:], true)...)
+func defineBootChoice(s *Syntax, defs []string) error {
+	name := defs[1]
+	ct := stringToCommitType(defs[2])
+	items := defs[3:]
+	return s.Choice(name, ct, items...)
 }
 
-func defineBootChoice(s *Syntax, d []string) error {
-	ct := stringToCommitType(d[2])
-	return s.Choice(d[1], ct, d[3:]...)
-}
-
-func defineBoot(s *Syntax, d []string) error {
-	switch d[0] {
+func defineBoot(s *Syntax, defs []string) error {
+	switch defs[0] {
 	case "anything":
-		return defineBootAnything(s, d)
+		return defineBootAnything(s, defs)
 	case "class":
-		return defineBootClass(s, d)
+		return defineBootClass(s, defs)
 	case "chars":
-		return defineBootCharSequence(s, d)
+		return defineBootCharSequence(s, defs)
 	case "sequence":
-		return defineBootSequence(s, d)
+		return defineBootSequence(s, defs)
 	case "choice":
-		return defineBootChoice(s, d)
+		return defineBootChoice(s, defs)
 	default:
 		return errInvalidDefinition
 	}
