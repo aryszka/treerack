@@ -1,52 +1,52 @@
 wschar:alias  = " " | "\t" | "\n" | "\b" | "\f" | "\r" | "\v";
-wsc:alias     = wschar | comment;
+wsc:ws        = wschar | comment;
 
-block-comment:alias   = "/*" ("*" [^/] | [^*])* "*/";
-line-comment:alias    = "//" [^\n]*;
-comment-segment:alias = line-comment | block-comment;
-ws-no-nl:alias        = " " | "\t" | "\b" | "\f" | "\r" | "\v";
-comment               = comment-segment (ws-no-nl* "\n"? ws-no-nl* comment-segment)*;
+block-comment:alias:nows   = "/*" ("*" [^/] | [^*])* "*/";
+line-comment:alias:nows    = "//" [^\n]*;
+comment-segment:alias:nows = line-comment | block-comment;
+ws-no-nl:alias:nows        = " " | "\t" | "\b" | "\f" | "\r" | "\v";
+comment:nows               = comment-segment (ws-no-nl* "\n"? ws-no-nl* comment-segment)*;
 
 any-char = "."; // equivalent to [^]
 
 // caution: newline is accepted
-class-not  = "^";
-class-char = [^\\\[\]\^\-] | "\\" .;
-char-range = class-char "-" class-char;
-char-class = "[" class-not? (class-char | char-range)* "]";
+class-not       = "^";
+class-char:nows = [^\\\[\]\^\-] | "\\" .;
+char-range:nows = class-char "-" class-char;
+char-class:nows = "[" class-not? (class-char | char-range)* "]";
 
 // newline is accepted
-sequence-char = [^\\"] | "\\" .;
-char-sequence = "\"" sequence-char* "\"";
+sequence-char:nows = [^\\"] | "\\" .;
+char-sequence:nows = "\"" sequence-char* "\"";
 
 terminal:alias = any-char | char-class | char-sequence;
 
-symbol = [^\\ \n\t\b\f\r\v/.\[\]\"{}\^+*?|():=;]+;
+symbol:nows = [^\\ \n\t\b\f\r\v/.\[\]\"{}\^+*?|():=;]+;
 
-group:alias = "(" wsc* expression wsc* ")";
+group:alias = "(" expression ")";
 
-number:alias     = [0-9]+;
-count            = number;
-count-quantifier = "{" wsc* count wsc* "}";
-range-from       = number;
-range-to         = number;
-range-quantifier = "{" wsc* range-from? wsc* "," wsc* range-to? wsc* "}";
-one-or-more      = "+";
-zero-or-more     = "*";
-zero-or-one      = "?";
-quantity:alias   = count-quantifier
-                 | range-quantifier
-                 | one-or-more
-                 | zero-or-more
-                 | zero-or-one;
+number:alias:nows = [0-9]+;
+count             = number;
+count-quantifier  = "{" count "}";
+range-from        = number;
+range-to          = number;
+range-quantifier  = "{" range-from? "," range-to? "}";
+one-or-more       = "+";
+zero-or-more      = "*";
+zero-or-one       = "?";
+quantity:alias    = count-quantifier
+                  | range-quantifier
+                  | one-or-more
+                  | zero-or-more
+                  | zero-or-one;
 
-item     = (terminal | symbol | group) quantity?;
-sequence = item (wsc* item)*;
+item:nows = (terminal | symbol | group) quantity?;
+sequence  = item+;
 
 element:alias = terminal | symbol | group | sequence;
 
 // DOC: how the order matters
-choice = element (wsc* "|" wsc* element)+;
+choice = element ("|" element)+;
 
 // DOC: not having 'not' needs some tricks sometimes
 
@@ -56,13 +56,14 @@ expression:alias = terminal
                  | sequence
                  | choice;
 
-alias      = "alias";
-ws         = "ws";
-nows       = "nows";
-doc        = "doc";
-root       = "root";
-flag:alias = alias | ws | nows | doc | root;
-definition = symbol (":" flag)* wsc* "=" wsc* expression;
+alias                      = "alias";
+ws                         = "ws";
+nows                       = "nows";
+doc                        = "doc";
+root                       = "root";
+flag:alias                 = alias | ws | nows | doc | root;
+definition-name:alias:nows = symbol (":" flag)*;
+definition                 = definition-name "=" expression;
 
-definitions:alias = definition (wsc* ";" (wsc | ";")* definition)*;
-syntax:root       = (wsc | ";")* definitions? (wsc | ";")*;
+definitions:alias = definition (";"+ definition)*;
+syntax:root       = ";"* definitions? ";"*;
