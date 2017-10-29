@@ -25,3 +25,7 @@ ws and nows flags
 
 [problems]
 can the root be an alias? check the commit mechanism
+
+[documentation]
+how the char classes are different from regexp
+why need nows when using ws
