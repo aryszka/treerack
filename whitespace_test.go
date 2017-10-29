@@ -281,3 +281,29 @@ func TestCSVWhitespace(t *testing.T) {
 		runTestsSyntax(t, s, tests)
 	})
 }
+
+func TestNoWhitespaceFlag(t *testing.T) {
+	runTests(
+		t,
+		`
+			space:ws = " ";
+			symbol:nows = [a-zA-Z_] [a-zA-Z0-9_]* | "[" .+ "]";
+			symbols = symbol*;
+		`,
+		[]testItem{{
+			title:          "multiple symbols",
+			text:           "a b c",
+			ignorePosition: true,
+			node: &Node{
+				Name: "symbols",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}, {
+					Name: "symbol",
+				}, {
+					Name: "symbol",
+				}},
+			},
+		}},
+	)
+}

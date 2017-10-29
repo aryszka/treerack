@@ -110,20 +110,20 @@ func nodeChar(n *Node) rune {
 	return toRune(s)
 }
 
-func defineMember(s *Syntax, defaultName string, n *Node) (string, error) {
+func defineMember(s *Syntax, defaultName string, ct CommitType, n *Node) (string, error) {
 	switch n.Name {
 	case "symbol":
 		return n.Text(), nil
 	default:
-		return defaultName, defineExpression(s, defaultName, Alias, n)
+		return defaultName, defineExpression(s, defaultName, ct, n)
 	}
 }
 
-func defineMembers(s *Syntax, name string, n ...*Node) ([]string, error) {
+func defineMembers(s *Syntax, name string, ct CommitType, n ...*Node) ([]string, error) {
 	var refs []string
 	for i, ni := range n {
 		nmi := childName(name, i)
-		ref, err := defineMember(s, nmi, ni)
+		ref, err := defineMember(s, nmi, ct, ni)
 		if err != nil {
 			return nil, err
 		}
@@ -211,6 +211,7 @@ func defineSymbol(s *Syntax, name string, ct CommitType, n *Node) error {
 }
 
 func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
+	nows := ct & NoWhitespace
 	var items []SequenceItem
 	for i, ni := range n {
 		if ni.Name != "item" || len(ni.Nodes) == 0 {
@@ -223,7 +224,7 @@ func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
 		)
 
 		defaultName := childName(name, i)
-		item.Name, err = defineMember(s, defaultName, ni.Nodes[0])
+		item.Name, err = defineMember(s, defaultName, Alias|nows, ni.Nodes[0])
 		if err != nil {
 			return err
 		}
@@ -242,7 +243,8 @@ func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
 }
 
 func defineChoice(s *Syntax, name string, ct CommitType, n ...*Node) error {
-	refs, err := defineMembers(s, name, n...)
+	nows := ct & NoWhitespace
+	refs, err := defineMembers(s, name, Alias|nows, n...)
 	if err != nil {
 		return err
 	}
