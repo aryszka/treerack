@@ -13,6 +13,10 @@ func stringToCommitType(s string) CommitType {
 	switch s {
 	case "alias":
 		return Alias
+	case "ws":
+		return Whitespace
+	case "nows":
+		return NoWhitespace
 	case "doc":
 		return Documentation
 	case "root":

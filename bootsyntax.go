@@ -16,7 +16,7 @@ var bootSyntaxDefs = [][]string{{
 	"chars", "verticaltab", "alias", "\\v",
 }, {
 	"choice",
-	"ws",
+	"wschar",
 	"alias",
 	"space",
 	"tab",
@@ -59,7 +59,7 @@ var bootSyntaxDefs = [][]string{{
 }, {
 	"choice", "comment-segment", "alias", "block-comment", "line-comment",
 }, {
-	"sequence", "wss", "alias", "ws:0:-1",
+	"sequence", "wss", "alias", "wschar:0:-1",
 }, {
 	"sequence", "optional-nl", "alias", "nl:0:1",
 }, {
@@ -89,7 +89,7 @@ var bootSyntaxDefs = [][]string{{
 	"comment-segment",
 	"continue-comment",
 }, {
-	"choice", "wsc", "alias", "ws", "comment",
+	"choice", "wsc", "alias", "wschar", "comment",
 }, {
 	"sequence", "wscs", "alias", "wsc:0:-1",
 }, {
@@ -225,11 +225,15 @@ var bootSyntaxDefs = [][]string{{
 }, {
 	"chars", "alias", "none", "alias",
 }, {
+	"chars", "ws", "none", "ws",
+}, {
+	"chars", "nows", "none", "nows",
+}, {
 	"chars", "doc", "none", "doc",
 }, {
 	"chars", "root", "none", "root",
 }, {
-	"choice", "flag", "alias", "alias", "doc", "root",
+	"choice", "flag", "alias", "alias", "ws", "nows", "doc", "root",
 }, {
 	"chars", "colon", "alias", ":",
 }, {
