@@ -23,77 +23,57 @@ func TestMML(t *testing.T) {
 			title: "single line comment",
 			text:  "// foo bar baz",
 			nodes: []*Node{{
-				Name: "comment",
+				Name: "line-comment-content",
+				From: 2,
 				To:   14,
-				Nodes: []*Node{{
-					Name: "line-comment-content",
-					From: 2,
-					To:   14,
-				}},
 			}},
 		}, {
 			title: "multiple line comments",
 			text:  "// foo bar\n// baz qux",
 			nodes: []*Node{{
-				Name: "comment",
+				Name: "line-comment-content",
+				From: 2,
+				To:   10,
+			}, {
+				Name: "line-comment-content",
+				From: 13,
 				To:   21,
-				Nodes: []*Node{{
-					Name: "line-comment-content",
-					From: 2,
-					To:   10,
-				}, {
-					Name: "line-comment-content",
-					From: 13,
-					To:   21,
-				}},
 			}},
 		}, {
 			title: "block comment",
 			text:  "/* foo bar baz */",
 			nodes: []*Node{{
-				Name: "comment",
-				To:   17,
-				Nodes: []*Node{{
-					Name: "block-comment-content",
-					From: 2,
-					To:   15,
-				}},
+				Name: "block-comment-content",
+				From: 2,
+				To:   15,
 			}},
 		}, {
 			title: "block comments",
 			text:  "/* foo bar */\n/* baz qux */",
 			nodes: []*Node{{
-				Name: "comment",
-				To:   27,
-				Nodes: []*Node{{
-					Name: "block-comment-content",
-					From: 2,
-					To:   11,
-				}, {
-					Name: "block-comment-content",
-					From: 16,
-					To:   25,
-				}},
+				Name: "block-comment-content",
+				From: 2,
+				To:   11,
+			}, {
+				Name: "block-comment-content",
+				From: 16,
+				To:   25,
 			}},
 		}, {
 			title: "mixed comments",
 			text:  "// foo\n/* bar */\n// baz",
 			nodes: []*Node{{
-				Name: "comment",
+				Name: "line-comment-content",
+				From: 2,
+				To:   6,
+			}, {
+				Name: "block-comment-content",
+				From: 9,
+				To:   14,
+			}, {
+				Name: "line-comment-content",
+				From: 19,
 				To:   23,
-				Nodes: []*Node{{
-					Name: "line-comment-content",
-					From: 2,
-					To:   6,
-				}, {
-					Name: "block-comment-content",
-					From: 9,
-					To:   14,
-				}, {
-					Name: "line-comment-content",
-					From: 19,
-					To:   23,
-				}},
 			}},
 		}})
 	})

@@ -5,39 +5,41 @@
 // - function args
 // - statements
 // - list, struct and function type constraints
-ws:alias    = " " | "\b" | "\f" | "\r" | "\t" | "\v";
-wsnl:alias  = ws | "\n";
-wsc:alias   = ws | comment;
-wsnlc:alias = wsc | "\n";
+//
+// comments are not ignored because they are needed during formatting
+ws:ws    = " " | "\b" | "\f" | "\r" | "\t" | "\v";
+wsc:ws   = comment;
+nl:alias = "\n";
 
 // comments can be line or block comments
-line-comment-content  = [^\n]*;
-line-comment:alias    = "//" line-comment-content;
-block-comment-content = ([^*] | "*" [^/])*;
-block-comment:alias   = "/*" block-comment-content "*/";
-comment-part:alias    = line-comment | block-comment;
-comment               = comment-part (ws* "\n"? ws* comment-part)*;
+// indentation can hold meaning
+line-comment-content:nows  = [^\n]*;
+line-comment:alias:nows    = "//" line-comment-content;
+block-comment-content:nows = ([^*] | "*" [^/])*; // TODO: why is the :nows required here if it is there for block-comment?
+block-comment:alias:nows   = "/*" block-comment-content "*/";
+comment-part:alias         = line-comment | block-comment;
+comment:alias              = comment-part ("\n"? comment-part)*;
 
 decimal-digit:alias = [0-9];
 octal-digit:alias   = [0-7];
 hexa-digit:alias    = [0-9a-fA-F];
 
 // interger examples: 42, 0666, 0xfff
-decimal:alias = [1-9] decimal-digit*;
-octal:alias   = "0" octal-digit*;
-hexa:alias    = "0" [xX] hexa-digit+;
-int           = decimal | octal | hexa;
+decimal:alias:nows = [1-9] decimal-digit*;
+octal:alias:nows   = "0" octal-digit*;
+hexa:alias:nows    = "0" [xX] hexa-digit+;
+int                = decimal | octal | hexa;
 
 // float examples: .0, 0., 3.14, 1E-12
-exponent:alias = [eE] [+\-]? decimal-digit+;
-float          = decimal-digit+ "." decimal-digit* exponent?
-               | "." decimal-digit+ exponent?
-               | decimal-digit+ exponent;
+exponent:alias:nows = [eE] [+\-]? decimal-digit+;
+float:nows          = decimal-digit+ "." decimal-digit* exponent?
+                    | "." decimal-digit+ exponent?
+                    | decimal-digit+ exponent;
 
 // string example: "Hello, world!"
 // only \ and " need to be escaped, e.g. allows new lines
 // common escaped chars get unescaped, the rest gets unescaped to themselves
-string = "\"" ([^\\"] | "\\" .)* "\"";
+string:nows = "\"" ([^\\"] | "\\" .)* "\"";
 
 true       = "true";
 false      = "false";
@@ -60,9 +62,9 @@ bool:alias = true | false;
 // - [a] would be ambigous with the list as an expression
 // - a logical loophole is closed with symbol(a)
 // - dynamic-symbols need to be handled differently in match expressions and type expressions
-symbol                  = [a-zA-Z_][a-zA-Z_0-9]*;
+symbol:nows             = [a-zA-Z_][a-zA-Z_0-9]*;
 static-symbol:alias     = symbol | string;
-dynamic-symbol          = "symbol" wsc* "(" wsnlc* expression wsnlc* ")";
+dynamic-symbol          = "symbol" "(" nl* expression nl* ")";
 symbol-expression:alias = static-symbol | dynamic-symbol;
 
 // TODO: what happens when a dynamic symbol gets exported?
@@ -78,39 +80,39 @@ symbol-expression:alias = static-symbol | dynamic-symbol;
         ]
         [1, 2, a..., [b, c], [d, [e]]...]
 */
-spread-expression     = primary-expression wsc* "...";
-list-sep:alias        = wsc* ("," | "\n") (wsnlc | ",")*;
+spread-expression     = primary-expression "...";
+list-sep:alias        = ("," | "\n") (nl | ",")*;
 list-item:alias       = expression | spread-expression;
 expression-list:alias = list-item (list-sep list-item)*;
 
 // list example: [1, 2, 3]
 // lists can be constructed with other lists: [l1..., l2...]
-list-fact:alias = "[" (wsnlc | ",")* expression-list? (wsnlc | ",")* "]";
+list-fact:alias = "[" (nl | ",")* expression-list? (nl | ",")* "]";
 list            = list-fact;
-mutable-list    = "~" wsnlc* list-fact;
+mutable-list    = "~" nl* list-fact;
 
-indexer-symbol    = "[" wsnlc* expression wsnlc* "]";
-entry             = (symbol-expression | indexer-symbol) wsnlc* ":" wsnlc* expression;
+indexer-symbol    = "[" nl* expression nl* "]";
+entry             = (symbol-expression | indexer-symbol) nl* ":" nl* expression;
 entry-list:alias  = (entry | spread-expression) (list-sep (entry | spread-expression))*;
-struct-fact:alias = "{" (wsnlc | ",")* entry-list? (wsnlc | ",")* "}";
+struct-fact:alias = "{" (nl | ",")* entry-list? (nl | ",")* "}";
 struct            = struct-fact;
-mutable-struct    = "~" wsnlc* struct-fact;
+mutable-struct    = "~" nl* struct-fact;
 
-channel = "<>" | "<" wsnlc* int wsnlc* ">";
+channel = "<>" | "<" nl* int nl* ">";
 
-// and-expression:doc = "and" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
-// or-expression:doc  = "or" wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
+// and-expression:doc = "and" "(" (nl | ",")* expression-list? (nl | ",")* ")";
+// or-expression:doc  = "or" "(" (nl | ",")* expression-list? (nl | ",")* ")";
 
 argument-list:alias = static-symbol (list-sep static-symbol)*;
-collect-symbol      = "..." wsnlc* static-symbol;
-function-fact:alias = "(" (wsnlc | ",")*
+collect-symbol      = "..." nl* static-symbol;
+function-fact:alias = "(" (nl | ",")*
                       argument-list?
-                      (wsnlc | ",")*
+                      (nl | ",")*
                       collect-symbol?
-                      (wsnlc | ",")* ")" wsnlc*
+                      (nl | ",")* ")" nl*
                       expression;
-function            = "fn" wsnlc* function-fact; // can it ever cause a conflict with call and grouping?
-effect              = "fn" wsnlc* "~" wsnlc* function-fact;
+function            = "fn" nl* function-fact; // can it ever cause a conflict with call and grouping?
+effect              = "fn" nl* "~" nl* function-fact;
 
 /*
 a[42]
@@ -124,25 +126,25 @@ a.symbol(foo)
 */
 range-from               = expression;
 range-to                 = expression;
-range-expression:alias   = range-from? wsnlc* ":" wsnlc* range-to?;
+range-expression:alias   = range-from? nl* ":" nl* range-to?;
 indexer-expression:alias = expression | range-expression;
-expression-indexer:alias = primary-expression wsc* "[" wsnlc* indexer-expression wsnlc* "]";
-symbol-indexer:alias     = primary-expression wsnlc* "." wsnlc* symbol-expression;
+expression-indexer:alias = primary-expression "[" nl* indexer-expression nl* "]";
+symbol-indexer:alias     = primary-expression nl* "." nl* symbol-expression;
 indexer                  = expression-indexer | symbol-indexer;
 
-function-application = primary-expression wsc* "(" (wsnlc | ",")* expression-list? (wsnlc | ",")* ")";
+function-application = primary-expression "(" (nl | ",")* expression-list? (nl | ",")* ")";
 
-if = "if" wsnlc* expression wsnlc* block
-     (wsnlc* "else" wsnlc* "if" wsnlc* expression wsnlc* block)*
-     (wsnlc* "else" wsnlc* block)?;
+if = "if" nl* expression nl* block
+     (nl* "else" nl* "if" nl* expression nl* block)*
+     (nl* "else" nl* block)?;
 
-default            = "default" wsnlc* ":";
-default-line:alias = default (wsnlc | ";")* statement?;
-case               = "case" wsnlc* expression wsnlc* ":";
-case-line:alias    = case (wsc | ";")* statement?;
-switch             = "switch" wsnlc* expression? wsnlc* "{" (wsnlc | ";")*
+default            = "default" nl* ":";
+default-line:alias = default (nl | ";")* statement?;
+case               = "case" nl* expression nl* ":";
+case-line:alias    = case ";"* statement?;
+switch             = "switch" nl* expression? nl* "{" (nl | ";")*
                      ((case-line | default-line) (sep (case-line | default-line | statement))*)?
-                     (wsnlc | ";")* "}";
+                     (nl | ";")* "}";
 
 int-type    = "int";
 float-type  = "float";
@@ -199,73 +201,73 @@ type-alias-name:alias = static-symbol;
 
 static-range-from             = int;
 static-range-to               = int;
-static-range-expression:alias = static-range-from? wsnlc* ":" wsnlc* static-range-to?;
+static-range-expression:alias = static-range-from? nl* ":" nl* static-range-to?;
 items-quantifier              = int | static-range-expression;
 // TODO: maybe this can be confusing with matching constants. Shall we support matching constants, values?
 
 items-type = items-quantifier
-           | type-set (wsnlc* ":" wsnlc* items-quantifier)?
-           | static-symbol wsnlc* type-set (wsnlc* ":" wsnlc* items-quantifier)?;
+           | type-set (nl* ":" nl* items-quantifier)?
+           | static-symbol nl* type-set (nl* ":" nl* items-quantifier)?;
 
-destructure-item = type-set | static-symbol wsnlc* type-set;
+destructure-item = type-set | static-symbol nl* type-set;
 
-collect-destructure-item = "..." wsnlc* destructure-item?
-                           (wsnlc* ":" items-quantifier)?;
+collect-destructure-item = "..." nl* destructure-item?
+                           (nl* ":" items-quantifier)?;
 list-destructure-type    = destructure-item
                            (list-sep destructure-item)*
                            (list-sep collect-destructure-item)?
                          | collect-destructure-item;
-list-type-fact:alias     = "[" (wsnlc | ",")*
+list-type-fact:alias     = "[" (nl | ",")*
                            (items-type | list-destructure-type)?
-                           (wsnlc | ",")* "]";
+                           (nl | ",")* "]";
 list-type                = list-type-fact;
-mutable-list-type        = "~" wsnlc* list-type-fact;
+mutable-list-type        = "~" nl* list-type-fact;
 
 destructure-match-item = match-set
-                       | static-symbol wsnlc* match-set
-                       | static-symbol wsnlc* static-symbol wsnlc* match-set;
+                       | static-symbol nl* match-set
+                       | static-symbol nl* static-symbol nl* match-set;
 
-collect-destructure-match-item = "..." wsnlc* destructure-match-item?
-                           (wsnlc* ":" items-quantifier)?;
+collect-destructure-match-item = "..." nl* destructure-match-item?
+                           (nl* ":" items-quantifier)?;
 list-destructure-match   = destructure-match-item
                            (list-sep destructure-match-item)*
                            (list-sep collect-destructure-match-item)?
                          | collect-destructure-match-item;
-list-match-fact:alias    = "[" (wsnlc | ",")*
+list-match-fact:alias    = "[" (nl | ",")*
                            (list-destructure-match | items-type)?
-                           (wsnlc | ",")* "]";
+                           (nl | ",")* "]";
 list-match               = list-match-fact;
-mutable-list-match       = "~" wsnlc* list-match;
+mutable-list-match       = "~" nl* list-match;
 
-entry-type             = static-symbol (wsnlc* ":" wsnlc* destructure-item)?;
+entry-type             = static-symbol (nl* ":" nl* destructure-item)?;
 entry-types:alias      = entry-type (list-sep entry-type)*;
-struct-type-fact:alias = "{" (wsnlc | ",")* entry-types? (wsnlc | ",")* "}";
+struct-type-fact:alias = "{" (nl | ",")* entry-types? (nl | ",")* "}";
 struct-type            = struct-type-fact;
-mutable-struct-type    = "~" wsnlc* struct-type-fact;
+mutable-struct-type    = "~" nl* struct-type-fact;
 
-entry-match             = static-symbol (wsnlc* ":" wsnlc* destructure-match-item)?;
+entry-match             = static-symbol (nl* ":" nl* destructure-match-item)?;
 entry-matches:alias     = entry-match (list-sep entry-match)*;
-struct-match-fact:alias = "{" (wsnlc | ",")* entry-matches?  (wsnlc | ",")* "}";
+struct-match-fact:alias = "{" (nl | ",")* entry-matches?  (nl | ",")* "}";
 struct-match            = struct-match-fact;
-mutable-struct-match    = "~" wsnlc* struct-match-fact;
+mutable-struct-match    = "~" nl* struct-match-fact;
 
-arg-type                 = type-set | static-symbol wsnlc* type-set;
+arg-type                 = type-set | static-symbol nl* type-set;
 args-type:alias          = arg-type (list-sep arg-type)*;
-function-type-fact:alias = "(" wsnlc* args-type?  wsnlc* ")"
-                            (wsc* (type-set | static-symbol wsc* type-set))?;
-function-type            = "fn" wsnlc* function-type-fact;
-effect-type              = "fn" wsnlc* "~" wsnlc* function-type-fact;
+function-type-fact:alias = "(" nl* args-type?  nl* ")"
+                            (type-set | static-symbol type-set)?;
+function-type            = "fn" nl* function-type-fact;
+effect-type              = "fn" nl* "~" nl* function-type-fact;
 
 // TODO: heavy naming crime
 
 receive-direction = "receive";
 send-direction    = "send";
-channel-type      = "<" wsnlc*
-                    (receive-direction | send-direction)? wsnlc*
+channel-type      = "<" nl*
+                    (receive-direction | send-direction)? nl*
                     destructure-item?
-                    wsnlc* ">";
+                    nl* ">";
 
-type-fact-group:alias = "(" wsnlc* type-fact wsnlc* ")";
+type-fact-group:alias = "(" nl* type-fact nl* ")";
 type-fact:alias = primitive-type
                 | type-alias-name
                 | list-type
@@ -277,8 +279,8 @@ type-fact:alias = primitive-type
                 | channel-type
                 | type-fact-group;
 
-type-set:alias        = type-fact (wsnlc* "|" wsnlc* type-fact)*;
-type-expression:alias = type-set | static-symbol wsc* type-set;
+type-set:alias        = type-fact (nl* "|" nl* type-fact)*;
+type-expression:alias = type-set | static-symbol type-set;
 
 match-fact:alias = list-match
                  | mutable-list-match
@@ -286,50 +288,50 @@ match-fact:alias = list-match
                  | mutable-struct-match;
 
 match-set:alias        = type-set | match-fact;
-match-expression:alias = match-set | static-symbol wsc* match-set;
+match-expression:alias = match-set | static-symbol match-set;
 
-match-case               = "case" wsnlc* match-expression wsnlc* ":";
-match-case-line:alias    = match-case (wsc | ";")* statement?;
-match                    = "match" wsnlc* expression wsnlc* "{" (wsnlc | ";")*
+match-case               = "case" nl* match-expression nl* ":";
+match-case-line:alias    = match-case ";"* statement?;
+match                    = "match" nl* expression nl* "{" (nl | ";")*
                            ((match-case-line | default-line)
                            (sep (match-case-line | default-line | statement))*)?
-                           (wsnlc | ";")* "}";
+                           (nl | ";")* "}";
 
 conditional:alias = if
                   | switch
                   | match;
 
-receive-call                    = "receive" wsc* "(" (wsnlc | ",")* expression (wsnlc | ",")* ")";
-receive-op                      = "<-" wsc* primary-expression;
-receive-expression-group:alias  = "(" wsnlc* receive-expression wsnlc* ")";
+receive-call                    = "receive" "(" (nl | ",")* expression (nl | ",")* ")";
+receive-op                      = "<-" primary-expression;
+receive-expression-group:alias  = "(" nl* receive-expression nl* ")";
 receive-expression:alias        = receive-call | receive-op | receive-expression-group;
 
-receive-assign-capture:alias = assignable wsnlc* ("=" wsnlc*)? receive-expression;
-receive-assignment           = "set" wsnlc* receive-assign-capture;
-receive-assignment-equal     = assignable wsnlc* "=" wsnlc* receive-expression;
-receive-capture:alias        = symbol-expression wsnlc* ("=" wsnlc*)? receive-expression;
-receive-definition           = "let" wsnlc* receive-capture;
-receive-mutable-definition   = "let" wsnlc* "~" wsnlc* receive-capture;
+receive-assign-capture:alias = assignable nl* ("=" nl*)? receive-expression;
+receive-assignment           = "set" nl* receive-assign-capture;
+receive-assignment-equal     = assignable nl* "=" nl* receive-expression;
+receive-capture:alias        = symbol-expression nl* ("=" nl*)? receive-expression;
+receive-definition           = "let" nl* receive-capture;
+receive-mutable-definition   = "let" nl* "~" nl* receive-capture;
 receive-statement:alias      = receive-assignment | receive-definition;
 
-send-call:alias       = "send" wsc* "(" (wsnlc | ",")* expression list-sep expression (wsnlc | ",")* ")";
-send-op:alias         = primary-expression wsc* "<-" wsc* expression;
-send-call-group:alias = "(" wsnlc* send wsnlc* ")";
+send-call:alias       = "send" "(" (nl | ",")* expression list-sep expression (nl | ",")* ")";
+send-op:alias         = primary-expression "<-" expression;
+send-call-group:alias = "(" nl* send nl* ")";
 send                  = send-call | send-op | send-call-group;
 
-close = "close" wsc* "(" (wsnlc | ",")* expression (wsnlc | ",")* ")";
+close = "close" "(" (nl | ",")* expression (nl | ",")* ")";
 
-communication-group:alias = "(" wsnlc* communication wsnlc* ")";
+communication-group:alias = "(" nl* communication nl* ")";
 communication:alias       = receive-expression | receive-statement | send | communication-group;
 
-select-case            = "case" wsnlc* communication wsnlc* ":";
-select-case-line:alias = select-case (wsc | ";")* statement?;
-select                 = "select" wsnlc* "{" (wsnlc | ";")*
+select-case            = "case" nl* communication nl* ":";
+select-case-line:alias = select-case ";"* statement?;
+select                 = "select" nl* "{" (nl | ";")*
                          ((select-case-line | default-line)
                           (sep (select-case-line | default-line | statement))*)?
-                         (wsnlc | ";")* "}";
+                         (nl | ";")* "}";
 
-go = "go" wsnlc* (function-application | block);
+go = "go" nl* (function-application | block);
 
 /*
 require . = "mml/foo"
@@ -348,19 +350,19 @@ require ()
 */
 require-inline                = ".";
 require-fact                  = string
-                              | (static-symbol | require-inline) (wsnlc* "=")? wsnlc* string;
+                              | (static-symbol | require-inline) (nl* "=")? nl* string;
 require-facts:alias           = require-fact (list-sep require-fact)*;
-require-statement:alias       = "require" wsnlc* require-fact;
-require-statement-group:alias = "require" wsc* "(" (wsnlc | ",")*
+require-statement:alias       = "require" nl* require-fact;
+require-statement-group:alias = "require" "(" (nl | ",")*
                                 require-facts?
-                                (wsnlc | ",")* ")";
+                                (nl | ",")* ")";
 require                       = require-statement | require-statement-group;
 
-panic   = "panic" wsc* "(" (wsnlc | ",")* expression (wsnlc | ",")* ")";
-recover = "recover" wsc* "(" (wsnlc | ",")* ")";
+panic   = "panic" "(" (nl | ",")* expression (nl | ",")* ")";
+recover = "recover" "(" (nl | ",")* ")";
 
-block                  = "{" (wsnlc | ";")* statements? (wsnlc | ";")* "}";
-expression-group:alias = "(" wsnlc* expression wsnlc* ")";
+block                  = "{" (nl | ";")* statements? (nl | ";")* "}";
+expression-group:alias = "(" nl* expression nl* ")";
 
 primary-expression:alias = int
                          | float
@@ -391,7 +393,7 @@ minus                = "-";
 logical-not          = "!";
 binary-not           = "^";
 unary-operator:alias = plus | minus | logical-not | binary-not;
-unary-expression = unary-operator wsc* primary-expression | receive-op;
+unary-expression = unary-operator primary-expression | receive-op;
 
 mul        = "*";
 div        = "/";
@@ -432,16 +434,16 @@ operand3:alias = operand2 | binary2;
 operand4:alias = operand3 | binary3;
 operand5:alias = operand4 | binary4;
 
-binary0 = operand0 wsc* binary-op0 wsc* operand0;
-binary1 = operand1 wsc* binary-op1 wsc* operand1;
-binary2 = operand2 wsc* binary-op2 wsc* operand2;
-binary3 = operand3 wsc* binary-op3 wsc* operand3;
-binary4 = operand4 wsc* binary-op4 wsc* operand4;
-binary5 = operand5 wsc* binary-op5 wsc* operand5;
+binary0 = operand0 binary-op0 operand0;
+binary1 = operand1 binary-op1 operand1;
+binary2 = operand2 binary-op2 operand2;
+binary3 = operand3 binary-op3 operand3;
+binary4 = operand4 binary-op4 operand4;
+binary5 = operand5 binary-op5 operand5;
 
 binary-expression:alias = binary0 | binary1 | binary2 | binary3 | binary4 | binary5;
 
-ternary-expression = expression wsnlc* "?" wsnlc* expression wsnlc* ":" wsnlc* expression;
+ternary-expression = expression nl* "?" nl* expression nl* ":" nl* expression;
 
 expression:alias = primary-expression
                  | unary-expression
@@ -455,9 +457,9 @@ break              = "break";
 continue           = "continue";
 loop-control:alias = break | continue;
 
-in-expression   = static-symbol wsnlc* "in" wsnlc* (expression | range-expression);
+in-expression   = static-symbol nl* "in" nl* (expression | range-expression);
 loop-expression = expression | in-expression;
-loop            = "for" wsnlc* (block | loop-expression wsnlc* block);
+loop            = "for" nl* (block | loop-expression nl* block);
 
 /*
 a = b
@@ -469,11 +471,11 @@ set (
 )
 */
 assignable:alias      = symbol-expression | indexer;
-assign-capture        = assignable wsnlc* ("=" wsnlc*)? expression;
-assign-set:alias      = "set" wsnlc* assign-capture;
-assign-equal          = assignable wsnlc* "=" wsnlc* expression;
+assign-capture        = assignable nl* ("=" nl*)? expression;
+assign-set:alias      = "set" nl* assign-capture;
+assign-equal          = assignable nl* "=" nl* expression;
 assign-captures:alias = assign-capture (list-sep assign-capture)*;
-assign-group:alias    = "set" wsnlc* "(" (wsnlc | ",")* assign-captures? (wsnlc | ",")* ")";
+assign-group:alias    = "set" nl* "(" (nl | ",")* assign-captures? (nl | ",")* ")";
 assignment            = assign-set | assign-equal | assign-group;
 
 /*
@@ -492,14 +494,14 @@ let ~ (
         s t
 )
 */
-value-capture-fact:alias = symbol-expression wsnlc* ("=" wsnlc*)? expression;
+value-capture-fact:alias = symbol-expression nl* ("=" nl*)? expression;
 value-capture            = value-capture-fact;
-mutable-capture          = "~" wsnlc* value-capture-fact;
-value-definition         = "let" wsnlc* (value-capture | mutable-capture);
+mutable-capture          = "~" nl* value-capture-fact;
+value-definition         = "let" nl* (value-capture | mutable-capture);
 value-captures:alias     = value-capture (list-sep value-capture)*;
 mixed-captures:alias     = (value-capture | mutable-capture) (list-sep (value-capture | mutable-capture))*;
-value-definition-group   = "let" wsnlc* "(" (wsnlc | ",")* mixed-captures? (wsnlc | ",")* ")";
-mutable-definition-group = "let" wsnlc* "~" wsnlc* "(" (wsnlc | ",")* value-captures? (wsnlc | ",")* ")";
+value-definition-group   = "let" nl* "(" (nl | ",")* mixed-captures? (nl | ",")* ")";
+mutable-definition-group = "let" nl* "~" nl* "(" (nl | ",")* value-captures? (nl | ",")* ")";
 
 /*
 fn a() b
@@ -513,19 +515,19 @@ fn ~ (
         j()
 )
 */
-function-definition-fact:alias = static-symbol wsnlc* function-fact;
+function-definition-fact:alias = static-symbol nl* function-fact;
 function-capture               = function-definition-fact;
-effect-capture                 = "~" wsnlc* function-definition-fact;
-function-definition            = "fn" wsnlc* (function-capture | effect-capture);
+effect-capture                 = "~" nl* function-definition-fact;
+function-definition            = "fn" nl* (function-capture | effect-capture);
 function-captures:alias        = function-capture (list-sep function-capture)*;
 mixed-function-captures:alias  = (function-capture | effect-capture)
                                  (list-sep (function-capture | effect-capture))*;
-function-definition-group      = "fn" wsnlc* "(" (wsnlc | ",")*
+function-definition-group      = "fn" nl* "(" (nl | ",")*
                                  mixed-function-captures?
-                                 (wsnlc | ",")* ")";
-effect-definition-group        = "fn" wsnlc* "~" wsnlc* "(" (wsnlc | ",")*
+                                 (nl | ",")* ")";
+effect-definition-group        = "fn" nl* "~" nl* "(" (nl | ",")*
                                  function-captures?
-                                 (wsnlc | ",")* ")";
+                                 (nl | ",")* ")";
 
 definition:alias = value-definition
                  | value-definition-group
@@ -534,10 +536,10 @@ definition:alias = value-definition
                  | function-definition-group
                  | effect-definition-group;
 
-type-alias      = "type" wsnlc* "alias" wsnlc* static-symbol wsnlc* type-set;
-type-constraint = "type" wsnlc* static-symbol wsnlc* type-set;
+type-alias      = "type" nl* "alias" nl* static-symbol nl* type-set;
+type-constraint = "type" nl* static-symbol nl* type-set;
 
-statement-group:alias = "(" wsnlc* statement wsnlc* ")";
+statement-group:alias = "(" nl* statement nl* ")";
 
 statement:alias = send
                 | close
@@ -555,6 +557,6 @@ statement:alias = send
 
 shebang-command  = [^\n]*;
 shebang          = "#!" shebang-command "\n";
-sep:alias        = wsc* (";" | "\n") (wsnlc | ";")*;
+sep:alias        = (";" | "\n") (nl | ";")*;
 statements:alias = statement (sep statement)*;
-mml:root         = shebang? (wsnlc | ";")* statements? (wsnlc | ";")*;
+mml:root         = shebang? (nl | ";")* statements? (nl | ";")*;
