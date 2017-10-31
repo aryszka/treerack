@@ -24,7 +24,6 @@ type SequenceItem struct {
 }
 
 type Syntax struct {
-	trace        Trace
 	registry     *registry
 	initialized  bool
 	initFailed   bool
@@ -54,16 +53,7 @@ func duplicateDefinition(name string) error {
 }
 
 func NewSyntax() *Syntax {
-	return NewSyntaxTrace(nil)
-}
-
-func NewSyntaxTrace(t Trace) *Syntax {
-	if t == nil {
-		t = NopTrace{}
-	}
-
 	return &Syntax{
-		trace:    t,
 		registry: newRegistry(),
 	}
 }
@@ -227,7 +217,7 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	c := newContext(bufio.NewReader(r))
-	if err := parse(s.trace, s.parser, c); err != nil {
+	if err := parse(s.parser, c); err != nil {
 		return nil, err
 	}
 

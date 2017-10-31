@@ -162,24 +162,12 @@ func (d *choiceDefinition) builder() builder {
 func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 
-func (p *choiceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing choice", c.offset)
-
-	// TODO: don't add documentation
-	// if p.commit&Documentation != 0 {
-	// 	// t.Out1("fail, doc")
-	// 	c.fail(c.offset)
-	// 	return
-	// }
-
+func (p *choiceParser) parse(c *context) {
 	if c.fromStore(p.id) {
-		// t.Out1("found in store, match:")
 		return
 	}
 
 	if c.excluded(c.offset, p.id) {
-		// t.Out1("fail, excluded")
 		c.fail(c.offset)
 		return
 	}
@@ -202,7 +190,7 @@ func (p *choiceParser) parse(t Trace, c *context) {
 		// - it is also important to figure why disabling the failed elements breaks the parsing
 
 		for elementIndex < len(p.elements) {
-			p.elements[elementIndex].parse(t, c)
+			p.elements[elementIndex].parse(c)
 			elementIndex++
 
 			if !c.match || match && c.offset <= to {
@@ -226,11 +214,9 @@ func (p *choiceParser) parse(t Trace, c *context) {
 	if match {
 		c.success(to)
 		c.include(from, p.id)
-		// t.Out1("choice, success")
 		return
 	}
 
-	// t.Out1("fail")
 	c.store.setNoMatch(from, p.id)
 	c.fail(from)
 	c.include(from, p.id)

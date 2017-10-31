@@ -20,7 +20,7 @@ type definition interface {
 type parser interface {
 	nodeName() string
 	nodeID() int
-	parse(Trace, *context)
+	parse(*context)
 }
 
 type builder interface {
@@ -77,8 +77,8 @@ func sequenceItemNames(items []SequenceItem) []string {
 	return names
 }
 
-func parse(t Trace, p parser, c *context) error {
-	p.parse(t, c)
+func parse(p parser, c *context) error {
+	p.parse(c)
 	if c.readErr != nil {
 		return c.readErr
 	}

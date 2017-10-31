@@ -213,19 +213,9 @@ func (d *sequenceDefinition) builder() builder {
 func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }
 
-func (p *sequenceParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing sequence", c.offset)
-
-	// if p.commit&Documentation != 0 {
-	// 	// t.Out1("fail, doc")
-	// 	c.fail(c.offset)
-	// 	return
-	// }
-
+func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
 		if c.excluded(c.offset, p.id) {
-			// t.Out1("fail, excluded")
 			c.fail(c.offset)
 			return
 		}
@@ -241,7 +231,7 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 
 	for itemIndex < len(p.items) {
 		// TODO: is it ok to parse before max range check? what if max=0
-		p.items[itemIndex].parse(t, c)
+		p.items[itemIndex].parse(c)
 		if !c.match {
 			if currentCount < p.ranges[itemIndex][0] {
 				// c.store.setNoMatch(from, p.id)
@@ -251,7 +241,6 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 					c.include(from, p.id)
 				}
 
-				// t.Out1("fail, not enough items")
 				return
 			}
 
@@ -276,13 +265,11 @@ func (p *sequenceParser) parse(t Trace, c *context) {
 	if !p.allChars {
 		for _, includedBy := range p.includedBy {
 			if c.excluded(from, includedBy) {
-				// t.Out1("storing included", includedBy)
 				c.store.setMatch(from, includedBy, to)
 			}
 		}
 	}
 
-	// t.Out1("success")
 	c.store.setMatch(from, p.id, to)
 	c.success(to)
 

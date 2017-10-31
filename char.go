@@ -72,17 +72,12 @@ func (p *charParser) match(t rune) bool {
 	return p.not
 }
 
-func (p *charParser) parse(t Trace, c *context) {
-	// t = t.Extend(p.name)
-	// t.Out1("parsing", c.offset)
-
+func (p *charParser) parse(c *context) {
 	if tok, ok := c.token(); !ok || !p.match(tok) {
-		// t.Out1("fail")
 		c.fail(c.offset)
 		return
 	}
 
-	// t.Out1("success")
 	c.success(c.offset + 1)
 	for _, includedBy := range p.includedBy {
 		c.store.setMatch(c.offset, includedBy, c.offset+1)
