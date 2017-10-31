@@ -95,7 +95,7 @@ func defineClass(s *Syntax, name string, ct CommitType, n []*Node) error {
 		}
 	}
 
-	return s.Class(name, ct, not, chars, ranges)
+	return s.class(name, ct, not, chars, ranges)
 }
 
 func defineCharSequence(s *Syntax, name string, ct CommitType, charNodes []*Node) error {
@@ -104,7 +104,7 @@ func defineCharSequence(s *Syntax, name string, ct CommitType, charNodes []*Node
 		chars = append(chars, nodeChar(ci))
 	}
 
-	return s.CharSequence(name, ct, chars)
+	return s.charSequence(name, ct, chars)
 }
 
 func getQuantity(n *Node) (min int, max int, err error) {
@@ -148,7 +148,7 @@ func getQuantity(n *Node) (min int, max int, err error) {
 }
 
 func defineSymbol(s *Syntax, name string, ct CommitType, n *Node) error {
-	return s.Sequence(name, ct, SequenceItem{Name: n.Text()})
+	return s.sequence(name, ct, SequenceItem{Name: n.Text()})
 }
 
 func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
@@ -180,7 +180,7 @@ func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
 		items = append(items, item)
 	}
 
-	return s.Sequence(name, ct, items...)
+	return s.sequence(name, ct, items...)
 }
 
 func defineChoice(s *Syntax, name string, ct CommitType, n ...*Node) error {
@@ -190,14 +190,14 @@ func defineChoice(s *Syntax, name string, ct CommitType, n ...*Node) error {
 		return err
 	}
 
-	return s.Choice(name, ct, refs...)
+	return s.choice(name, ct, refs...)
 }
 
 func defineExpression(s *Syntax, name string, ct CommitType, expression *Node) error {
 	var err error
 	switch expression.Name {
 	case "any-char":
-		err = s.AnyChar(name, ct)
+		err = s.anyChar(name, ct)
 	case "char-class":
 		err = defineClass(s, name, ct, expression.Nodes)
 	case "char-sequence":

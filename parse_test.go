@@ -573,7 +573,7 @@ func TestUndefined(t *testing.T) {
 		t.Error(err)
 	}
 
-	stest := NewSyntax()
+	stest := &Syntax{}
 	err = define(stest, n)
 	if err != nil {
 		t.Error(err)

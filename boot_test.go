@@ -15,7 +15,7 @@ func parseWithSyntax(s *Syntax, f io.ReadSeeker) (*Node, error) {
 }
 
 func syntaxFromTree(n *Node) (*Syntax, error) {
-	s := NewSyntax()
+	s := &Syntax{}
 	if err := define(s, n); err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func TestBoot(t *testing.T) {
 		return
 	}
 
-	f, err := os.Open("treerack.treerack")
+	f, err := os.Open("syntax.treerack")
 	if err != nil {
 		t.Error(err)
 		return

@@ -97,7 +97,7 @@ func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err erro
 
 func defineBootAnything(s *Syntax, d []string) error {
 	ct := stringToCommitType(d[2])
-	return s.AnyChar(d[1], ct)
+	return s.anyChar(d[1], ct)
 }
 
 func defineBootClass(s *Syntax, d []string) error {
@@ -109,7 +109,7 @@ func defineBootClass(s *Syntax, d []string) error {
 		return err
 	}
 
-	return s.Class(name, ct, not, chars, ranges)
+	return s.class(name, ct, not, chars, ranges)
 }
 
 func defineBootCharSequence(s *Syntax, d []string) error {
@@ -121,7 +121,7 @@ func defineBootCharSequence(s *Syntax, d []string) error {
 		return err
 	}
 
-	return s.CharSequence(name, ct, chars)
+	return s.charSequence(name, ct, chars)
 }
 
 func splitQuantifiedSymbol(s string) (string, int, int) {
@@ -159,14 +159,14 @@ func defineBootSequence(s *Syntax, defs []string) error {
 	name := defs[1]
 	ct := stringToCommitType(defs[2])
 	items := namesToSequenceItemsQuantify(defs[3:])
-	return s.Sequence(name, ct, items...)
+	return s.sequence(name, ct, items...)
 }
 
 func defineBootChoice(s *Syntax, defs []string) error {
 	name := defs[1]
 	ct := stringToCommitType(defs[2])
 	items := defs[3:]
-	return s.Choice(name, ct, items...)
+	return s.choice(name, ct, items...)
 }
 
 func defineBoot(s *Syntax, defs []string) error {
@@ -197,7 +197,7 @@ func defineAllBoot(s *Syntax, defs [][]string) error {
 }
 
 func createBoot() (*Syntax, error) {
-	s := NewSyntax()
+	s := &Syntax{}
 	if err := defineAllBoot(s, bootSyntaxDefs); err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func bootSyntax() (*Syntax, error) {
 		return nil, err
 	}
 
-	f, err := os.Open("treerack.treerack")
+	f, err := os.Open("syntax.treerack")
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +223,6 @@ func bootSyntax() (*Syntax, error) {
 		return nil, err
 	}
 
-	s := NewSyntax()
+	s := &Syntax{}
 	return s, define(s, doc)
 }

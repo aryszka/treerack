@@ -56,20 +56,24 @@ func (p *charParser) builder() builder {
 	return p
 }
 
+func matchChars(chars []rune, ranges [][]rune, not bool, char rune) bool {
+	for _, ci := range chars {
+		if ci == char {
+			return !not
+		}
+	}
+
+	for _, ri := range ranges {
+		if char >= ri[0] && char <= ri[1] {
+			return !not
+		}
+	}
+
+	return not
+}
+
 func (p *charParser) match(t rune) bool {
-	for _, ci := range p.chars {
-		if ci == t {
-			return !p.not
-		}
-	}
-
-	for _, ri := range p.ranges {
-		if t >= ri[0] && t <= ri[1] {
-			return !p.not
-		}
-	}
-
-	return p.not
+	return matchChars(p.chars, p.ranges, p.not, t)
 }
 
 func (p *charParser) parse(c *context) {
@@ -86,17 +90,4 @@ func (p *charParser) parse(c *context) {
 
 func (p *charParser) build(c *context) ([]*Node, bool) {
 	panic("called char build")
-	// // TODO: how to remove this check
-	// t, ok := c.token()
-	// if !ok {
-	// 	panic("damaged parser context")
-	// }
-
-	// if !p.match(t) {
-	// 	return nil, false
-	// }
-
-	// // always alias
-	// c.offset++
-	// return nil, true
 }

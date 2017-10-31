@@ -46,21 +46,45 @@ var (
 	ErrRootWhitespace          = errors.New("root node cannot be a whitespace")
 	ErrNotImplemented          = errors.New("not implemented")
 	ErrMultipleRoots           = errors.New("multiple roots")
+	ErrInvalidSymbolName       = errors.New("invalid symbol name")
 )
+
+const symbolChars = "^\\\\ \\n\\t\\b\\f\\r\\v/.\\[\\]\\\"{}\\^+*?|():=;"
+
+func parseSymbolChars(c []rune) []rune {
+	_, chars, _, err := parseClass(c)
+	if err != nil {
+		panic(err)
+	}
+
+	return chars
+}
+
+var symbolCharRunes = parseSymbolChars([]rune(symbolChars))
 
 func duplicateDefinition(name string) error {
 	return fmt.Errorf("duplicate definition: %s", name)
 }
 
-func NewSyntax() *Syntax {
-	return &Syntax{
-		registry: newRegistry(),
+func isValidSymbol(n string) bool {
+	runes := []rune(n)
+	for _, r := range runes {
+		if !matchChars(symbolCharRunes, nil, true, r) {
+			return false
+		}
 	}
+
+	return true
+
 }
 
 func (s *Syntax) register(d definition) error {
 	if s.initialized {
 		return ErrSyntaxInitialized
+	}
+
+	if s.registry == nil {
+		s.registry = newRegistry()
 	}
 
 	if d.commitType()&Root != 0 {
@@ -90,8 +114,16 @@ func (s *Syntax) register(d definition) error {
 	return s.registry.setDefinition(d)
 }
 
+func (s *Syntax) anyChar(name string, ct CommitType) error {
+	return s.class(name, ct, true, nil, nil)
+}
+
 func (s *Syntax) AnyChar(name string, ct CommitType) error {
-	return s.Class(name, ct, true, nil, nil)
+	if !isValidSymbol(name) {
+		return ErrInvalidSymbolName
+	}
+
+	return s.anyChar(name, ct)
 }
 
 func childName(name string, childIndex int) string {
@@ -107,16 +139,24 @@ func namesToSequenceItems(n []string) []SequenceItem {
 	return si
 }
 
-func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
+func (s *Syntax) class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
 	cname := childName(name, 0)
 	if err := s.register(newChar(cname, not, chars, ranges)); err != nil {
 		return err
 	}
 
-	return s.Sequence(name, ct, SequenceItem{Name: cname})
+	return s.sequence(name, ct, SequenceItem{Name: cname})
 }
 
-func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
+func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, ranges [][]rune) error {
+	if !isValidSymbol(name) {
+		return ErrInvalidSymbolName
+	}
+
+	return s.class(name, ct, not, chars, ranges)
+}
+
+func (s *Syntax) charSequence(name string, ct CommitType, chars []rune) error {
 	var refs []string
 	for i, ci := range chars {
 		ref := childName(name, i)
@@ -126,15 +166,39 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 		}
 	}
 
-	return s.Sequence(name, ct|NoWhitespace, namesToSequenceItems(refs)...)
+	return s.sequence(name, ct|NoWhitespace, namesToSequenceItems(refs)...)
 }
 
-func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) error {
+func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
+	if !isValidSymbol(name) {
+		return ErrInvalidSymbolName
+	}
+
+	return s.charSequence(name, ct, chars)
+}
+
+func (s *Syntax) sequence(name string, ct CommitType, items ...SequenceItem) error {
 	return s.register(newSequence(name, ct, items))
 }
 
-func (s *Syntax) Choice(name string, ct CommitType, elements ...string) error {
+func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) error {
+	if !isValidSymbol(name) {
+		return ErrInvalidSymbolName
+	}
+
+	return s.sequence(name, ct, items...)
+}
+
+func (s *Syntax) choice(name string, ct CommitType, elements ...string) error {
 	return s.register(newChoice(name, ct, elements))
+}
+
+func (s *Syntax) Choice(name string, ct CommitType, elements ...string) error {
+	if !isValidSymbol(name) {
+		return ErrInvalidSymbolName
+	}
+
+	return s.choice(name, ct, elements...)
 }
 
 func (s *Syntax) Read(r io.Reader) error {

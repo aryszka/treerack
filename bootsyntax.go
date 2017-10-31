@@ -135,7 +135,7 @@ var bootSyntaxDefs = [][]string{{
 }, {
 	"choice", "terminal", "alias", "any-char", "char-class", "char-sequence",
 }, {
-	"class", "symbol-char", "alias", "^\\\\ \\n\\t\\b\\f\\r\\v\\b/.\\[\\]\\\"{}\\^+*?|():=;",
+	"class", "symbol-char", "alias", symbolChars,
 }, {
 	"sequence", "symbol-chars", "alias", "symbol-char:1:-1",
 }, {
