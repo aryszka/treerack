@@ -234,7 +234,6 @@ func (p *sequenceParser) parse(c *context) {
 		p.items[itemIndex].parse(c)
 		if !c.match {
 			if currentCount < p.ranges[itemIndex][0] {
-				// c.store.setNoMatch(from, p.id)
 				c.fail(from)
 
 				if !p.allChars {

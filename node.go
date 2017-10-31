@@ -11,6 +11,26 @@ type Node struct {
 	tokens     []rune
 }
 
+func mapNodes(m func(n *Node) *Node, n []*Node) []*Node {
+	var nn []*Node
+	for i := range n {
+		nn = append(nn, m(n[i]))
+	}
+
+	return nn
+}
+
+func filterNodes(f func(n *Node) bool, n []*Node) []*Node {
+	var nn []*Node
+	for i := range n {
+		if f(n[i]) {
+			nn = append(nn, n[i])
+		}
+	}
+
+	return nn
+}
+
 func newNode(name string, id int, from, to int, ct CommitType) *Node {
 	return &Node{
 		Name:       name,

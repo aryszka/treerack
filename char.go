@@ -82,10 +82,11 @@ func (p *charParser) parse(c *context) {
 		return
 	}
 
-	c.success(c.offset + 1)
 	for _, includedBy := range p.includedBy {
 		c.store.setMatch(c.offset, includedBy, c.offset+1)
 	}
+
+	c.success(c.offset + 1)
 }
 
 func (p *charParser) build(c *context) ([]*Node, bool) {

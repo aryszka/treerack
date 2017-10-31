@@ -78,6 +78,28 @@ func isValidSymbol(n string) bool {
 
 }
 
+func (s *Syntax) applyRoot(d definition) error {
+	explicitRoot := d.commitType()&Root != 0
+	if explicitRoot && s.explicitRoot {
+		return ErrMultipleRoots
+	}
+
+	if s.root != nil && (explicitRoot || !s.explicitRoot) {
+		s.root.setCommitType(s.root.commitType() &^ Root)
+	}
+
+	if explicitRoot || !s.explicitRoot {
+		s.root = d
+		s.root.setCommitType(s.root.commitType() | Root)
+	}
+
+	if explicitRoot {
+		s.explicitRoot = true
+	}
+
+	return nil
+}
+
 func (s *Syntax) register(d definition) error {
 	if s.initialized {
 		return ErrSyntaxInitialized
@@ -87,29 +109,9 @@ func (s *Syntax) register(d definition) error {
 		s.registry = newRegistry()
 	}
 
-	if d.commitType()&Root != 0 {
-		if s.explicitRoot {
-			return ErrMultipleRoots
-		}
-
-		if s.root != nil {
-			s.root.setCommitType(s.root.commitType() &^ Root)
-		}
-
-		s.root = d
-		s.root.setCommitType(s.root.commitType() | Root)
-		s.explicitRoot = true
-	} else if !s.explicitRoot {
-		if s.root != nil {
-			s.root.setCommitType(s.root.commitType() &^ Root)
-		}
-
-		s.root = d
-		s.root.setCommitType(s.root.commitType() | Root)
+	if err := s.applyRoot(d); err != nil {
+		return err
 	}
-
-	// TODO: verify that definition names match the symbol criteria, or figure a better naming for the
-	// whitespace
 
 	return s.registry.setDefinition(d)
 }

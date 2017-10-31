@@ -5,16 +5,8 @@ import "strconv"
 func dropComments(n *Node) *Node {
 	ncc := *n
 	nc := &ncc
-
-	nc.Nodes = nil
-	for _, ni := range n.Nodes {
-		if ni.Name == "comment" {
-			continue
-		}
-
-		nc.Nodes = append(nc.Nodes, dropComments(ni))
-	}
-
+	nc.Nodes = filterNodes(func(n *Node) bool { return n.Name != "comment" }, n.Nodes)
+	nc.Nodes = mapNodes(dropComments, nc.Nodes)
 	return nc
 }
 
@@ -58,21 +50,6 @@ func defineMember(s *Syntax, defaultName string, ct CommitType, n *Node) (string
 	default:
 		return defaultName, defineExpression(s, defaultName, ct, n)
 	}
-}
-
-func defineMembers(s *Syntax, name string, ct CommitType, n ...*Node) ([]string, error) {
-	var refs []string
-	for i, ni := range n {
-		nmi := childName(name, i)
-		ref, err := defineMember(s, nmi, ct, ni)
-		if err != nil {
-			return nil, err
-		}
-
-		refs = append(refs, ref)
-	}
-
-	return refs, nil
 }
 
 func defineClass(s *Syntax, name string, ct CommitType, n []*Node) error {
@@ -184,10 +161,16 @@ func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
 }
 
 func defineChoice(s *Syntax, name string, ct CommitType, n ...*Node) error {
-	nows := ct & NoWhitespace
-	refs, err := defineMembers(s, name, Alias|nows, n...)
-	if err != nil {
-		return err
+	var refs []string
+	memberCT := ct&NoWhitespace | Alias
+	for i, ni := range n {
+		nmi := childName(name, i)
+		ref, err := defineMember(s, nmi, memberCT, ni)
+		if err != nil {
+			return err
+		}
+
+		refs = append(refs, ref)
 	}
 
 	return s.choice(name, ct, refs...)
@@ -223,10 +206,6 @@ func defineDefinition(s *Syntax, n *Node) error {
 }
 
 func define(s *Syntax, n *Node) error {
-	if n.Name != "syntax" {
-		return ErrInvalidSyntax
-	}
-
 	n = dropComments(n)
 
 	for _, ni := range n.Nodes {
