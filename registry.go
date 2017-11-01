@@ -8,13 +8,19 @@ type registry struct {
 	parsers     map[string]parser
 }
 
-func newRegistry() *registry {
-	return &registry{
+func newRegistry(defs ...definition) *registry {
+	r := &registry{
 		ids:         make(map[string]int),
 		names:       make(map[int]string),
 		definitions: make(map[string]definition),
 		parsers:     make(map[string]parser),
 	}
+
+	for _, def := range defs {
+		r.setDefinition(def)
+	}
+
+	return r
 }
 
 func (r *registry) definition(name string) (definition, bool) {
@@ -44,4 +50,13 @@ func (r *registry) setDefinition(d definition) error {
 
 func (r *registry) setParser(p parser) {
 	r.parsers[p.nodeName()] = p
+}
+
+func (r *registry) getDefinitions() []definition {
+	var defs []definition
+	for _, def := range r.definitions {
+		defs = append(defs, def)
+	}
+
+	return defs
 }

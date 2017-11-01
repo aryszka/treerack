@@ -1,12 +1,14 @@
 package treerack
 
 type choiceDefinition struct {
-	name       string
-	id         int
-	commit     CommitType
-	elements   []string
-	includedBy []int
-	cbuilder   *choiceBuilder
+	name        string
+	id          int
+	commit      CommitType
+	elements    []string
+	includedBy  []int
+	cbuilder    *choiceBuilder
+	validated   bool
+	initialized bool
 }
 
 type choiceParser struct {
@@ -40,30 +42,34 @@ func (d *choiceDefinition) setID(id int)                { d.id = id }
 func (d *choiceDefinition) commitType() CommitType      { return d.commit }
 func (d *choiceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
-func (d *choiceDefinition) validate(r *registry, path *idSet) error {
+func (d *choiceDefinition) validate(r *registry) error {
+	if d.validated {
+		return nil
+	}
+
+	d.validated = true
+
 	for i := range d.elements {
-		if _, ok := r.definitions[d.elements[i]]; !ok {
+		e, ok := r.definitions[d.elements[i]]
+		if !ok {
 			return parserNotFound(d.elements[i])
+		}
+
+		if err := e.validate(r); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (d *choiceDefinition) normalize(r *registry, path *idSet) error {
-	if path.has(d.id) {
-		return nil
+func (d *choiceDefinition) init(r *registry) {
+	if d.initialized {
+		return
 	}
 
-	path.set(d.id)
-	for i := range d.elements {
-		r.definitions[d.elements[i]].normalize(r, path)
-	}
+	d.initialized = true
 
-	return nil
-}
-
-func (d *choiceDefinition) init(r *registry) error {
 	if d.cbuilder == nil {
 		d.cbuilder = &choiceBuilder{
 			name:       d.name,
@@ -74,21 +80,19 @@ func (d *choiceDefinition) init(r *registry) error {
 	}
 
 	for _, e := range d.elements {
-		// TODO: handle undefined reference
-		d.cbuilder.elements = append(d.cbuilder.elements, r.definitions[e].builder())
+		def := r.definitions[e]
+		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
+		def.init(r)
+		def.setIncludedBy(r, d.id)
 	}
-
-	parsers := &idSet{}
-	parsers.set(d.id)
-	return setItemsIncludedBy(r, d.elements, d.id, parsers)
 }
 
-func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
-	if parsers.has(d.id) {
-		return nil
+func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int) {
+	if intsContain(d.includedBy, includedBy) {
+		return
 	}
 
-	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+	d.includedBy = append(d.includedBy, includedBy)
 
 	if d.cbuilder == nil {
 		d.cbuilder = &choiceBuilder{
@@ -101,18 +105,19 @@ func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int, parsers *i
 
 	d.cbuilder.includedBy.set(includedBy)
 
-	parsers.set(d.id)
-	return setItemsIncludedBy(r, d.elements, includedBy, parsers)
+	for _, e := range d.elements {
+		r.definitions[e].setIncludedBy(r, includedBy)
+	}
 }
 
 // TODO:
 // - it may be possible to initialize the parsers non-recursively
 // - maybe the whole definition, parser and builder can be united
 
-func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
+func (d *choiceDefinition) parser(r *registry) parser {
 	p, ok := r.parser(d.name)
 	if ok {
-		return p, nil
+		return p
 	}
 
 	cp := &choiceParser{
@@ -125,8 +130,6 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 	r.setParser(cp)
 
 	var elements []parser
-	parsers.set(d.id)
-	defer parsers.unset(d.id)
 	for _, e := range d.elements {
 		element, ok := r.parser(e)
 		if ok {
@@ -134,16 +137,12 @@ func (d *choiceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
 			continue
 		}
 
-		element, err := r.definitions[e].parser(r, parsers)
-		if err != nil {
-			return nil, err
-		}
-
+		element = r.definitions[e].parser(r)
 		elements = append(elements, element)
 	}
 
 	cp.elements = elements
-	return cp, nil
+	return cp
 }
 
 func (d *choiceDefinition) builder() builder {

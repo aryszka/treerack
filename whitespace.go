@@ -12,9 +12,9 @@ func brokenRegistryError(err error) error {
 	return fmt.Errorf("broken registry: %v", err)
 }
 
-func splitWhitespaceDefs(all map[string]definition) ([]definition, []definition) {
+func splitWhitespaceDefs(defs []definition) ([]definition, []definition) {
 	var whitespaceDefs, nonWhitespaceDefs []definition
-	for _, def := range all {
+	for _, def := range defs {
 		if def.commitType()&Whitespace != 0 {
 			def.setCommitType(def.commitType() | Alias)
 			whitespaceDefs = append(whitespaceDefs, def)
@@ -54,13 +54,9 @@ func mergeWhitespaceDefs(ws []definition) definition {
 	return newChoice(whitespaceName, Alias, names)
 }
 
-// TODO: validate min and max
-
 func patchName(s ...string) string {
 	return strings.Join(s, ":")
 }
-
-// TODO: check what's more useful: update quantified char classes or not
 
 func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 	var (
@@ -113,7 +109,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 	return defs
 }
 
-func applyWhitespace(defs []definition) []definition {
+func applyWhitespaceToDefs(defs []definition) []definition {
 	var defsWS []definition
 	for _, def := range defs {
 		if def.commitType()&NoWhitespace != 0 {
@@ -133,7 +129,7 @@ func applyWhitespace(defs []definition) []definition {
 	return defsWS
 }
 
-func applyWhitespaceRoot(root definition) (definition, definition) {
+func applyWhitespaceToRoot(root definition) (definition, definition) {
 	original, name := root, root.nodeName()
 	wsName := patchName(name, "wsroot")
 
@@ -158,30 +154,34 @@ func applyWhitespaceRoot(root definition) (definition, definition) {
 	return original, root
 }
 
-func registerPatched(r *registry, defs ...definition) {
-	for _, def := range defs {
-		if err := r.setDefinition(def); err != nil {
-			panic(brokenRegistryError(err))
+func hasWhitespace(defs []definition) bool {
+	for i := range defs {
+		if defs[i].commitType()&Whitespace != 0 {
+			return true
 		}
 	}
+
+	return false
 }
 
-func initWhitespace(r *registry) *registry {
-	whitespaceDefs, defs := splitWhitespaceDefs(r.definitions)
-	if len(whitespaceDefs) == 0 {
-		return r
-	}
-
+func applyWhitespace(defs []definition) ([]definition, definition) {
+	whitespaceDefs, defs := splitWhitespaceDefs(defs)
 	whitespace := mergeWhitespaceDefs(whitespaceDefs)
-	defs = applyWhitespace(defs)
+
+	defs = applyWhitespaceToDefs(defs)
 
 	root, defs := splitRoot(defs)
-	originalRoot, root := applyWhitespaceRoot(root)
+	originalRoot, root := applyWhitespaceToRoot(root)
 
-	r = newRegistry()
-	registerPatched(r, whitespace)
-	registerPatched(r, whitespaceDefs...)
-	registerPatched(r, defs...)
-	registerPatched(r, originalRoot, root)
-	return r
+	defs = append(
+		append(
+			defs,
+			whitespaceDefs...,
+		),
+		whitespace,
+		originalRoot,
+		root,
+	)
+
+	return defs, root
 }

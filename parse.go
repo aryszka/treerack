@@ -9,11 +9,10 @@ type definition interface {
 	commitType() CommitType
 	setCommitType(CommitType)
 	setID(int)
-	validate(*registry, *idSet) error
-	normalize(*registry, *idSet) error
-	init(*registry) error
-	setIncludedBy(*registry, int, *idSet) error
-	parser(*registry, *idSet) (parser, error)
+	validate(*registry) error
+	init(*registry)
+	setIncludedBy(*registry, int)
+	parser(*registry) parser
 	builder() builder
 }
 
@@ -45,36 +44,6 @@ func intsContain(is []int, i int) bool {
 	}
 
 	return false
-}
-
-func appendIfMissing(is []int, i int) []int {
-	if intsContain(is, i) {
-		return is
-	}
-
-	return append(is, i)
-}
-
-func setItemsIncludedBy(r *registry, items []string, includedBy int, parsers *idSet) error {
-	for _, item := range items {
-		di, ok := r.definition(item)
-		if !ok {
-			return ErrNoParsersDefined
-		}
-
-		di.setIncludedBy(r, includedBy, parsers)
-	}
-
-	return nil
-}
-
-func sequenceItemNames(items []SequenceItem) []string {
-	names := make([]string, len(items))
-	for i := range items {
-		names[i] = items[i].Name
-	}
-
-	return names
 }
 
 func parse(p parser, c *context) error {

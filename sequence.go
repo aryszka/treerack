@@ -1,14 +1,16 @@
 package treerack
 
 type sequenceDefinition struct {
-	name       string
-	id         int
-	commit     CommitType
-	items      []SequenceItem
-	includedBy []int
-	ranges     [][]int
-	sbuilder   *sequenceBuilder
-	allChars   bool
+	name        string
+	id          int
+	commit      CommitType
+	items       []SequenceItem
+	includedBy  []int
+	ranges      [][]int
+	sbuilder    *sequenceBuilder
+	allChars    bool
+	validated   bool
+	initialized bool
 }
 
 type sequenceParser struct {
@@ -46,36 +48,22 @@ func (d *sequenceDefinition) setID(id int)                { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType      { return d.commit }
 func (d *sequenceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
-func (d *sequenceDefinition) validate(r *registry, path *idSet) error {
-	for i := range d.items {
-		if _, ok := r.definition(d.items[i].Name); !ok {
-			return parserNotFound(d.items[i].Name)
-		}
-	}
-
-	return nil
-}
-
-func (d *sequenceDefinition) normalizeItems() {
-	for i := range d.items {
-		if d.items[i].Min == 0 && d.items[i].Max == 0 {
-			d.items[i].Min, d.items[i].Max = 1, 1
-		} else if d.items[i].Max == 0 {
-			d.items[i].Max = -1
-		}
-	}
-}
-
-func (d *sequenceDefinition) normalize(r *registry, path *idSet) error {
-	if path.has(d.id) {
+func (d *sequenceDefinition) validate(r *registry) error {
+	if d.validated {
 		return nil
 	}
 
-	// d.normalizeItems()
+	d.validated = true
 
-	path.set(d.id)
 	for i := range d.items {
-		r.definitions[d.items[i].Name].normalize(r, path)
+		ii, ok := r.definition(d.items[i].Name)
+		if !ok {
+			return parserNotFound(d.items[i].Name)
+		}
+
+		if err := ii.validate(r); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -85,7 +73,21 @@ func (d *sequenceDefinition) includeItems() bool {
 	return len(d.items) == 1 && d.items[0].Min == 1 && d.items[0].Max == 1
 }
 
-func (d *sequenceDefinition) init(r *registry) error {
+func (d *sequenceDefinition) init(r *registry) {
+	if d.initialized {
+		return
+	}
+
+	d.initialized = true
+
+	for i := range d.items {
+		if d.items[i].Min == 0 && d.items[i].Max == 0 {
+			d.items[i].Min, d.items[i].Max = 1, 1
+		} else if d.items[i].Max == 0 {
+			d.items[i].Max = -1
+		}
+	}
+
 	if d.sbuilder == nil {
 		d.sbuilder = &sequenceBuilder{
 			name:       d.name,
@@ -113,6 +115,8 @@ func (d *sequenceDefinition) init(r *registry) error {
 				allChars = false
 			}
 		}
+
+		def.init(r)
 	}
 
 	d.sbuilder.ranges = d.ranges
@@ -120,20 +124,18 @@ func (d *sequenceDefinition) init(r *registry) error {
 	d.allChars = allChars
 
 	if !d.includeItems() {
-		return nil
+		return
 	}
 
-	parsers := &idSet{}
-	parsers.set(d.id)
-	return setItemsIncludedBy(r, sequenceItemNames(d.items), d.id, parsers)
+	r.definitions[d.items[0].Name].setIncludedBy(r, d.id)
 }
 
-func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
-	if parsers.has(d.id) {
-		return nil
+func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int) {
+	if intsContain(d.includedBy, includedBy) {
+		return
 	}
 
-	d.includedBy = appendIfMissing(d.includedBy, includedBy)
+	d.includedBy = append(d.includedBy, includedBy)
 
 	if d.sbuilder == nil {
 		d.sbuilder = &sequenceBuilder{
@@ -147,21 +149,16 @@ func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int, parsers 
 	d.sbuilder.includedBy.set(includedBy)
 
 	if !d.includeItems() {
-		return nil
+		return
 	}
 
-	parsers.set(d.id)
-	return setItemsIncludedBy(r, sequenceItemNames(d.items), includedBy, parsers)
+	r.definitions[d.items[0].Name].setIncludedBy(r, includedBy)
 }
 
-func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error) {
-	if parsers.has(d.id) {
-		panic(cannotIncludeParsers(d.name))
-	}
-
+func (d *sequenceDefinition) parser(r *registry) parser {
 	p, ok := r.parser(d.name)
 	if ok {
-		return p, nil
+		return p
 	}
 
 	sp := &sequenceParser{
@@ -175,8 +172,6 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 	r.setParser(sp)
 
 	var items []parser
-	parsers.set(d.id)
-	defer parsers.unset(d.id)
 	for _, item := range d.items {
 		pi, ok := r.parser(item.Name)
 		if ok {
@@ -184,17 +179,13 @@ func (d *sequenceDefinition) parser(r *registry, parsers *idSet) (parser, error)
 			continue
 		}
 
-		pi, err := r.definitions[item.Name].parser(r, parsers)
-		if err != nil {
-			return nil, err
-		}
-
+		pi = r.definitions[item.Name].parser(r)
 		items = append(items, pi)
 	}
 
 	sp.items = items
 	sp.ranges = d.ranges
-	return sp, nil
+	return sp
 }
 
 func (d *sequenceDefinition) builder() builder {

@@ -234,35 +234,22 @@ func (s *Syntax) Init() error {
 		return ErrRootWhitespace
 	}
 
-	s.registry = initWhitespace(s.registry)
+	defs := s.registry.getDefinitions()
 
-	for _, def := range s.registry.definitions {
-		if def.commitType()&Root != 0 {
-			s.root = def
-			break
-		}
+	if hasWhitespace(defs) {
+		defs, s.root = applyWhitespace(defs)
+		s.registry = newRegistry(defs...)
 	}
 
-	if err := s.root.validate(s.registry, &idSet{}); err != nil {
-		return err
-	}
-
-	if err := s.root.normalize(s.registry, &idSet{}); err != nil {
-		return err
-	}
-
-	for _, p := range s.registry.definitions {
-		p.init(s.registry)
-	}
-
-	var err error
-	s.parser, err = s.root.parser(s.registry, &idSet{})
-	if err != nil {
+	if err := s.root.validate(s.registry); err != nil {
 		s.initFailed = true
 		return err
 	}
 
+	s.root.init(s.registry)
+	s.parser = s.root.parser(s.registry)
 	s.builder = s.root.builder()
+
 	s.initialized = true
 	return nil
 }

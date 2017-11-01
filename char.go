@@ -23,33 +23,30 @@ func newChar(
 	}
 }
 
-func (p *charParser) nodeName() string                  { return p.name }
-func (p *charParser) setNodeName(n string)              { p.name = n }
-func (p *charParser) nodeID() int                       { return p.id }
-func (p *charParser) setID(id int)                      { p.id = id }
-func (p *charParser) commitType() CommitType            { return Alias }
-func (p *charParser) setCommitType(ct CommitType)       {}
-func (p *charParser) validate(*registry, *idSet) error  { return nil }
-func (p *charParser) normalize(*registry, *idSet) error { return nil }
+func (p *charParser) nodeName() string            { return p.name }
+func (p *charParser) setNodeName(n string)        { p.name = n }
+func (p *charParser) nodeID() int                 { return p.id }
+func (p *charParser) setID(id int)                { p.id = id }
+func (p *charParser) commitType() CommitType      { return Alias }
+func (p *charParser) setCommitType(ct CommitType) {}
+func (p *charParser) validate(*registry) error    { return nil }
+func (p *charParser) init(*registry)              {}
 
-func (p *charParser) init(r *registry) error { return nil }
-
-func (p *charParser) setIncludedBy(r *registry, includedBy int, parsers *idSet) error {
-	p.includedBy = appendIfMissing(p.includedBy, includedBy)
-	return nil
-}
-
-func (p *charParser) parser(r *registry, parsers *idSet) (parser, error) {
-	if parsers.has(p.id) {
-		panic(cannotIncludeParsers(p.name))
+func (p *charParser) setIncludedBy(r *registry, includedBy int) {
+	if intsContain(p.includedBy, includedBy) {
+		return
 	}
 
+	p.includedBy = append(p.includedBy, includedBy)
+}
+
+func (p *charParser) parser(r *registry) parser {
 	if _, ok := r.parser(p.name); ok {
-		return p, nil
+		return p
 	}
 
 	r.setParser(p)
-	return p, nil
+	return p
 }
 
 func (p *charParser) builder() builder {
