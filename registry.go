@@ -28,11 +28,6 @@ func (r *registry) definition(name string) (definition, bool) {
 	return d, ok
 }
 
-func (r *registry) parser(name string) (parser, bool) {
-	p, ok := r.parsers[name]
-	return p, ok
-}
-
 func (r *registry) setDefinition(d definition) error {
 	if _, ok := r.definitions[d.nodeName()]; ok {
 		return duplicateDefinition(d.nodeName())
@@ -46,10 +41,6 @@ func (r *registry) setDefinition(d definition) error {
 
 	r.definitions[d.nodeName()] = d
 	return nil
-}
-
-func (r *registry) setParser(p parser) {
-	r.parsers[p.nodeName()] = p
 }
 
 func (r *registry) getDefinitions() []definition {

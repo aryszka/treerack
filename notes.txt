@@ -22,6 +22,8 @@ code generation go:
 - char matches can be generated into switches
 code generation js
 documentation flag
+support custom tokenization
+streaming
 
 [problems]
 can the root be an alias? check the commit mechanism

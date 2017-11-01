@@ -5,9 +5,11 @@ type sequenceDefinition struct {
 	id          int
 	commit      CommitType
 	items       []SequenceItem
+	itemDefs    []definition
 	includedBy  []int
 	ranges      [][]int
 	sbuilder    *sequenceBuilder
+	sparser     *sequenceParser
 	allChars    bool
 	validated   bool
 	initialized bool
@@ -54,7 +56,6 @@ func (d *sequenceDefinition) validate(r *registry) error {
 	}
 
 	d.validated = true
-
 	for i := range d.items {
 		ii, ok := r.definition(d.items[i].Name)
 		if !ok {
@@ -70,34 +71,23 @@ func (d *sequenceDefinition) validate(r *registry) error {
 }
 
 func (d *sequenceDefinition) includeItems() bool {
-	return len(d.items) == 1 && d.items[0].Min == 1 && d.items[0].Max == 1
+	return len(d.items) == 1 && d.items[0].Max == 1
 }
 
-func (d *sequenceDefinition) init(r *registry) {
-	if d.initialized {
+func (d *sequenceDefinition) ensureBuilder() {
+	if d.sbuilder != nil {
 		return
 	}
 
-	d.initialized = true
-
-	for i := range d.items {
-		if d.items[i].Min == 0 && d.items[i].Max == 0 {
-			d.items[i].Min, d.items[i].Max = 1, 1
-		} else if d.items[i].Max == 0 {
-			d.items[i].Max = -1
-		}
+	d.sbuilder = &sequenceBuilder{
+		name:       d.name,
+		id:         d.id,
+		commit:     d.commit,
+		includedBy: &idSet{},
 	}
+}
 
-	if d.sbuilder == nil {
-		d.sbuilder = &sequenceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
-	}
-
-	allChars := true
+func (d *sequenceDefinition) initRanges() {
 	for _, item := range d.items {
 		if item.Min == 0 && item.Max == 0 {
 			item.Min, item.Max = 1, 1
@@ -106,103 +96,86 @@ func (d *sequenceDefinition) init(r *registry) {
 		}
 
 		d.ranges = append(d.ranges, []int{item.Min, item.Max})
+	}
+}
 
+func (d *sequenceDefinition) initItems(r *registry) {
+	allChars := true
+	for _, item := range d.items {
 		def := r.definitions[item.Name]
+		d.itemDefs = append(d.itemDefs, def)
+		def.init(r)
 		d.sbuilder.items = append(d.sbuilder.items, def.builder())
-
 		if allChars {
 			if _, isChar := def.(*charParser); !isChar {
 				allChars = false
 			}
 		}
-
-		def.init(r)
 	}
 
-	d.sbuilder.ranges = d.ranges
 	d.sbuilder.allChars = allChars
 	d.allChars = allChars
+}
 
-	if !d.includeItems() {
+func (d *sequenceDefinition) init(r *registry) {
+	if d.initialized {
 		return
 	}
 
-	r.definitions[d.items[0].Name].setIncludedBy(r, d.id)
+	d.initialized = true
+	d.initRanges()
+	d.ensureBuilder()
+	d.sbuilder.ranges = d.ranges
+	d.initItems(r)
+	if d.includeItems() {
+		d.itemDefs[0].setIncludedBy(d.id)
+	}
 }
 
-func (d *sequenceDefinition) setIncludedBy(r *registry, includedBy int) {
+func (d *sequenceDefinition) setIncludedBy(includedBy int) {
 	if intsContain(d.includedBy, includedBy) {
 		return
 	}
 
 	d.includedBy = append(d.includedBy, includedBy)
-
-	if d.sbuilder == nil {
-		d.sbuilder = &sequenceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
-	}
-
+	d.ensureBuilder()
 	d.sbuilder.includedBy.set(includedBy)
-
-	if !d.includeItems() {
-		return
+	if d.includeItems() {
+		d.itemDefs[0].setIncludedBy(includedBy)
 	}
-
-	r.definitions[d.items[0].Name].setIncludedBy(r, includedBy)
 }
 
-func (d *sequenceDefinition) parser(r *registry) parser {
-	p, ok := r.parser(d.name)
-	if ok {
-		return p
-	}
-
-	sp := &sequenceParser{
+func (d *sequenceDefinition) createParser() {
+	d.sparser = &sequenceParser{
 		name:       d.name,
 		id:         d.id,
 		commit:     d.commit,
 		includedBy: d.includedBy,
 		allChars:   d.allChars,
+		ranges:     d.ranges,
 	}
-
-	r.setParser(sp)
-
-	var items []parser
-	for _, item := range d.items {
-		pi, ok := r.parser(item.Name)
-		if ok {
-			items = append(items, pi)
-			continue
-		}
-
-		pi = r.definitions[item.Name].parser(r)
-		items = append(items, pi)
-	}
-
-	sp.items = items
-	sp.ranges = d.ranges
-	return sp
 }
 
-func (d *sequenceDefinition) builder() builder {
-	if d.sbuilder == nil {
-		d.sbuilder = &sequenceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
+func (d *sequenceDefinition) createItemParsers() {
+	for _, item := range d.itemDefs {
+		pi := item.parser()
+		d.sparser.items = append(d.sparser.items, pi)
 	}
-
-	return d.sbuilder
 }
 
-func (p *sequenceParser) nodeName() string { return p.name }
-func (p *sequenceParser) nodeID() int      { return p.id }
+func (d *sequenceDefinition) parser() parser {
+	if d.sparser != nil {
+		return d.sparser
+	}
+
+	d.createParser()
+	d.createItemParsers()
+	return d.sparser
+}
+
+func (d *sequenceDefinition) builder() builder { return d.sbuilder }
+func (p *sequenceParser) nodeName() string     { return p.name }
+func (p *sequenceParser) nodeID() int          { return p.id }
 
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {

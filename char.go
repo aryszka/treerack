@@ -32,7 +32,7 @@ func (p *charParser) setCommitType(ct CommitType) {}
 func (p *charParser) validate(*registry) error    { return nil }
 func (p *charParser) init(*registry)              {}
 
-func (p *charParser) setIncludedBy(r *registry, includedBy int) {
+func (p *charParser) setIncludedBy(includedBy int) {
 	if intsContain(p.includedBy, includedBy) {
 		return
 	}
@@ -40,18 +40,8 @@ func (p *charParser) setIncludedBy(r *registry, includedBy int) {
 	p.includedBy = append(p.includedBy, includedBy)
 }
 
-func (p *charParser) parser(r *registry) parser {
-	if _, ok := r.parser(p.name); ok {
-		return p
-	}
-
-	r.setParser(p)
-	return p
-}
-
-func (p *charParser) builder() builder {
-	return p
-}
+func (p *charParser) parser() parser   { return p }
+func (p *charParser) builder() builder { return p }
 
 func matchChars(chars []rune, ranges [][]rune, not bool, char rune) bool {
 	for _, ci := range chars {

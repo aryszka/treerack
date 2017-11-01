@@ -5,8 +5,10 @@ type choiceDefinition struct {
 	id          int
 	commit      CommitType
 	elements    []string
+	elementDefs []definition
 	includedBy  []int
 	cbuilder    *choiceBuilder
+	cparser     *choiceParser
 	validated   bool
 	initialized bool
 }
@@ -48,7 +50,6 @@ func (d *choiceDefinition) validate(r *registry) error {
 	}
 
 	d.validated = true
-
 	for i := range d.elements {
 		e, ok := r.definitions[d.elements[i]]
 		if !ok {
@@ -63,103 +64,81 @@ func (d *choiceDefinition) validate(r *registry) error {
 	return nil
 }
 
+func (d *choiceDefinition) ensureBuilder() {
+	if d.cbuilder != nil {
+		return
+	}
+
+	d.cbuilder = &choiceBuilder{
+		name:       d.name,
+		id:         d.id,
+		commit:     d.commit,
+		includedBy: &idSet{},
+	}
+}
+
+func (d *choiceDefinition) initElements(r *registry) {
+	for _, e := range d.elements {
+		def := r.definitions[e]
+		d.elementDefs = append(d.elementDefs, def)
+		def.init(r)
+		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
+		def.setIncludedBy(d.id)
+	}
+}
+
 func (d *choiceDefinition) init(r *registry) {
 	if d.initialized {
 		return
 	}
 
 	d.initialized = true
-
-	if d.cbuilder == nil {
-		d.cbuilder = &choiceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
-	}
-
-	for _, e := range d.elements {
-		def := r.definitions[e]
-		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
-		def.init(r)
-		def.setIncludedBy(r, d.id)
-	}
+	d.ensureBuilder()
+	d.initElements(r)
 }
 
-func (d *choiceDefinition) setIncludedBy(r *registry, includedBy int) {
+func (d *choiceDefinition) setIncludedBy(includedBy int) {
 	if intsContain(d.includedBy, includedBy) {
 		return
 	}
 
 	d.includedBy = append(d.includedBy, includedBy)
-
-	if d.cbuilder == nil {
-		d.cbuilder = &choiceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
-	}
-
+	d.ensureBuilder()
 	d.cbuilder.includedBy.set(includedBy)
-
-	for _, e := range d.elements {
-		r.definitions[e].setIncludedBy(r, includedBy)
+	for _, e := range d.elementDefs {
+		e.setIncludedBy(includedBy)
 	}
 }
 
-// TODO:
-// - it may be possible to initialize the parsers non-recursively
-// - maybe the whole definition, parser and builder can be united
-
-func (d *choiceDefinition) parser(r *registry) parser {
-	p, ok := r.parser(d.name)
-	if ok {
-		return p
-	}
-
-	cp := &choiceParser{
+func (d *choiceDefinition) createParser() {
+	d.cparser = &choiceParser{
 		name:       d.name,
 		id:         d.id,
 		commit:     d.commit,
 		includedBy: d.includedBy,
 	}
-
-	r.setParser(cp)
-
-	var elements []parser
-	for _, e := range d.elements {
-		element, ok := r.parser(e)
-		if ok {
-			elements = append(elements, element)
-			continue
-		}
-
-		element = r.definitions[e].parser(r)
-		elements = append(elements, element)
-	}
-
-	cp.elements = elements
-	return cp
 }
 
-func (d *choiceDefinition) builder() builder {
-	if d.cbuilder == nil {
-		d.cbuilder = &choiceBuilder{
-			name:       d.name,
-			id:         d.id,
-			commit:     d.commit,
-			includedBy: &idSet{},
-		}
+func (d *choiceDefinition) createElementParsers() {
+	for _, def := range d.elementDefs {
+		element := def.parser()
+		d.cparser.elements = append(d.cparser.elements, element)
 	}
-
-	return d.cbuilder
 }
 
-func (p *choiceParser) nodeName() string { return p.name }
-func (p *choiceParser) nodeID() int      { return p.id }
+func (d *choiceDefinition) parser() parser {
+	if d.cparser != nil {
+		return d.cparser
+	}
+
+	d.createParser()
+	d.createElementParsers()
+	return d.cparser
+}
+
+func (d *choiceDefinition) builder() builder { return d.cbuilder }
+func (p *choiceParser) nodeName() string     { return p.name }
+func (p *choiceParser) nodeID() int          { return p.id }
 
 func (p *choiceParser) parse(c *context) {
 	if c.fromStore(p.id) {

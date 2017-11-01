@@ -33,6 +33,32 @@ type Syntax struct {
 	builder      builder
 }
 
+type definition interface {
+	nodeName() string
+	setNodeName(string)
+	nodeID() int
+	commitType() CommitType
+	setCommitType(CommitType)
+	setID(int)
+	validate(*registry) error
+	init(*registry)
+	setIncludedBy(int)
+	parser() parser
+	builder() builder
+}
+
+type parser interface {
+	nodeName() string
+	nodeID() int
+	parse(*context)
+}
+
+type builder interface {
+	nodeName() string
+	nodeID() int
+	build(*context) ([]*Node, bool)
+}
+
 var (
 	ErrSyntaxInitialized       = errors.New("syntax initialized")
 	ErrInitFailed              = errors.New("init failed")
@@ -49,6 +75,14 @@ var (
 	ErrInvalidSymbolName       = errors.New("invalid symbol name")
 )
 
+func duplicateDefinition(name string) error {
+	return fmt.Errorf("duplicate definition: %s", name)
+}
+
+func parserNotFound(name string) error {
+	return fmt.Errorf("parser not found: %s", name)
+}
+
 const symbolChars = "^\\\\ \\n\\t\\b\\f\\r\\v/.\\[\\]\\\"{}\\^+*?|():=;"
 
 func parseSymbolChars(c []rune) []rune {
@@ -62,10 +96,6 @@ func parseSymbolChars(c []rune) []rune {
 
 var symbolCharRunes = parseSymbolChars([]rune(symbolChars))
 
-func duplicateDefinition(name string) error {
-	return fmt.Errorf("duplicate definition: %s", name)
-}
-
 func isValidSymbol(n string) bool {
 	runes := []rune(n)
 	for _, r := range runes {
@@ -76,6 +106,16 @@ func isValidSymbol(n string) bool {
 
 	return true
 
+}
+
+func intsContain(is []int, i int) bool {
+	for _, ii := range is {
+		if ii == i {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Syntax) applyRoot(d definition) error {
@@ -247,7 +287,7 @@ func (s *Syntax) Init() error {
 	}
 
 	s.root.init(s.registry)
-	s.parser = s.root.parser(s.registry)
+	s.parser = s.root.parser()
 	s.builder = s.root.builder()
 
 	s.initialized = true
@@ -262,17 +302,30 @@ func (s *Syntax) Generate(w io.Writer) error {
 	return ErrNotImplemented
 }
 
-// TODO: optimize top sequences to save memory, or just support streaming, or combine the two
-
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
 	c := newContext(bufio.NewReader(r))
-	if err := parse(s.parser, c); err != nil {
+	s.parser.parse(c)
+	if c.readErr != nil {
+		return nil, c.readErr
+	}
+
+	if !c.match {
+		return nil, ErrInvalidInput
+	}
+
+	if err := c.finalize(s.parser); err != nil {
 		return nil, err
 	}
 
-	return build(s.builder, c), nil
+	c.offset = 0
+	n, ok := s.builder.build(c)
+	if !ok || len(n) != 1 {
+		panic("damaged parse result")
+	}
+
+	return n[0], nil
 }
