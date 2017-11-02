@@ -69,7 +69,7 @@ func (d *sequenceDefinition) validate(r *registry) error {
 	return nil
 }
 
-func (d *sequenceDefinition) ensureBuilder() {
+func (d *sequenceDefinition) createBuilder() {
 	if d.sbuilder != nil {
 		return
 	}
@@ -78,6 +78,7 @@ func (d *sequenceDefinition) ensureBuilder() {
 		name:   d.name,
 		id:     d.id,
 		commit: d.commit,
+		ranges: d.ranges,
 	}
 }
 
@@ -111,10 +112,6 @@ func (d *sequenceDefinition) initItems(r *registry) {
 	d.allChars = allChars
 }
 
-func (d *sequenceDefinition) canHaveSpecializations() bool {
-	return len(d.items) == 1 && d.items[0].Max == 1
-}
-
 func (d *sequenceDefinition) init(r *registry) {
 	if d.initialized {
 		return
@@ -122,12 +119,8 @@ func (d *sequenceDefinition) init(r *registry) {
 
 	d.initialized = true
 	d.initRanges()
-	d.ensureBuilder()
-	d.sbuilder.ranges = d.ranges
+	d.createBuilder()
 	d.initItems(r)
-	if d.canHaveSpecializations() {
-		d.itemDefs[0].addGeneralization(d.id)
-	}
 }
 
 func (d *sequenceDefinition) addGeneralization(g int) {
@@ -136,10 +129,6 @@ func (d *sequenceDefinition) addGeneralization(g int) {
 	}
 
 	d.generalizations = append(d.generalizations, g)
-	d.ensureBuilder()
-	if d.canHaveSpecializations() {
-		d.itemDefs[0].addGeneralization(g)
-	}
 }
 
 func (d *sequenceDefinition) createParser() {

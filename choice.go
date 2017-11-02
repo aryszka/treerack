@@ -63,7 +63,7 @@ func (d *choiceDefinition) validate(r *registry) error {
 	return nil
 }
 
-func (d *choiceDefinition) ensureBuilder() {
+func (d *choiceDefinition) createBuilder() {
 	if d.cbuilder != nil {
 		return
 	}
@@ -91,7 +91,7 @@ func (d *choiceDefinition) init(r *registry) {
 	}
 
 	d.initialized = true
-	d.ensureBuilder()
+	d.createBuilder()
 	d.initOptions(r)
 }
 
@@ -101,7 +101,6 @@ func (d *choiceDefinition) addGeneralization(g int) {
 	}
 
 	d.generalizations = append(d.generalizations, g)
-	d.ensureBuilder()
 	for _, e := range d.optionDefs {
 		e.addGeneralization(g)
 	}
