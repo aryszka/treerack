@@ -313,11 +313,7 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 		return nil, c.readErr
 	}
 
-	if !c.matchLast {
-		return nil, ErrInvalidInput
-	}
-
-	if err := c.finalize(s.parser); err != nil {
+	if err := c.finalizeParse(s.parser.nodeID()); err != nil {
 		return nil, err
 	}
 

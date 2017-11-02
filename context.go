@@ -29,7 +29,7 @@ func (c *context) read() bool {
 		return false
 	}
 
-	t, n, err := c.reader.ReadRune()
+	token, n, err := c.reader.ReadRune()
 	if err != nil {
 		if err == io.EOF {
 			if n == 0 {
@@ -44,12 +44,12 @@ func (c *context) read() bool {
 
 	c.readOffset++
 
-	if t == unicode.ReplacementChar {
+	if token == unicode.ReplacementChar {
 		c.readErr = ErrInvalidUnicodeCharacter
 		return false
 	}
 
-	c.tokens = append(c.tokens, t)
+	c.tokens = append(c.tokens, token)
 	return true
 }
 
@@ -133,8 +133,11 @@ func (c *context) fail(offset int) {
 	c.matchLast = false
 }
 
-func (c *context) finalize(root parser) error {
-	rootID := root.nodeID()
+func (c *context) finalizeParse(rootID int) error {
+	if !c.matchLast {
+		return ErrInvalidInput
+	}
+
 	to, match, found := c.results.getMatch(0, rootID)
 	if !found || !match || to < c.readOffset {
 		return ErrUnexpectedCharacter
