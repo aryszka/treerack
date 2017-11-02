@@ -70,7 +70,7 @@ func (p *charParser) parse(c *context) {
 	}
 
 	for _, includedBy := range p.includedBy {
-		c.store.setMatch(c.offset, includedBy, c.offset+1)
+		c.results.setMatch(c.offset, includedBy, c.offset+1)
 	}
 
 	c.success(c.offset + 1)

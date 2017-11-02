@@ -141,16 +141,16 @@ func (p *choiceParser) nodeName() string     { return p.name }
 func (p *choiceParser) nodeID() int          { return p.id }
 
 func (p *choiceParser) parse(c *context) {
-	if c.fromStore(p.id) {
+	if c.fromResults(p.id) {
 		return
 	}
 
-	if c.excluded(c.offset, p.id) {
+	if c.pending(c.offset, p.id) {
 		c.fail(c.offset)
 		return
 	}
 
-	c.exclude(c.offset, p.id)
+	c.markPending(c.offset, p.id)
 	from := c.offset
 	to := c.offset
 
@@ -171,7 +171,7 @@ func (p *choiceParser) parse(c *context) {
 			p.elements[elementIndex].parse(c)
 			elementIndex++
 
-			if !c.match || match && c.offset <= to {
+			if !c.matchLast || match && c.offset <= to {
 				c.offset = from
 				continue
 			}
@@ -181,7 +181,7 @@ func (p *choiceParser) parse(c *context) {
 			to = c.offset
 			c.offset = from
 
-			c.store.setMatch(from, p.id, to)
+			c.results.setMatch(from, p.id, to)
 		}
 
 		if !foundMatch {
@@ -191,27 +191,27 @@ func (p *choiceParser) parse(c *context) {
 
 	if match {
 		c.success(to)
-		c.include(from, p.id)
+		c.unmarkPending(from, p.id)
 		return
 	}
 
-	c.store.setNoMatch(from, p.id)
+	c.results.setNoMatch(from, p.id)
 	c.fail(from)
-	c.include(from, p.id)
+	c.unmarkPending(from, p.id)
 }
 
 func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
 func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.store.takeMatch(c.offset, b.id, b.includedBy)
+	to, ok := c.results.takeMatch(c.offset, b.id, b.includedBy)
 	if !ok {
 		return nil, false
 	}
 
 	var element builder
 	for _, e := range b.elements {
-		if c.store.hasMatchTo(c.offset, e.nodeID(), to) {
+		if c.results.hasMatchTo(c.offset, e.nodeID(), to) {
 			element = e
 			break
 		}

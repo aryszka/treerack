@@ -11,17 +11,16 @@ type context struct {
 	readOffset int
 	readErr    error
 	eof        bool
-	store      *store
+	results    *results
 	tokens     []rune
-	match      bool
-	node       *Node
-	isExcluded [][]int
+	matchLast  bool
+	isPending  [][]int
 }
 
 func newContext(r io.RuneReader) *context {
 	return &context{
-		reader: r,
-		store:  &store{},
+		reader:  r,
+		results: &results{},
 	}
 }
 
@@ -64,13 +63,13 @@ func (c *context) token() (rune, bool) {
 	return c.tokens[c.offset], true
 }
 
-func (c *context) excluded(offset int, id int) bool {
-	if len(c.isExcluded) <= id {
+func (c *context) pending(offset int, id int) bool {
+	if len(c.isPending) <= id {
 		return false
 	}
 
-	for i := range c.isExcluded[id] {
-		if c.isExcluded[id][i] == offset {
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == offset {
 			return true
 		}
 	}
@@ -78,40 +77,39 @@ func (c *context) excluded(offset int, id int) bool {
 	return false
 }
 
-func (c *context) exclude(offset int, id int) {
-	if len(c.isExcluded) <= id {
-		if cap(c.isExcluded) > id {
-			c.isExcluded = c.isExcluded[:id+1]
+func (c *context) markPending(offset int, id int) {
+	if len(c.isPending) <= id {
+		if cap(c.isPending) > id {
+			c.isPending = c.isPending[:id+1]
 		} else {
-			c.isExcluded = c.isExcluded[:cap(c.isExcluded)]
-			for i := cap(c.isExcluded); i <= id; i++ {
-				c.isExcluded = append(c.isExcluded, nil)
+			c.isPending = c.isPending[:cap(c.isPending)]
+			for i := cap(c.isPending); i <= id; i++ {
+				c.isPending = append(c.isPending, nil)
 			}
 		}
 	}
 
-	for i := range c.isExcluded[id] {
-		if c.isExcluded[id][i] == -1 {
-			c.isExcluded[id][i] = offset
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == -1 {
+			c.isPending[id][i] = offset
 			return
 		}
 	}
 
-	c.isExcluded[id] = append(c.isExcluded[id], offset)
+	c.isPending[id] = append(c.isPending[id], offset)
 }
 
-func (c *context) include(offset int, id int) {
-	for i := range c.isExcluded[id] {
-		if c.isExcluded[id][i] == offset {
-			// c.isExcluded[id] = append(c.isExcluded[id][:i], c.isExcluded[id][i+1:]...)
-			c.isExcluded[id][i] = -1
+func (c *context) unmarkPending(offset int, id int) {
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == offset {
+			c.isPending[id][i] = -1
 			break
 		}
 	}
 }
 
-func (c *context) fromStore(id int) bool {
-	to, m, ok := c.store.getMatch(c.offset, id)
+func (c *context) fromResults(id int) bool {
+	to, m, ok := c.results.getMatch(c.offset, id)
 	if !ok {
 		return false
 	}
@@ -127,17 +125,17 @@ func (c *context) fromStore(id int) bool {
 
 func (c *context) success(to int) {
 	c.offset = to
-	c.match = true
+	c.matchLast = true
 }
 
 func (c *context) fail(offset int) {
 	c.offset = offset
-	c.match = false
+	c.matchLast = false
 }
 
 func (c *context) finalize(root parser) error {
 	rootID := root.nodeID()
-	to, match, found := c.store.getMatch(0, rootID)
+	to, match, found := c.results.getMatch(0, rootID)
 	if !found || !match || to < c.readOffset {
 		return ErrUnexpectedCharacter
 	}

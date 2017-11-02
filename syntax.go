@@ -313,7 +313,7 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 		return nil, c.readErr
 	}
 
-	if !c.match {
+	if !c.matchLast {
 		return nil, ErrInvalidInput
 	}
 

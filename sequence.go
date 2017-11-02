@@ -179,12 +179,12 @@ func (p *sequenceParser) nodeID() int          { return p.id }
 
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
-		if c.excluded(c.offset, p.id) {
+		if c.pending(c.offset, p.id) {
 			c.fail(c.offset)
 			return
 		}
 
-		c.exclude(c.offset, p.id)
+		c.markPending(c.offset, p.id)
 	}
 
 	itemIndex := 0
@@ -196,12 +196,12 @@ func (p *sequenceParser) parse(c *context) {
 	for itemIndex < len(p.items) {
 		// TODO: is it ok to parse before max range check? what if max=0
 		p.items[itemIndex].parse(c)
-		if !c.match {
+		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
 				c.fail(from)
 
 				if !p.allChars {
-					c.include(from, p.id)
+					c.unmarkPending(from, p.id)
 				}
 
 				return
@@ -227,17 +227,17 @@ func (p *sequenceParser) parse(c *context) {
 
 	if !p.allChars {
 		for _, includedBy := range p.includedBy {
-			if c.excluded(from, includedBy) {
-				c.store.setMatch(from, includedBy, to)
+			if c.pending(from, includedBy) {
+				c.results.setMatch(from, includedBy, to)
 			}
 		}
 	}
 
-	c.store.setMatch(from, p.id, to)
+	c.results.setMatch(from, p.id, to)
 	c.success(to)
 
 	if !p.allChars {
-		c.include(from, p.id)
+		c.unmarkPending(from, p.id)
 	}
 }
 
@@ -245,7 +245,7 @@ func (b *sequenceBuilder) nodeName() string { return b.name }
 func (b *sequenceBuilder) nodeID() int      { return b.id }
 
 func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.store.takeMatch(c.offset, b.id, b.includedBy)
+	to, ok := c.results.takeMatch(c.offset, b.id, b.includedBy)
 	if !ok {
 		return nil, false
 	}

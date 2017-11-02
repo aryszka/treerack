@@ -1,11 +1,11 @@
 package treerack
 
-type store struct {
+type results struct {
 	noMatch []*idSet
 	match   [][]int
 }
 
-func (s *store) getMatch(offset, id int) (int, bool, bool) {
+func (s *results) getMatch(offset, id int) (int, bool, bool) {
 	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
 		return 0, false, true
 	}
@@ -33,7 +33,7 @@ func (s *store) getMatch(offset, id int) (int, bool, bool) {
 	return to, found, found
 }
 
-func (s *store) hasMatchTo(offset, id, to int) bool {
+func (s *results) hasMatchTo(offset, id, to int) bool {
 	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
 		return false
 	}
@@ -55,7 +55,7 @@ func (s *store) hasMatchTo(offset, id, to int) bool {
 	return false
 }
 
-func (s *store) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
+func (s *results) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
 	if len(s.match) <= offset {
 		return 0, false
 	}
@@ -91,7 +91,7 @@ func (s *store) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
 	return to, found
 }
 
-func (s *store) takeMatchLength(offset, id, to int) {
+func (s *results) takeMatchLength(offset, id, to int) {
 	if len(s.match) <= offset {
 		return
 	}
@@ -104,7 +104,7 @@ func (s *store) takeMatchLength(offset, id, to int) {
 	}
 }
 
-func (s *store) ensureOffset(offset int) {
+func (s *results) ensureOffset(offset int) {
 	if len(s.match) > offset {
 		return
 	}
@@ -120,7 +120,7 @@ func (s *store) ensureOffset(offset int) {
 	}
 }
 
-func (s *store) setMatch(offset, id, to int) {
+func (s *results) setMatch(offset, id, to int) {
 	s.ensureOffset(offset)
 	for i := 0; i < len(s.match[offset]); i += 2 {
 		if s.match[offset][i] != id || s.match[offset][i+1] != to {
@@ -133,7 +133,7 @@ func (s *store) setMatch(offset, id, to int) {
 	s.match[offset] = append(s.match[offset], id, to)
 }
 
-func (s *store) setNoMatch(offset, id int) {
+func (s *results) setNoMatch(offset, id int) {
 	if len(s.match) > offset {
 		for i := 0; i < len(s.match[offset]); i += 2 {
 			if s.match[offset][i] != id {
