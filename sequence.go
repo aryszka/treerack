@@ -1,38 +1,37 @@
 package treerack
 
 type sequenceDefinition struct {
-	name        string
-	id          int
-	commit      CommitType
-	items       []SequenceItem
-	itemDefs    []definition
-	includedBy  []int
-	ranges      [][]int
-	sbuilder    *sequenceBuilder
-	sparser     *sequenceParser
-	allChars    bool
-	validated   bool
-	initialized bool
+	name            string
+	id              int
+	commit          CommitType
+	items           []SequenceItem
+	itemDefs        []definition
+	ranges          [][]int
+	generalizations []int
+	sbuilder        *sequenceBuilder
+	sparser         *sequenceParser
+	allChars        bool
+	validated       bool
+	initialized     bool
 }
 
 type sequenceParser struct {
-	name       string
-	id         int
-	commit     CommitType
-	items      []parser
-	ranges     [][]int
-	includedBy []int
-	allChars   bool
+	name            string
+	id              int
+	commit          CommitType
+	items           []parser
+	ranges          [][]int
+	generalizations []int
+	allChars        bool
 }
 
 type sequenceBuilder struct {
-	name       string
-	id         int
-	commit     CommitType
-	items      []builder
-	ranges     [][]int
-	includedBy *idSet
-	allChars   bool
+	name     string
+	id       int
+	commit   CommitType
+	items    []builder
+	ranges   [][]int
+	allChars bool
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
@@ -70,20 +69,15 @@ func (d *sequenceDefinition) validate(r *registry) error {
 	return nil
 }
 
-func (d *sequenceDefinition) includeItems() bool {
-	return len(d.items) == 1 && d.items[0].Max == 1
-}
-
 func (d *sequenceDefinition) ensureBuilder() {
 	if d.sbuilder != nil {
 		return
 	}
 
 	d.sbuilder = &sequenceBuilder{
-		name:       d.name,
-		id:         d.id,
-		commit:     d.commit,
-		includedBy: &idSet{},
+		name:   d.name,
+		id:     d.id,
+		commit: d.commit,
 	}
 }
 
@@ -117,6 +111,10 @@ func (d *sequenceDefinition) initItems(r *registry) {
 	d.allChars = allChars
 }
 
+func (d *sequenceDefinition) canHaveSpecializations() bool {
+	return len(d.items) == 1 && d.items[0].Max == 1
+}
+
 func (d *sequenceDefinition) init(r *registry) {
 	if d.initialized {
 		return
@@ -127,32 +125,31 @@ func (d *sequenceDefinition) init(r *registry) {
 	d.ensureBuilder()
 	d.sbuilder.ranges = d.ranges
 	d.initItems(r)
-	if d.includeItems() {
-		d.itemDefs[0].setIncludedBy(d.id)
+	if d.canHaveSpecializations() {
+		d.itemDefs[0].addGeneralization(d.id)
 	}
 }
 
-func (d *sequenceDefinition) setIncludedBy(includedBy int) {
-	if intsContain(d.includedBy, includedBy) {
+func (d *sequenceDefinition) addGeneralization(g int) {
+	if intsContain(d.generalizations, g) {
 		return
 	}
 
-	d.includedBy = append(d.includedBy, includedBy)
+	d.generalizations = append(d.generalizations, g)
 	d.ensureBuilder()
-	d.sbuilder.includedBy.set(includedBy)
-	if d.includeItems() {
-		d.itemDefs[0].setIncludedBy(includedBy)
+	if d.canHaveSpecializations() {
+		d.itemDefs[0].addGeneralization(g)
 	}
 }
 
 func (d *sequenceDefinition) createParser() {
 	d.sparser = &sequenceParser{
-		name:       d.name,
-		id:         d.id,
-		commit:     d.commit,
-		includedBy: d.includedBy,
-		allChars:   d.allChars,
-		ranges:     d.ranges,
+		name:            d.name,
+		id:              d.id,
+		commit:          d.commit,
+		generalizations: d.generalizations,
+		allChars:        d.allChars,
+		ranges:          d.ranges,
 	}
 }
 
@@ -174,8 +171,9 @@ func (d *sequenceDefinition) parser() parser {
 }
 
 func (d *sequenceDefinition) builder() builder { return d.sbuilder }
-func (p *sequenceParser) nodeName() string     { return p.name }
-func (p *sequenceParser) nodeID() int          { return p.id }
+
+func (p *sequenceParser) nodeName() string { return p.name }
+func (p *sequenceParser) nodeID() int      { return p.id }
 
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
@@ -194,7 +192,9 @@ func (p *sequenceParser) parse(c *context) {
 	var parsed bool
 
 	for itemIndex < len(p.items) {
-		// TODO: is it ok to parse before max range check? what if max=0
+		// TODO:
+		// - is it ok to parse before max range check? what if max=0
+		// - validate, normalize and document max=0
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
@@ -219,23 +219,21 @@ func (p *sequenceParser) parse(c *context) {
 
 		to = c.offset
 
+		// TODO: max cannot be 0
 		if !parsed || p.ranges[itemIndex][1] >= 0 && currentCount == p.ranges[itemIndex][1] {
 			itemIndex++
 			currentCount = 0
 		}
 	}
 
-	if !p.allChars {
-		for _, includedBy := range p.includedBy {
-			if c.pending(from, includedBy) {
-				c.results.setMatch(from, includedBy, to)
-			}
+	for _, g := range p.generalizations {
+		if c.pending(from, g) {
+			c.results.setMatch(from, g, to)
 		}
 	}
 
 	c.results.setMatch(from, p.id, to)
 	c.success(to)
-
 	if !p.allChars {
 		c.unmarkPending(from, p.id)
 	}
@@ -245,12 +243,11 @@ func (b *sequenceBuilder) nodeName() string { return b.name }
 func (b *sequenceBuilder) nodeID() int      { return b.id }
 
 func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.results.takeMatch(c.offset, b.id, b.includedBy)
+	to, ok := c.results.takeMatch(c.offset, b.id)
 	if !ok {
 		return nil, false
 	}
 
-	// maybe something like this:
 	if to-c.offset == 0 && b.commit&Alias != 0 {
 		return nil, true
 	}
@@ -289,8 +286,6 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 			currentCount = 0
 			continue
 		}
-
-		// maybe can handle the commit type differently
 
 		parsed := c.offset > itemFrom
 		if parsed || len(n) > 0 {

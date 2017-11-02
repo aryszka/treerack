@@ -204,15 +204,15 @@ var bootSyntaxDefs = [][]string{{
 }, {
 	"sequence", "sequence", "none", "item", "items-continue",
 }, {
-	"choice", "element", "alias", "terminal", "symbol", "group", "sequence",
+	"choice", "option", "alias", "terminal", "symbol", "group", "sequence",
 }, {
 	"chars", "pipe", "alias", "|",
 }, {
-	"sequence", "element-continue", "alias", "wscs", "pipe", "wscs", "element",
+	"sequence", "option-continue", "alias", "wscs", "pipe", "wscs", "option",
 }, {
-	"sequence", "elements-continue", "alias", "element-continue:1:-1",
+	"sequence", "options-continue", "alias", "option-continue:1:-1",
 }, {
-	"sequence", "choice", "none", "element", "elements-continue",
+	"sequence", "choice", "none", "option", "options-continue",
 }, {
 	"choice",
 	"expression",

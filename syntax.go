@@ -42,7 +42,7 @@ type definition interface {
 	setID(int)
 	validate(*registry) error
 	init(*registry)
-	setIncludedBy(int)
+	addGeneralization(int)
 	parser() parser
 	builder() builder
 }
@@ -231,16 +231,16 @@ func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) err
 	return s.sequence(name, ct, items...)
 }
 
-func (s *Syntax) choice(name string, ct CommitType, elements ...string) error {
-	return s.register(newChoice(name, ct, elements))
+func (s *Syntax) choice(name string, ct CommitType, options ...string) error {
+	return s.register(newChoice(name, ct, options))
 }
 
-func (s *Syntax) Choice(name string, ct CommitType, elements ...string) error {
+func (s *Syntax) Choice(name string, ct CommitType, options ...string) error {
 	if !isValidSymbol(name) {
 		return ErrInvalidSymbolName
 	}
 
-	return s.choice(name, ct, elements...)
+	return s.choice(name, ct, options...)
 }
 
 func (s *Syntax) Read(r io.Reader) error {

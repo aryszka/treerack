@@ -1,39 +1,38 @@
 package treerack
 
 type choiceDefinition struct {
-	name        string
-	id          int
-	commit      CommitType
-	elements    []string
-	elementDefs []definition
-	includedBy  []int
-	cbuilder    *choiceBuilder
-	cparser     *choiceParser
-	validated   bool
-	initialized bool
+	name            string
+	id              int
+	commit          CommitType
+	options         []string
+	optionDefs      []definition
+	generalizations []int
+	cparser         *choiceParser
+	cbuilder        *choiceBuilder
+	validated       bool
+	initialized     bool
 }
 
 type choiceParser struct {
-	name       string
-	id         int
-	commit     CommitType
-	elements   []parser
-	includedBy []int
+	name            string
+	id              int
+	commit          CommitType
+	options         []parser
+	generalizations []int
 }
 
 type choiceBuilder struct {
-	name       string
-	id         int
-	commit     CommitType
-	elements   []builder
-	includedBy *idSet
+	name    string
+	id      int
+	commit  CommitType
+	options []builder
 }
 
-func newChoice(name string, ct CommitType, elements []string) *choiceDefinition {
+func newChoice(name string, ct CommitType, options []string) *choiceDefinition {
 	return &choiceDefinition{
-		name:     name,
-		commit:   ct,
-		elements: elements,
+		name:    name,
+		commit:  ct,
+		options: options,
 	}
 }
 
@@ -50,10 +49,10 @@ func (d *choiceDefinition) validate(r *registry) error {
 	}
 
 	d.validated = true
-	for i := range d.elements {
-		e, ok := r.definitions[d.elements[i]]
+	for i := range d.options {
+		e, ok := r.definitions[d.options[i]]
 		if !ok {
-			return parserNotFound(d.elements[i])
+			return parserNotFound(d.options[i])
 		}
 
 		if err := e.validate(r); err != nil {
@@ -70,20 +69,19 @@ func (d *choiceDefinition) ensureBuilder() {
 	}
 
 	d.cbuilder = &choiceBuilder{
-		name:       d.name,
-		id:         d.id,
-		commit:     d.commit,
-		includedBy: &idSet{},
+		name:   d.name,
+		id:     d.id,
+		commit: d.commit,
 	}
 }
 
-func (d *choiceDefinition) initElements(r *registry) {
-	for _, e := range d.elements {
+func (d *choiceDefinition) initOptions(r *registry) {
+	for _, e := range d.options {
 		def := r.definitions[e]
-		d.elementDefs = append(d.elementDefs, def)
+		d.optionDefs = append(d.optionDefs, def)
 		def.init(r)
-		d.cbuilder.elements = append(d.cbuilder.elements, def.builder())
-		def.setIncludedBy(d.id)
+		d.cbuilder.options = append(d.cbuilder.options, def.builder())
+		def.addGeneralization(d.id)
 	}
 }
 
@@ -94,35 +92,34 @@ func (d *choiceDefinition) init(r *registry) {
 
 	d.initialized = true
 	d.ensureBuilder()
-	d.initElements(r)
+	d.initOptions(r)
 }
 
-func (d *choiceDefinition) setIncludedBy(includedBy int) {
-	if intsContain(d.includedBy, includedBy) {
+func (d *choiceDefinition) addGeneralization(g int) {
+	if intsContain(d.generalizations, g) {
 		return
 	}
 
-	d.includedBy = append(d.includedBy, includedBy)
+	d.generalizations = append(d.generalizations, g)
 	d.ensureBuilder()
-	d.cbuilder.includedBy.set(includedBy)
-	for _, e := range d.elementDefs {
-		e.setIncludedBy(includedBy)
+	for _, e := range d.optionDefs {
+		e.addGeneralization(g)
 	}
 }
 
 func (d *choiceDefinition) createParser() {
 	d.cparser = &choiceParser{
-		name:       d.name,
-		id:         d.id,
-		commit:     d.commit,
-		includedBy: d.includedBy,
+		name:            d.name,
+		id:              d.id,
+		commit:          d.commit,
+		generalizations: d.generalizations,
 	}
 }
 
-func (d *choiceDefinition) createElementParsers() {
-	for _, def := range d.elementDefs {
-		element := def.parser()
-		d.cparser.elements = append(d.cparser.elements, element)
+func (d *choiceDefinition) createOptionParsers() {
+	for _, def := range d.optionDefs {
+		option := def.parser()
+		d.cparser.options = append(d.cparser.options, option)
 	}
 }
 
@@ -132,13 +129,14 @@ func (d *choiceDefinition) parser() parser {
 	}
 
 	d.createParser()
-	d.createElementParsers()
+	d.createOptionParsers()
 	return d.cparser
 }
 
 func (d *choiceDefinition) builder() builder { return d.cbuilder }
-func (p *choiceParser) nodeName() string     { return p.name }
-func (p *choiceParser) nodeID() int          { return p.id }
+
+func (p *choiceParser) nodeName() string { return p.name }
+func (p *choiceParser) nodeID() int      { return p.id }
 
 func (p *choiceParser) parse(c *context) {
 	if c.fromResults(p.id) {
@@ -155,21 +153,21 @@ func (p *choiceParser) parse(c *context) {
 	to := c.offset
 
 	var match bool
-	var elementIndex int
+	var optionIndex int
 	var foundMatch bool
 
 	for {
 		foundMatch = false
-		elementIndex = 0
+		optionIndex = 0
 
 		// TODO:
 		// - avoid double parsing by setting first-from-store in the context, prepare in advance to
 		// know whether it can be it's own item
-		// - it is also important to figure why disabling the failed elements breaks the parsing
+		// - it is also important to figure why disabling the failed options breaks the parsing
 
-		for elementIndex < len(p.elements) {
-			p.elements[elementIndex].parse(c)
-			elementIndex++
+		for optionIndex < len(p.options) {
+			p.options[optionIndex].parse(c)
+			optionIndex++
 
 			if !c.matchLast || match && c.offset <= to {
 				c.offset = from
@@ -204,26 +202,26 @@ func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
 func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.results.takeMatch(c.offset, b.id, b.includedBy)
+	to, ok := c.results.takeMatch(c.offset, b.id)
 	if !ok {
 		return nil, false
 	}
 
-	var element builder
-	for _, e := range b.elements {
+	var option builder
+	for _, e := range b.options {
 		if c.results.hasMatchTo(c.offset, e.nodeID(), to) {
-			element = e
+			option = e
 			break
 		}
 	}
 
-	if element == nil {
+	if option == nil {
 		panic("damaged parse result")
 	}
 
 	from := c.offset
 
-	n, ok := element.build(c)
+	n, ok := option.build(c)
 	if !ok {
 		panic("damaged parse result")
 	}

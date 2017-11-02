@@ -43,10 +43,10 @@ quantity:alias    = count-quantifier
 item:nows = (terminal | symbol | group) quantity?;
 sequence  = item+;
 
-element:alias = terminal | symbol | group | sequence;
+option:alias = terminal | symbol | group | sequence;
 
 // DOC: how the order matters
-choice = element ("|" element)+;
+choice = option ("|" option)+;
 
 // DOC: not having 'not' needs some tricks sometimes
 

@@ -55,7 +55,7 @@ func (s *results) hasMatchTo(offset, id, to int) bool {
 	return false
 }
 
-func (s *results) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
+func (s *results) takeMatch(offset, id int) (int, bool) {
 	if len(s.match) <= offset {
 		return 0, false
 	}
@@ -81,27 +81,9 @@ func (s *results) takeMatch(offset, id int, includedBy *idSet) (int, bool) {
 
 	if found && to-offset > 0 {
 		s.match[offset][index] = -1
-		for i := 0; i < len(s.match[offset]); i += 2 {
-			if includedBy.has(s.match[offset][i]) && s.match[offset][i+1] == to {
-				s.match[offset][i] = -1
-			}
-		}
 	}
 
 	return to, found
-}
-
-func (s *results) takeMatchLength(offset, id, to int) {
-	if len(s.match) <= offset {
-		return
-	}
-
-	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] == id && s.match[offset][i+1] == to {
-			s.match[offset][i] = -1
-			return
-		}
-	}
 }
 
 func (s *results) ensureOffset(offset int) {

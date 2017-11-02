@@ -1,12 +1,12 @@
 package treerack
 
 type charParser struct {
-	name       string
-	id         int
-	not        bool
-	chars      []rune
-	ranges     [][]rune
-	includedBy []int
+	name            string
+	id              int
+	not             bool
+	chars           []rune
+	ranges          [][]rune
+	generalizations []int
 }
 
 func newChar(
@@ -32,12 +32,12 @@ func (p *charParser) setCommitType(ct CommitType) {}
 func (p *charParser) validate(*registry) error    { return nil }
 func (p *charParser) init(*registry)              {}
 
-func (p *charParser) setIncludedBy(includedBy int) {
-	if intsContain(p.includedBy, includedBy) {
+func (p *charParser) addGeneralization(g int) {
+	if intsContain(p.generalizations, g) {
 		return
 	}
 
-	p.includedBy = append(p.includedBy, includedBy)
+	p.generalizations = append(p.generalizations, g)
 }
 
 func (p *charParser) parser() parser   { return p }
@@ -67,10 +67,6 @@ func (p *charParser) parse(c *context) {
 	if tok, ok := c.token(); !ok || !p.match(tok) {
 		c.fail(c.offset)
 		return
-	}
-
-	for _, includedBy := range p.includedBy {
-		c.results.setMatch(c.offset, includedBy, c.offset+1)
 	}
 
 	c.success(c.offset + 1)
