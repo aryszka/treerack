@@ -43,27 +43,28 @@ func checkNode(t *testing.T, ignorePosition bool, left, right *Node) {
 		return
 	}
 
-	if len(left.Nodes) != len(right.Nodes) {
-		t.Error("length doesn't match", left.Name, len(left.Nodes), len(right.Nodes))
+	lnodes, rnodes := left.Nodes, right.Nodes
+	if len(lnodes) != len(rnodes) {
+		t.Error("length doesn't match", left.Name, len(lnodes), len(rnodes))
 		t.Log(left)
 		t.Log(right)
 		for {
-			if len(left.Nodes) > 0 {
-				t.Log("<", left.Nodes[0])
-				left.Nodes = left.Nodes[1:]
+			if len(lnodes) > 0 {
+				t.Log("<", lnodes[0])
+				lnodes = lnodes[1:]
 			}
 
-			if len(right.Nodes) > 0 {
-				t.Log(">", right.Nodes[0])
-				right.Nodes = right.Nodes[1:]
+			if len(rnodes) > 0 {
+				t.Log(">", rnodes[0])
+				rnodes = rnodes[1:]
 			}
 
-			if len(left.Nodes) == 0 && len(right.Nodes) == 0 {
+			if len(lnodes) == 0 && len(rnodes) == 0 {
 				break
 			}
 		}
 		return
 	}
 
-	checkNodes(t, ignorePosition, left.Nodes, right.Nodes)
+	checkNodes(t, ignorePosition, lnodes, rnodes)
 }

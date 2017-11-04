@@ -15,9 +15,18 @@ type testItem struct {
 	ignorePosition bool
 }
 
-func runTestsSyntax(t *testing.T, s *Syntax, tests []testItem) {
+func runTestsGetSyntax(t *testing.T, getSyntax func(t *testing.T) *Syntax, tests []testItem) {
+	var s *Syntax
 	for _, test := range tests {
 		t.Run(test.title, func(t *testing.T) {
+			if s == nil {
+				s = getSyntax(t)
+			}
+
+			if t.Failed() {
+				return
+			}
+
 			b := bytes.NewBufferString(test.text)
 
 			start := time.Now()
@@ -43,22 +52,32 @@ func runTestsSyntax(t *testing.T, s *Syntax, tests []testItem) {
 	}
 }
 
+func runTestsSyntax(t *testing.T, s *Syntax, tests []testItem) {
+	runTestsGetSyntax(t, func(*testing.T) *Syntax { return s }, tests)
+}
+
 func runTests(t *testing.T, syntax string, tests []testItem) {
-	s, err := openSyntaxString(syntax)
-	if err != nil {
-		t.Error(err)
-		return
+	getSyntax := func(t *testing.T) *Syntax {
+		s, err := openSyntaxString(syntax)
+		if err != nil {
+			t.Error(err)
+		}
+
+		return s
 	}
 
-	runTestsSyntax(t, s, tests)
+	runTestsGetSyntax(t, getSyntax, tests)
 }
 
 func runTestsFile(t *testing.T, file string, tests []testItem) {
-	s, err := openSyntaxFile(file)
-	if err != nil {
-		t.Error(err)
-		return
+	getSyntax := func(t *testing.T) *Syntax {
+		s, err := openSyntaxFile(file)
+		if err != nil {
+			t.Error(err)
+		}
+
+		return s
 	}
 
-	runTestsSyntax(t, s, tests)
+	runTestsGetSyntax(t, getSyntax, tests)
 }

@@ -5,120 +5,39 @@ type results struct {
 	match   [][]int
 }
 
-func (s *results) getMatch(offset, id int) (int, bool, bool) {
-	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
-		return 0, false, true
-	}
-
-	if len(s.match) <= offset {
-		return 0, false, false
-	}
-
-	var (
-		found bool
-		to    int
-	)
-
-	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] != id {
-			continue
-		}
-
-		found = true
-		if s.match[offset][i+1] > to {
-			to = s.match[offset][i+1]
-		}
-	}
-
-	return to, found, found
-}
-
-func (s *results) hasMatchTo(offset, id, to int) bool {
-	if len(s.noMatch) > offset && s.noMatch[offset] != nil && s.noMatch[offset].has(id) {
-		return false
-	}
-
-	if len(s.match) <= offset {
-		return false
-	}
-
-	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] != id {
-			continue
-		}
-
-		if s.match[offset][i+1] == to {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *results) takeMatch(offset, id int) (int, bool) {
-	if len(s.match) <= offset {
-		return 0, false
-	}
-
-	var (
-		found bool
-		to    int
-		index int
-	)
-
-	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] != id {
-			continue
-		}
-
-		if s.match[offset][i+1] > to || !found {
-			to = s.match[offset][i+1]
-			index = i
-		}
-
-		found = true
-	}
-
-	if found && to-offset > 0 {
-		s.match[offset][index] = -1
-	}
-
-	return to, found
-}
-
-func (s *results) ensureOffset(offset int) {
-	if len(s.match) > offset {
+func (r *results) ensureOffset(offset int) {
+	if len(r.match) > offset {
 		return
 	}
 
-	if cap(s.match) > offset {
-		s.match = s.match[:offset+1]
+	if cap(r.match) > offset {
+		r.match = r.match[:offset+1]
 		return
 	}
 
-	s.match = s.match[:cap(s.match)]
-	for i := len(s.match); i <= offset; i++ {
-		s.match = append(s.match, nil)
+	r.match = r.match[:cap(r.match)]
+	for i := len(r.match); i <= offset; i++ {
+		r.match = append(r.match, nil)
 	}
 }
 
-func (s *results) setMatch(offset, id, to int) {
-	s.ensureOffset(offset)
-	for i := 0; i < len(s.match[offset]); i += 2 {
-		if s.match[offset][i] != id || s.match[offset][i+1] != to {
+func (r *results) setMatch(offset, id, to int) {
+	r.ensureOffset(offset)
+	for i := 0; i < len(r.match[offset]); i += 2 {
+		if r.match[offset][i] != id || r.match[offset][i+1] != to {
 			continue
 		}
 
 		return
 	}
 
-	s.match[offset] = append(s.match[offset], id, to)
+	r.match[offset] = append(r.match[offset], id, to)
 }
 
-func (s *results) setNoMatch(offset, id int) {
-	if len(s.match) > offset {
-		for i := 0; i < len(s.match[offset]); i += 2 {
-			if s.match[offset][i] != id {
+func (r *results) setNoMatch(offset, id int) {
+	if len(r.match) > offset {
+		for i := 0; i < len(r.match[offset]); i += 2 {
+			if r.match[offset][i] != id {
 				continue
 			}
 
@@ -126,20 +45,82 @@ func (s *results) setNoMatch(offset, id int) {
 		}
 	}
 
-	if len(s.noMatch) <= offset {
-		if cap(s.noMatch) > offset {
-			s.noMatch = s.noMatch[:offset+1]
+	if len(r.noMatch) <= offset {
+		if cap(r.noMatch) > offset {
+			r.noMatch = r.noMatch[:offset+1]
 		} else {
-			s.noMatch = s.noMatch[:cap(s.noMatch)]
-			for i := cap(s.noMatch); i <= offset; i++ {
-				s.noMatch = append(s.noMatch, nil)
+			r.noMatch = r.noMatch[:cap(r.noMatch)]
+			for i := cap(r.noMatch); i <= offset; i++ {
+				r.noMatch = append(r.noMatch, nil)
 			}
 		}
 	}
 
-	if s.noMatch[offset] == nil {
-		s.noMatch[offset] = &idSet{}
+	if r.noMatch[offset] == nil {
+		r.noMatch[offset] = &idSet{}
 	}
 
-	s.noMatch[offset].set(id)
+	r.noMatch[offset].set(id)
+}
+
+func (r *results) hasMatchTo(offset, id, to int) bool {
+	if len(r.match) <= offset {
+		return false
+	}
+
+	for i := 0; i < len(r.match[offset]); i += 2 {
+		if r.match[offset][i] != id {
+			continue
+		}
+
+		if r.match[offset][i+1] == to {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *results) longestMatch(offset, id int) (int, bool) {
+	if len(r.match) <= offset {
+		return 0, false
+	}
+
+	var found bool
+	to := -1
+	for i := 0; i < len(r.match[offset]); i += 2 {
+		if r.match[offset][i] != id {
+			continue
+		}
+
+		if r.match[offset][i+1] > to {
+			to = r.match[offset][i+1]
+		}
+
+		found = true
+	}
+
+	return to, found
+}
+
+func (r *results) longestResult(offset, id int) (int, bool, bool) {
+	if len(r.noMatch) > offset && r.noMatch[offset] != nil && r.noMatch[offset].has(id) {
+		return 0, false, true
+	}
+
+	to, ok := r.longestMatch(offset, id)
+	return to, ok, ok
+}
+
+func (r *results) dropMatchTo(offset, id, to int) {
+	for i := 0; i < len(r.match[offset]); i += 2 {
+		if r.match[offset][i] != id {
+			continue
+		}
+
+		if r.match[offset][i+1] == to {
+			r.match[offset][i] = -1
+			return
+		}
+	}
 }

@@ -66,6 +66,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 
 	whitespace := SequenceItem{Name: whitespaceName, Min: 0, Max: -1}
 	for i, item := range s.items {
+		// TODO: there should not be max=0
 		if item.Max >= 0 && item.Max <= 1 {
 			if i > 0 {
 				items = append(items, whitespace)
@@ -98,8 +99,13 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 			continue
 		}
 
+		optItems := []SequenceItem{singleItem, restItems}
+		if i > 0 {
+			optItems = []SequenceItem{whitespace, singleItem, restItems}
+		}
+
 		optName := patchName(item.Name, s.nodeName(), "wsopt", strconv.Itoa(i))
-		optDef := newSequence(optName, Alias, []SequenceItem{whitespace, singleItem, restItems})
+		optDef := newSequence(optName, Alias, optItems)
 		defs = append(defs, optDef)
 		items = append(items, SequenceItem{Name: optName, Min: 0, Max: 1})
 	}

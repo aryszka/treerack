@@ -133,6 +133,34 @@ func TestRecursion(t *testing.T) {
 			},
 		}},
 	)
+
+	runTests(
+		t,
+		`A = "a" | A*`,
+		[]testItem{{
+			title:          "recursive sequence in choice",
+			text:           "aaaa",
+			ignorePosition: true,
+			node: &Node{
+				Name: "A",
+				Nodes: []*Node{{
+					Name: "A",
+				}, {
+					Name: "A",
+					Nodes: []*Node{{
+						Name: "A",
+					}, {
+						Name: "A",
+						Nodes: []*Node{{
+							Name: "A",
+						}, {
+							Name: "A",
+						}},
+					}},
+				}},
+			},
+		}},
+	)
 }
 
 func TestSequence(t *testing.T) {
@@ -188,33 +216,24 @@ func TestSequence(t *testing.T) {
 			},
 		}},
 	)
-}
 
-func TestSequenceBug(t *testing.T) {
 	runTests(
 		t,
-		`A = "a" | A*`,
+		`a = "a"?; A = a | a*`,
 		[]testItem{{
-			title: "BUG: recursive sequence in choice",
-			text:  "aaa",
+			title:          "single or zero-or-more optional in choice",
+			text:           "aaa",
+			ignorePosition: true,
 			node: &Node{
 				Name: "A",
 				Nodes: []*Node{{
-					Name: "A",
+					Name: "a",
 				}, {
-					Name: "A",
-					Nodes: []*Node{{
-						Name: "A",
-					}, {
-						Name: "A",
-					}, {
-						Name: "A",
-					}},
+					Name: "a",
 				}, {
-					Name: "A",
+					Name: "a",
 				}},
 			},
-			ignorePosition: true,
 		}},
 	)
 }
@@ -571,12 +590,14 @@ func TestUndefined(t *testing.T) {
 	n, err := s.Parse(bytes.NewBufferString("a = b"))
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	stest := &Syntax{}
 	err = define(stest, n)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if err := stest.Init(); err == nil {
@@ -625,6 +646,22 @@ func TestEmpty(t *testing.T) {
 			title: "empty document with quantifiers in the reference",
 			node: &Node{
 				Name: "A",
+			},
+		}},
+	)
+
+	runTests(
+		t,
+		`a = [a]*; a':alias = a; a'' = a' [^a]*`,
+		[]testItem{{
+			title:          "no a",
+			text:           "b",
+			ignorePosition: true,
+			node: &Node{
+				Name: "a''",
+				Nodes: []*Node{{
+					Name: "a",
+				}},
 			},
 		}},
 	)

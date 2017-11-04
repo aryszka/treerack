@@ -8,9 +8,9 @@ const (
 		word-char:alias = [^\n, \t];
 		cell            = (word-char (ws* word-char)*)?;
 		rest-cell:alias = "," ws* cell;
-		line            = cell ws* (rest-cell (ws* rest-cell)*)?;
+		line            = cell (ws* rest-cell (ws* rest-cell)*)?;
 		rest-line:alias = "\n" ws* line;
-		document        = ws* (line ws* (rest-line (ws* rest-line)*)?)? ws*;
+		document        = ws* (line (ws* rest-line (ws* rest-line)*)?)? ws*;
 	`
 
 	csvWithWhitespaceSupport = `
@@ -23,7 +23,8 @@ const (
 
 func TestCSVWhitespace(t *testing.T) {
 	tests := []testItem{{
-		title: "empty",
+		title:          "empty",
+		ignorePosition: true,
 		node: &Node{
 			Name: "document",
 		},

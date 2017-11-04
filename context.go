@@ -63,7 +63,7 @@ func (c *context) token() (rune, bool) {
 	return c.tokens[c.offset], true
 }
 
-func (c *context) pending(offset int, id int) bool {
+func (c *context) pending(offset, id int) bool {
 	if len(c.isPending) <= id {
 		return false
 	}
@@ -77,7 +77,7 @@ func (c *context) pending(offset int, id int) bool {
 	return false
 }
 
-func (c *context) markPending(offset int, id int) {
+func (c *context) markPending(offset, id int) {
 	if len(c.isPending) <= id {
 		if cap(c.isPending) > id {
 			c.isPending = c.isPending[:id+1]
@@ -99,7 +99,7 @@ func (c *context) markPending(offset int, id int) {
 	c.isPending[id] = append(c.isPending[id], offset)
 }
 
-func (c *context) unmarkPending(offset int, id int) {
+func (c *context) unmarkPending(offset, id int) {
 	for i := range c.isPending[id] {
 		if c.isPending[id][i] == offset {
 			c.isPending[id][i] = -1
@@ -108,8 +108,58 @@ func (c *context) unmarkPending(offset int, id int) {
 	}
 }
 
+func (c *context) resetPending() {
+	c.isPending = nil
+}
+
+func (c *context) buildPending(offset, id, to int) bool {
+	if len(c.isPending) <= id {
+		return false
+	}
+
+	for i := 0; i < len(c.isPending[id]); i += 2 {
+		if c.isPending[id][i] == offset && c.isPending[id][i+1] == to {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *context) markBuildPending(offset, id, to int) {
+	if len(c.isPending) <= id {
+		if cap(c.isPending) > id {
+			c.isPending = c.isPending[:id+1]
+		} else {
+			c.isPending = c.isPending[:cap(c.isPending)]
+			for i := cap(c.isPending); i <= id; i++ {
+				c.isPending = append(c.isPending, nil)
+			}
+		}
+	}
+
+	for i := 0; i < len(c.isPending[id]); i += 2 {
+		if c.isPending[id][i] == -1 {
+			c.isPending[id][i] = offset
+			c.isPending[id][i+1] = to
+			return
+		}
+	}
+
+	c.isPending[id] = append(c.isPending[id], offset, to)
+}
+
+func (c *context) unmarkBuildPending(offset, id, to int) {
+	for i := 0; i < len(c.isPending[id]); i += 2 {
+		if c.isPending[id][i] == offset && c.isPending[id][i+1] == to {
+			c.isPending[id][i] = -1
+			break
+		}
+	}
+}
+
 func (c *context) fromResults(id int) bool {
-	to, m, ok := c.results.getMatch(c.offset, id)
+	to, m, ok := c.results.longestResult(c.offset, id)
 	if !ok {
 		return false
 	}
@@ -138,7 +188,7 @@ func (c *context) finalizeParse(rootID int) error {
 		return ErrInvalidInput
 	}
 
-	to, match, found := c.results.getMatch(0, rootID)
+	to, match, found := c.results.longestResult(0, rootID)
 	if !found || !match || to < c.readOffset {
 		return ErrUnexpectedCharacter
 	}

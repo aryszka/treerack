@@ -184,6 +184,8 @@ func (p *sequenceParser) parse(c *context) {
 		// TODO:
 		// - is it ok to parse before max range check? what if max=0
 		// - validate, normalize and document max=0
+
+		// TODO: test this f(g())
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
@@ -232,18 +234,27 @@ func (b *sequenceBuilder) nodeName() string { return b.name }
 func (b *sequenceBuilder) nodeID() int      { return b.id }
 
 func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.results.takeMatch(c.offset, b.id)
+	to, ok := c.results.longestMatch(c.offset, b.id)
 	if !ok {
 		return nil, false
 	}
 
-	if to-c.offset == 0 && b.commit&Alias != 0 {
-		return nil, true
+	if c.buildPending(c.offset, b.id, to) {
+		return nil, false
 	}
 
+	c.markBuildPending(c.offset, b.id, to)
+
+	if to-c.offset > 0 {
+		c.results.dropMatchTo(c.offset, b.id, to)
+	}
+
+	from := c.offset
+
 	if b.allChars {
-		from := c.offset
 		c.offset = to
+		c.unmarkBuildPending(from, b.id, to)
+
 		if b.commit&Alias != 0 {
 			return nil, true
 		}
@@ -256,7 +267,6 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		}}, true
 	}
 
-	from := c.offset
 	var (
 		itemIndex    int
 		currentCount int
@@ -277,16 +287,31 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		}
 
 		parsed := c.offset > itemFrom
-		if parsed || len(n) > 0 {
+
+		if parsed {
 			nodes = append(nodes, n...)
 			currentCount++
 		}
 
-		if !parsed || b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
+		if !parsed {
+			if currentCount < b.ranges[itemIndex][0] {
+				for i := 0; i < b.ranges[itemIndex][0]-currentCount; i++ {
+					nodes = append(nodes, n...)
+				}
+			}
+
+			itemIndex++
+			currentCount = 0
+			continue
+		}
+
+		if b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
 			itemIndex++
 			currentCount = 0
 		}
 	}
+
+	c.unmarkBuildPending(from, b.id, to)
 
 	if b.commit&Alias != 0 {
 		return nodes, true

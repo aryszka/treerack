@@ -318,6 +318,8 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	c.offset = 0
+	c.resetPending()
+
 	n, ok := s.builder.build(c)
 	if !ok || len(n) != 1 {
 		panic("damaged parse result")

@@ -50,12 +50,12 @@ func (d *choiceDefinition) validate(r *registry) error {
 
 	d.validated = true
 	for i := range d.options {
-		e, ok := r.definitions[d.options[i]]
+		o, ok := r.definitions[d.options[i]]
 		if !ok {
 			return parserNotFound(d.options[i])
 		}
 
-		if err := e.validate(r); err != nil {
+		if err := o.validate(r); err != nil {
 			return err
 		}
 	}
@@ -76,8 +76,8 @@ func (d *choiceDefinition) createBuilder() {
 }
 
 func (d *choiceDefinition) initOptions(r *registry) {
-	for _, e := range d.options {
-		def := r.definitions[e]
+	for _, o := range d.options {
+		def := r.definitions[o]
 		d.optionDefs = append(d.optionDefs, def)
 		def.init(r)
 		d.cbuilder.options = append(d.cbuilder.options, def.builder())
@@ -101,8 +101,8 @@ func (d *choiceDefinition) addGeneralization(g int) {
 	}
 
 	d.generalizations = append(d.generalizations, g)
-	for _, e := range d.optionDefs {
-		e.addGeneralization(g)
+	for _, o := range d.optionDefs {
+		o.addGeneralization(g)
 	}
 }
 
@@ -201,15 +201,25 @@ func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
 func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
-	to, ok := c.results.takeMatch(c.offset, b.id)
+	to, ok := c.results.longestMatch(c.offset, b.id)
 	if !ok {
 		return nil, false
 	}
 
+	if c.buildPending(c.offset, b.id, to) {
+		return nil, false
+	}
+
+	c.markBuildPending(c.offset, b.id, to)
+
+	if to-c.offset > 0 {
+		c.results.dropMatchTo(c.offset, b.id, to)
+	}
+
 	var option builder
-	for _, e := range b.options {
-		if c.results.hasMatchTo(c.offset, e.nodeID(), to) {
-			option = e
+	for _, o := range b.options {
+		if c.results.hasMatchTo(c.offset, o.nodeID(), to) {
+			option = o
 			break
 		}
 	}
@@ -224,6 +234,8 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 	if !ok {
 		panic("damaged parse result")
 	}
+
+	c.unmarkBuildPending(from, b.id, to)
 
 	if b.commit&Alias != 0 {
 		return n, true
