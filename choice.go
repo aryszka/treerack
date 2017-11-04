@@ -42,6 +42,7 @@ func (d *choiceDefinition) nodeID() int                 { return d.id }
 func (d *choiceDefinition) setID(id int)                { d.id = id }
 func (d *choiceDefinition) commitType() CommitType      { return d.commit }
 func (d *choiceDefinition) setCommitType(ct CommitType) { d.commit = ct }
+func (d *choiceDefinition) preinit()                    {}
 
 func (d *choiceDefinition) validate(r *registry) error {
 	if d.validated {

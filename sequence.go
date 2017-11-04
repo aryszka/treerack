@@ -49,6 +49,29 @@ func (d *sequenceDefinition) setID(id int)                { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType      { return d.commit }
 func (d *sequenceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
+func (d *sequenceDefinition) initRanges() {
+	for i, item := range d.items {
+		if item.Min == 0 && item.Max == 0 {
+			item.Min, item.Max = 1, 1
+		} else {
+			if item.Min <= 0 {
+				item.Min = 0
+			}
+
+			if item.Max <= 0 {
+				item.Max = -1
+			}
+		}
+
+		d.items[i] = item
+		d.ranges = append(d.ranges, []int{item.Min, item.Max})
+	}
+}
+
+func (d *sequenceDefinition) preinit() {
+	d.initRanges()
+}
+
 func (d *sequenceDefinition) validate(r *registry) error {
 	if d.validated {
 		return nil
@@ -79,18 +102,6 @@ func (d *sequenceDefinition) createBuilder() {
 		id:     d.id,
 		commit: d.commit,
 		ranges: d.ranges,
-	}
-}
-
-func (d *sequenceDefinition) initRanges() {
-	for _, item := range d.items {
-		if item.Min == 0 && item.Max == 0 {
-			item.Min, item.Max = 1, 1
-		} else if item.Max == 0 {
-			item.Max = -1
-		}
-
-		d.ranges = append(d.ranges, []int{item.Min, item.Max})
 	}
 }
 
@@ -181,10 +192,6 @@ func (p *sequenceParser) parse(c *context) {
 	var parsed bool
 
 	for itemIndex < len(p.items) {
-		// TODO:
-		// - is it ok to parse before max range check? what if max=0
-		// - validate, normalize and document max=0
-
 		// TODO: test this f(g())
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
@@ -210,8 +217,7 @@ func (p *sequenceParser) parse(c *context) {
 
 		to = c.offset
 
-		// TODO: max cannot be 0
-		if !parsed || p.ranges[itemIndex][1] >= 0 && currentCount == p.ranges[itemIndex][1] {
+		if !parsed || p.ranges[itemIndex][1] > 0 && currentCount == p.ranges[itemIndex][1] {
 			itemIndex++
 			currentCount = 0
 		}
@@ -287,7 +293,7 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 			nodes = append(nodes, n...)
 			currentCount++
 
-			if b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
+			if b.ranges[itemIndex][1] > 0 && currentCount == b.ranges[itemIndex][1] {
 				itemIndex++
 				currentCount = 0
 			}

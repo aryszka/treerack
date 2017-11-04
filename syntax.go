@@ -18,9 +18,12 @@ const (
 	Root
 )
 
+// if min=0&&max=0, it means min=1,max=1
+// else if max<=0, it means no max
+// else if min<=0, it means no min
 type SequenceItem struct {
 	Name     string
-	Min, Max int // 0,0 considered as 1,1, x,0 considered as x,-1
+	Min, Max int
 }
 
 type Syntax struct {
@@ -40,6 +43,7 @@ type definition interface {
 	commitType() CommitType
 	setCommitType(CommitType)
 	setID(int)
+	preinit()
 	validate(*registry) error
 	init(*registry)
 	addGeneralization(int)
@@ -220,6 +224,8 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 }
 
 func (s *Syntax) sequence(name string, ct CommitType, items ...SequenceItem) error {
+	citems := make([]SequenceItem, len(items))
+	copy(citems, items)
 	return s.register(newSequence(name, ct, items))
 }
 
@@ -251,8 +257,6 @@ func (s *Syntax) Read(r io.Reader) error {
 	return ErrNotImplemented
 }
 
-// TODO: why normalization failed?
-
 func (s *Syntax) Init() error {
 	if s.initFailed {
 		return ErrInitFailed
@@ -275,6 +279,9 @@ func (s *Syntax) Init() error {
 	}
 
 	defs := s.registry.getDefinitions()
+	for i := range defs {
+		defs[i].preinit()
+	}
 
 	if hasWhitespace(defs) {
 		defs, s.root = applyWhitespace(defs)

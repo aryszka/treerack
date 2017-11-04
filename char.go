@@ -29,6 +29,7 @@ func (p *charParser) nodeID() int                 { return p.id }
 func (p *charParser) setID(id int)                { p.id = id }
 func (p *charParser) commitType() CommitType      { return Alias }
 func (p *charParser) setCommitType(ct CommitType) {}
+func (p *charParser) preinit()                    {}
 func (p *charParser) validate(*registry) error    { return nil }
 func (p *charParser) init(*registry)              {}
 

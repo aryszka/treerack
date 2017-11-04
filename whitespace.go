@@ -66,8 +66,7 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 
 	whitespace := SequenceItem{Name: whitespaceName, Min: 0, Max: -1}
 	for i, item := range s.items {
-		// TODO: there should not be max=0
-		if item.Max >= 0 && item.Max <= 1 {
+		if item.Max == 1 {
 			if i > 0 {
 				items = append(items, whitespace)
 			}
