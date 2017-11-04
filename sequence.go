@@ -239,22 +239,11 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		return nil, false
 	}
 
-	if c.buildPending(c.offset, b.id, to) {
-		return nil, false
-	}
-
-	c.markBuildPending(c.offset, b.id, to)
-
-	if to-c.offset > 0 {
-		c.results.dropMatchTo(c.offset, b.id, to)
-	}
-
 	from := c.offset
+	parsed := to > from
 
 	if b.allChars {
 		c.offset = to
-		c.unmarkBuildPending(from, b.id, to)
-
 		if b.commit&Alias != 0 {
 			return nil, true
 		}
@@ -265,6 +254,14 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 			To:     to,
 			tokens: c.tokens,
 		}}, true
+	} else if parsed {
+		c.results.dropMatchTo(c.offset, b.id, to)
+	} else {
+		if c.buildPending(c.offset, b.id, to) {
+			return nil, false
+		}
+
+		c.markBuildPending(c.offset, b.id, to)
 	}
 
 	var (
@@ -286,32 +283,31 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 			continue
 		}
 
-		parsed := c.offset > itemFrom
-
-		if parsed {
+		if c.offset > itemFrom {
 			nodes = append(nodes, n...)
 			currentCount++
-		}
 
-		if !parsed {
-			if currentCount < b.ranges[itemIndex][0] {
-				for i := 0; i < b.ranges[itemIndex][0]-currentCount; i++ {
-					nodes = append(nodes, n...)
-				}
+			if b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
+				itemIndex++
+				currentCount = 0
 			}
 
-			itemIndex++
-			currentCount = 0
 			continue
 		}
 
-		if b.ranges[itemIndex][1] >= 0 && currentCount == b.ranges[itemIndex][1] {
-			itemIndex++
-			currentCount = 0
+		if currentCount < b.ranges[itemIndex][0] {
+			for i := 0; i < b.ranges[itemIndex][0]-currentCount; i++ {
+				nodes = append(nodes, n...)
+			}
 		}
+
+		itemIndex++
+		currentCount = 0
 	}
 
-	c.unmarkBuildPending(from, b.id, to)
+	if !parsed {
+		c.unmarkBuildPending(from, b.id, to)
+	}
 
 	if b.commit&Alias != 0 {
 		return nodes, true

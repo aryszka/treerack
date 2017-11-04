@@ -206,14 +206,17 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 		return nil, false
 	}
 
-	if c.buildPending(c.offset, b.id, to) {
-		return nil, false
-	}
+	from := c.offset
+	parsed := to > from
 
-	c.markBuildPending(c.offset, b.id, to)
-
-	if to-c.offset > 0 {
+	if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
+	} else {
+		if c.buildPending(c.offset, b.id, to) {
+			return nil, false
+		}
+
+		c.markBuildPending(c.offset, b.id, to)
 	}
 
 	var option builder
@@ -228,14 +231,14 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 		panic("damaged parse result")
 	}
 
-	from := c.offset
-
 	n, ok := option.build(c)
 	if !ok {
 		panic("damaged parse result")
 	}
 
-	c.unmarkBuildPending(from, b.id, to)
+	if !parsed {
+		c.unmarkBuildPending(from, b.id, to)
+	}
 
 	if b.commit&Alias != 0 {
 		return n, true
