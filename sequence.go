@@ -192,7 +192,6 @@ func (p *sequenceParser) parse(c *context) {
 	var parsed bool
 
 	for itemIndex < len(p.items) {
-		// TODO: test this f(g())
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {

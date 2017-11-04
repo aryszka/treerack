@@ -160,11 +160,6 @@ func (p *choiceParser) parse(c *context) {
 		foundMatch = false
 		optionIndex = 0
 
-		// TODO:
-		// - avoid double parsing by setting first-from-store in the context, prepare in advance to
-		// know whether it can be it's own item
-		// - it is also important to figure why disabling the failed options breaks the parsing
-
 		for optionIndex < len(p.options) {
 			p.options[optionIndex].parse(c)
 			optionIndex++
