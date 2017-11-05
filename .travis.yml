@@ -1,0 +1,13 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.x
+
+branches:
+  except:
+  - "/^v\\d+[.]\\d+[.]\\d+.*/"
+
+script:
+- make ci-trigger

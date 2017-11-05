@@ -43,3 +43,5 @@ clean:
 	@rm -f *.test
 	@rm -f cpu.out
 	@go clean -i ./...
+
+ci-trigger: build check-all
