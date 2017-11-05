@@ -7,6 +7,6 @@
 
 ### Examples
 
-- JSON: https://github.com/aryszka/treerack/blob/master/json.treerack
-- Scheme: https://github.com/aryszka/treerack/blob/master/scheme.treerack
-- Treerack (itself): https://github.com/aryszka/treerack/blob/master/treerack.treerack
+- JSON: https://github.com/aryszka/treerack/blob/master/examples/json.treerack
+- Scheme: https://github.com/aryszka/treerack/blob/master/examples/scheme.treerack
+- Treerack (itself): https://github.com/aryszka/treerack/blob/master/syntax.treerack

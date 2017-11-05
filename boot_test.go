@@ -51,7 +51,7 @@ func TestBoot(t *testing.T) {
 		return
 	}
 
-	f, err := os.Open("syntax.treerack")
+	f, err := os.Open("examples/syntax.treerack")
 	if err != nil {
 		t.Error(err)
 		return

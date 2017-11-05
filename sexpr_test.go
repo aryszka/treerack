@@ -3,7 +3,7 @@ package treerack
 import "testing"
 
 func TestSExpr(t *testing.T) {
-	runTestsFile(t, "sexpr.treerack", []testItem{{
+	runTestsFile(t, "examples/sexpr.treerack", []testItem{{
 		title: "number",
 		text:  "42",
 		nodes: []*Node{{

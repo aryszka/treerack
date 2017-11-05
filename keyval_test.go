@@ -3,7 +3,7 @@ package treerack
 import "testing"
 
 func TestKeyVal(t *testing.T) {
-	runTestsFile(t, "keyval.treerack", []testItem{{
+	runTestsFile(t, "examples/keyval.treerack", []testItem{{
 		title: "empty",
 	}, {
 		title: "a comment",
