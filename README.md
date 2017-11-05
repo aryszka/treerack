@@ -1,4 +1,5 @@
 [![License](https://img.shields.io/badge/MIT-License-green.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://travis-ci.org/aryszka/treerack.svg)](https://travis-ci.org/aryszka/treerack)
 [![codecov](https://codecov.io/gh/aryszka/treerack/branch/master/graph/badge.svg)](https://codecov.io/gh/aryszka/treerack)
 
 # treerack
