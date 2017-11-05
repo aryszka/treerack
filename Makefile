@@ -5,6 +5,7 @@ default: build
 
 deps:
 	go get golang.org/x/tools/cmd/goimports
+	go get github.com/zalando/skipper/eskip
 
 imports: $(SOURCES)
 	@goimports -w $(SOURCES)
@@ -29,7 +30,7 @@ show-cover: .coverprofile
 
 publish-coverage: .coverprofile
 	curl -s https://codecov.io/bash -o codecov
-	CODECOV_TOKEN=a2b0290b-62b6-419f-bf61-4182e479aec4 bash codecov -f .coverprofile
+	bash codecov -f .coverprofile
 
 cpu.out: $(SOURCES) $(PARSERS)
 	go test -v -run TestMMLFile -cpuprofile cpu.out
@@ -48,3 +49,6 @@ clean:
 	@go clean -i ./...
 
 ci-trigger: deps build check-all
+ifeq ($(TRAVIS_BRANCH)_$(TRAVIS_PULL_REQUEST), master_false)
+	make publish-coverage
+endif
