@@ -5,7 +5,7 @@ default: build
 
 deps:
 	go get golang.org/x/tools/cmd/goimports
-	go get ./...
+	go get -t ./...
 
 imports: $(SOURCES)
 	@goimports -w $(SOURCES)
