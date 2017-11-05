@@ -16,8 +16,11 @@ build: $(SOURCES)
 check: imports build $(PARSERS)
 	go test -test.short -run ^Test
 
-check-all: imports build $(PARSERS)
+check-full: imports build $(PARSERS)
 	go test
+
+check-fmt: $(SOURCES)
+	@if [ "$$(gofmt -s -d $(SOURCES))" != "" ]; then false; else true; fi
 
 .coverprofile: $(SOURCES) imports
 	go test -coverprofile .coverprofile
@@ -41,14 +44,14 @@ cpu: cpu.out
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
 
-precommit: fmt build check-all
+precommit: fmt build check-full
 
 clean:
 	@rm -f *.test
 	@rm -f cpu.out
 	@go clean -i ./...
 
-ci-trigger: deps build check-all
+ci-trigger: deps build check-all check-fmt
 ifeq ($(TRAVIS_BRANCH)_$(TRAVIS_PULL_REQUEST), master_false)
 	make publish-coverage
 endif
