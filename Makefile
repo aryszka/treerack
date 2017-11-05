@@ -54,7 +54,7 @@ clean:
 	@rm -f cpu.out
 	@go clean -i ./...
 
-ci-trigger: deps build check-all check-fmt
+ci-trigger: deps build check-full check-fmt
 ifeq ($(TRAVIS_BRANCH)_$(TRAVIS_PULL_REQUEST), master_false)
 	make publish-coverage
 endif
