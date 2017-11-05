@@ -1,9 +1,6 @@
 package treerack
 
-import (
-	"bytes"
-	"testing"
-)
+import "testing"
 
 func TestRecursion(t *testing.T) {
 	runTests(
@@ -234,6 +231,41 @@ func TestSequence(t *testing.T) {
 					Name: "a",
 				}},
 			},
+		}},
+	)
+
+	runTests(
+		t,
+		`a = "a"{3,5}`,
+		[]testItem{{
+			title: "less than min",
+			text:  "aa",
+			fail:  true,
+		}, {
+			title:          "just min",
+			text:           "aaa",
+			ignorePosition: true,
+			node: &Node{
+				Name: "a",
+			},
+		}, {
+			title:          "less than max",
+			text:           "aaaa",
+			ignorePosition: true,
+			node: &Node{
+				Name: "a",
+			},
+		}, {
+			title:          "just max",
+			text:           "aaaaa",
+			ignorePosition: true,
+			node: &Node{
+				Name: "a",
+			},
+		}, {
+			title: "more than max",
+			text:  "aaaaaa",
+			fail:  true,
 		}},
 	)
 }
@@ -580,31 +612,6 @@ func TestQuantifiers(t *testing.T) {
 	)
 }
 
-func TestUndefined(t *testing.T) {
-	s, err := bootSyntax()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	n, err := s.Parse(bytes.NewBufferString("a = b"))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	stest := &Syntax{}
-	err = define(stest, n)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if err := stest.Init(); err == nil {
-		t.Error("failed to fail")
-	}
-}
-
 func TestEmpty(t *testing.T) {
 	runTests(
 		t,
@@ -678,6 +685,28 @@ func TestCharAsRoot(t *testing.T) {
 			node: &Node{
 				Name: "A",
 			},
+		}},
+	)
+}
+
+func TestPartialRead(t *testing.T) {
+	runTests(
+		t,
+		`A = "a"`,
+		[]testItem{{
+			title: "document finished before eof",
+			text:  "ab",
+			fail:  true,
+		}},
+	)
+
+	runTests(
+		t,
+		`A = "a"*`,
+		[]testItem{{
+			title: "document finished before eof with reading past",
+			text:  "ab",
+			fail:  true,
 		}},
 	)
 }

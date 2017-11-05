@@ -3,26 +3,35 @@ PARSERS = $(shell find . -name '*.treerack')
 
 default: build
 
-imports:
+imports: $(SOURCES)
 	@goimports -w $(SOURCES)
 
 build: $(SOURCES)
 	go build ./...
 
-check: build $(PARSERS)
-	go test ./... -test.short -run ^Test
+check: imports build $(PARSERS)
+	go test -test.short -run ^Test
 
-check-all: build $(PARSERS)
-	go test ./...
+check-all: imports build $(PARSERS)
+	go test
 
-fmt: $(SOURCES)
-	@gofmt -w -s $(SOURCES)
+.coverprofile: $(SOURCES) imports
+	go test -coverprofile .coverprofile
+
+cover: .coverprofile
+	go tool cover -func .coverprofile
+
+show-cover: .coverprofile
+	go tool cover -html .coverprofile
 
 cpu.out: $(SOURCES) $(PARSERS)
 	go test -v -run TestMMLFile -cpuprofile cpu.out
 
 cpu: cpu.out
 	go tool pprof -top cpu.out
+
+fmt: $(SOURCES)
+	@gofmt -w -s $(SOURCES)
 
 precommit: fmt build check-all
 

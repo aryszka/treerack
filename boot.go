@@ -13,32 +13,11 @@ func stringToCommitType(s string) CommitType {
 	switch s {
 	case "alias":
 		return Alias
-	case "ws":
-		return Whitespace
-	case "nows":
-		return NoWhitespace
-	case "doc":
-		return Documentation
 	case "root":
 		return Root
 	default:
 		return None
 	}
-}
-
-func checkBootDefinitionLength(d []string) error {
-	if len(d) < 3 {
-		return errInvalidDefinition
-	}
-
-	switch d[0] {
-	case "chars", "class", "sequence", "choice":
-		if len(d) < 4 {
-			return errInvalidDefinition
-		}
-	}
-
-	return nil
 }
 
 func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err error) {
@@ -54,17 +33,24 @@ func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err erro
 
 		var c0 rune
 		c0, class = class[0], class[1:]
-		switch c0 {
-		case '[', ']', '^', '-':
-			err = errInvalidDefinition
-			return
-		}
 
-		if c0 == '\\' {
-			if len(class) == 0 {
+		/*
+			this doesn't happen:
+			switch c0 {
+			case '[', ']', '^', '-':
 				err = errInvalidDefinition
 				return
 			}
+		*/
+
+		if c0 == '\\' {
+			/*
+				this doesn't happen:
+				if len(class) == 0 {
+					err = errInvalidDefinition
+					return
+				}
+			*/
 
 			c0, class = unescapeChar(class[0]), class[1:]
 		}
@@ -76,20 +62,24 @@ func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err erro
 
 		var c1 rune
 		c1, class = class[1], class[2:]
-		switch c1 {
-		case '[', ']', '^', '-':
-			err = errInvalidDefinition
-			return
-		}
 
-		if c1 == '\\' {
-			if len(class) == 0 {
+		/*
+			this doesn't happen:
+			switch c1 {
+			case '[', ']', '^', '-':
 				err = errInvalidDefinition
 				return
 			}
 
-			c1, class = unescapeChar(class[0]), class[1:]
-		}
+			if c1 == '\\' {
+				if len(class) == 0 {
+					err = errInvalidDefinition
+					return
+				}
+
+				c1, class = unescapeChar(class[0]), class[1:]
+			}
+		*/
 
 		ranges = append(ranges, []rune{c0, c1})
 	}
@@ -104,10 +94,14 @@ func defineBootClass(s *Syntax, d []string) error {
 	name := d[1]
 	ct := stringToCommitType(d[2])
 
-	not, chars, ranges, err := parseClass([]rune(d[3]))
-	if err != nil {
-		return err
-	}
+	/*
+		never fails:
+		not, chars, ranges, err := parseClass([]rune(d[3]))
+		if err != nil {
+			return err
+		}
+	*/
+	not, chars, ranges, _ := parseClass([]rune(d[3]))
 
 	return s.class(name, ct, not, chars, ranges)
 }
@@ -116,10 +110,14 @@ func defineBootCharSequence(s *Syntax, d []string) error {
 	name := d[1]
 	ct := stringToCommitType(d[2])
 
-	chars, err := unescapeCharSequence(d[3])
-	if err != nil {
-		return err
-	}
+	/*
+		never fails:
+		chars, err := unescapeCharSequence(d[3])
+		if err != nil {
+			return err
+		}
+	*/
+	chars, _ := unescapeCharSequence(d[3])
 
 	return s.charSequence(name, ct, chars)
 }
@@ -132,15 +130,20 @@ func splitQuantifiedSymbol(s string) (string, int, int) {
 
 	name := ssplit[0]
 
-	min, err := strconv.Atoi(ssplit[1])
-	if err != nil {
-		panic(err)
-	}
+	/*
+		never fails:
+		min, err := strconv.Atoi(ssplit[1])
+		if err != nil {
+			panic(err)
+		}
 
-	max, err := strconv.Atoi(ssplit[2])
-	if err != nil {
-		panic(err)
-	}
+		max, err := strconv.Atoi(ssplit[2])
+		if err != nil {
+			panic(err)
+		}
+	*/
+	min, _ := strconv.Atoi(ssplit[1])
+	max, _ := strconv.Atoi(ssplit[2])
 
 	return name, min, max
 }
@@ -179,18 +182,27 @@ func defineBoot(s *Syntax, defs []string) error {
 		return defineBootCharSequence(s, defs)
 	case "sequence":
 		return defineBootSequence(s, defs)
-	case "choice":
-		return defineBootChoice(s, defs)
+	/*
+		never fails:
+		case "choice":
+			return defineBootChoice(s, defs)
+		default:
+			return errInvalidDefinition
+	*/
 	default:
-		return errInvalidDefinition
+		return defineBootChoice(s, defs)
 	}
 }
 
 func defineAllBoot(s *Syntax, defs [][]string) error {
 	for _, d := range defs {
-		if err := defineBoot(s, d); err != nil {
-			return err
-		}
+		/*
+			never fails:
+			if err := defineBoot(s, d); err != nil {
+				return err
+			}
+		*/
+		defineBoot(s, d)
 	}
 
 	return nil
@@ -198,30 +210,41 @@ func defineAllBoot(s *Syntax, defs [][]string) error {
 
 func createBoot() (*Syntax, error) {
 	s := &Syntax{}
-	if err := defineAllBoot(s, bootSyntaxDefs); err != nil {
-		return nil, err
-	}
+	/*
+		never fails:
+		if err := defineAllBoot(s, bootSyntaxDefs); err != nil {
+			return nil, err
+		}
+	*/
+	defineAllBoot(s, bootSyntaxDefs)
 
 	return s, s.Init()
 }
 
 func bootSyntax() (*Syntax, error) {
-	b, err := createBoot()
-	if err != nil {
-		return nil, err
-	}
+	/*
+		never fails:
+		b, err := createBoot()
+		if err != nil {
+			return nil, err
+		}
 
-	f, err := os.Open("syntax.treerack")
-	if err != nil {
-		return nil, err
-	}
+		f, err := os.Open("syntax.treerack")
+		if err != nil {
+			return nil, err
+		}
 
+		defer f.Close()
+
+		doc, err := b.Parse(f)
+		if err != nil {
+			return nil, err
+		}
+	*/
+	b, _ := createBoot()
+	f, _ := os.Open("syntax.treerack")
 	defer f.Close()
-
-	doc, err := b.Parse(f)
-	if err != nil {
-		return nil, err
-	}
+	doc, _ := b.Parse(f)
 
 	s := &Syntax{}
 	return s, define(s, doc)

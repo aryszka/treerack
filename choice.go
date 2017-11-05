@@ -37,7 +37,7 @@ func newChoice(name string, ct CommitType, options []string) *choiceDefinition {
 }
 
 func (d *choiceDefinition) nodeName() string            { return d.name }
-func (d *choiceDefinition) setNodeName(n string)        { d.name = n }
+func (d *choiceDefinition) setName(n string)            { d.name = n }
 func (d *choiceDefinition) nodeID() int                 { return d.id }
 func (d *choiceDefinition) setID(id int)                { d.id = id }
 func (d *choiceDefinition) commitType() CommitType      { return d.commit }
@@ -65,10 +65,6 @@ func (d *choiceDefinition) validate(r *registry) error {
 }
 
 func (d *choiceDefinition) createBuilder() {
-	if d.cbuilder != nil {
-		return
-	}
-
 	d.cbuilder = &choiceBuilder{
 		name:   d.name,
 		id:     d.id,
@@ -223,15 +219,7 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 		}
 	}
 
-	if option == nil {
-		panic("damaged parse result")
-	}
-
-	n, ok := option.build(c)
-	if !ok {
-		panic("damaged parse result")
-	}
-
+	n, _ := option.build(c)
 	if !parsed {
 		c.unmarkBuildPending(from, b.id, to)
 	}

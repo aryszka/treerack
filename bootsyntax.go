@@ -229,11 +229,9 @@ var bootSyntaxDefs = [][]string{{
 }, {
 	"chars", "nows", "none", "nows",
 }, {
-	"chars", "doc", "none", "doc",
-}, {
 	"chars", "root", "none", "root",
 }, {
-	"choice", "flag", "alias", "alias", "ws", "nows", "doc", "root",
+	"choice", "flag", "alias", "alias", "ws", "nows", "root",
 }, {
 	"chars", "colon", "alias", ":",
 }, {

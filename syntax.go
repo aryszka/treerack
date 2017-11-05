@@ -14,7 +14,6 @@ const (
 	Alias CommitType = 1 << iota
 	Whitespace
 	NoWhitespace
-	Documentation
 	Root
 )
 
@@ -38,11 +37,11 @@ type Syntax struct {
 
 type definition interface {
 	nodeName() string
-	setNodeName(string)
+	setName(string)
 	nodeID() int
+	setID(int)
 	commitType() CommitType
 	setCommitType(CommitType)
-	setID(int)
 	preinit()
 	validate(*registry) error
 	init(*registry)
@@ -90,11 +89,7 @@ func parserNotFound(name string) error {
 const symbolChars = "^\\\\ \\n\\t\\b\\f\\r\\v/.\\[\\]\\\"{}\\^+*?|():=;"
 
 func parseSymbolChars(c []rune) []rune {
-	_, chars, _, err := parseClass(c)
-	if err != nil {
-		panic(err)
-	}
-
+	_, chars, _, _ := parseClass(c)
 	return chars
 }
 
@@ -327,10 +322,6 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	c.offset = 0
 	c.resetPending()
 
-	n, ok := s.builder.build(c)
-	if !ok || len(n) != 1 {
-		panic("damaged parse result")
-	}
-
+	n, _ := s.builder.build(c)
 	return n[0], nil
 }

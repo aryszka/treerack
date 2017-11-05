@@ -1,16 +1,11 @@
 package treerack
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
 
 const whitespaceName = ":ws"
-
-func brokenRegistryError(err error) error {
-	return fmt.Errorf("broken registry: %v", err)
-}
 
 func splitWhitespaceDefs(defs []definition) ([]definition, []definition) {
 	var whitespaceDefs, nonWhitespaceDefs []definition
@@ -85,8 +80,8 @@ func applyWhitespaceToSeq(s *sequenceDefinition) []definition {
 		if item.Min > 0 {
 			restItems.Min = item.Min - 1
 		}
-		if item.Max > 0 {
-			restItems.Min = item.Max - 1
+		if item.Max > 1 {
+			restItems.Max = item.Max - 1
 		}
 
 		if item.Min > 0 {
@@ -138,7 +133,7 @@ func applyWhitespaceToRoot(root definition) (definition, definition) {
 	original, name := root, root.nodeName()
 	wsName := patchName(name, "wsroot")
 
-	original.setNodeName(wsName)
+	original.setName(wsName)
 	original.setCommitType(original.commitType() &^ Root)
 	original.setCommitType(original.commitType() | Alias)
 

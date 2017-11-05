@@ -43,7 +43,7 @@ func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefi
 }
 
 func (d *sequenceDefinition) nodeName() string            { return d.name }
-func (d *sequenceDefinition) setNodeName(n string)        { d.name = n }
+func (d *sequenceDefinition) setName(n string)            { d.name = n }
 func (d *sequenceDefinition) nodeID() int                 { return d.id }
 func (d *sequenceDefinition) setID(id int)                { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType      { return d.commit }
@@ -93,10 +93,6 @@ func (d *sequenceDefinition) validate(r *registry) error {
 }
 
 func (d *sequenceDefinition) createBuilder() {
-	if d.sbuilder != nil {
-		return
-	}
-
 	d.sbuilder = &sequenceBuilder{
 		name:   d.name,
 		id:     d.id,
@@ -279,10 +275,6 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		itemFrom := c.offset
 		n, ok := b.items[itemIndex].build(c)
 		if !ok {
-			if currentCount < b.ranges[itemIndex][0] {
-				panic(b.name + ": damaged parse result")
-			}
-
 			itemIndex++
 			currentCount = 0
 			continue

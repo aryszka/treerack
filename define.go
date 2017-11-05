@@ -20,8 +20,6 @@ func flagsToCommitType(n []*Node) CommitType {
 			ct |= Whitespace
 		case "nows":
 			ct |= NoWhitespace
-		case "doc":
-			ct |= Documentation
 		case "root":
 			ct |= Root
 		}
@@ -108,9 +106,6 @@ func getQuantity(n *Node) (min int, max int, err error) {
 				if err != nil {
 					return
 				}
-			default:
-				err = ErrInvalidSyntax
-				return
 			}
 		}
 	case "one-or-more":
@@ -132,10 +127,6 @@ func defineSequence(s *Syntax, name string, ct CommitType, n ...*Node) error {
 	nows := ct & NoWhitespace
 	var items []SequenceItem
 	for i, ni := range n {
-		if ni.Name != "item" || len(ni.Nodes) == 0 {
-			return ErrInvalidSyntax
-		}
-
 		var (
 			item SequenceItem
 			err  error

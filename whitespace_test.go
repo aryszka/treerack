@@ -283,28 +283,67 @@ func TestCSVWhitespace(t *testing.T) {
 	})
 }
 
-func TestNoWhitespaceFlag(t *testing.T) {
-	runTests(
-		t,
-		`
-			space:ws = " ";
-			symbol:nows = [a-zA-Z_] [a-zA-Z0-9_]* | "[" .+ "]";
-			symbols = symbol*;
-		`,
-		[]testItem{{
-			title:          "multiple symbols",
-			text:           "a b c",
-			ignorePosition: true,
-			node: &Node{
-				Name: "symbols",
-				Nodes: []*Node{{
-					Name: "symbol",
-				}, {
-					Name: "symbol",
-				}, {
-					Name: "symbol",
-				}},
-			},
-		}},
-	)
+func TestWhitespace(t *testing.T) {
+	t.Run("nows flag", func(t *testing.T) {
+		runTests(
+			t,
+			`
+				space:ws = " ";
+				symbol:nows = [a-zA-Z_] [a-zA-Z0-9_]* | "[" .+ "]";
+				symbols = symbol*;
+			`,
+			[]testItem{{
+				title:          "multiple symbols",
+				text:           "a b c",
+				ignorePosition: true,
+				node: &Node{
+					Name: "symbols",
+					Nodes: []*Node{{
+						Name: "symbol",
+					}, {
+						Name: "symbol",
+					}, {
+						Name: "symbol",
+					}},
+				},
+			}},
+		)
+	})
+
+	t.Run("whitespace with max items", func(t *testing.T) {
+		runTests(
+			t,
+			`space:ws = " "; a = "a"{3,5}`,
+			[]testItem{{
+				title: "less than min",
+				text:  "a a",
+				fail:  true,
+			}, {
+				title:          "just min",
+				text:           "a a a",
+				ignorePosition: true,
+				node: &Node{
+					Name: "a",
+				},
+			}, {
+				title:          "less than max",
+				text:           "a a a a",
+				ignorePosition: true,
+				node: &Node{
+					Name: "a",
+				},
+			}, {
+				title:          "just max",
+				text:           "a a a a a",
+				ignorePosition: true,
+				node: &Node{
+					Name: "a",
+				},
+			}, {
+				title: "more than max",
+				text:  "a a a a a a",
+				fail:  true,
+			}},
+		)
+	})
 }
