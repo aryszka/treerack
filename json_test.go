@@ -234,14 +234,14 @@ func checkJSON(t *testing.T, got, expected interface{}) {
 		}
 
 		if len(v) != len(o) {
-			t.Error("invalid object length, expected: %d, got: %d", len(v), len(o))
+			t.Errorf("invalid object length, expected: %d, got: %d", len(v), len(o))
 			return
 		}
 
 		for key, val := range v {
 			gotVal, ok := o[key]
 			if !ok {
-				t.Error("expected key not found: %s", key)
+				t.Errorf("expected key not found: %s", key)
 				return
 			}
 
@@ -257,7 +257,7 @@ func checkJSON(t *testing.T, got, expected interface{}) {
 		}
 
 		if len(v) != len(a) {
-			t.Error("invalid array length, expected: %d, got: %d", len(v), len(a))
+			t.Errorf("invalid array length, expected: %d, got: %d", len(v), len(a))
 			return
 		}
 

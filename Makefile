@@ -19,9 +19,6 @@ check: imports build $(PARSERS)
 check-full: imports build $(PARSERS)
 	go test
 
-check-fmt: $(SOURCES)
-	@if [ "$$(gofmt -s -d $(SOURCES))" != "" ]; then false; else true; fi
-
 .coverprofile: $(SOURCES) imports
 	go test -coverprofile .coverprofile
 
@@ -43,6 +40,12 @@ cpu: cpu.out
 
 fmt: $(SOURCES)
 	@gofmt -w -s $(SOURCES)
+
+check-fmt: $(SOURCES)
+	@if [ "$$(gofmt -s -d $(SOURCES))" != "" ]; then false; else true; fi
+
+vet:
+	@go vet
 
 precommit: fmt build check-full
 
