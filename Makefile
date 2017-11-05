@@ -3,6 +3,9 @@ PARSERS = $(shell find . -name '*.treerack')
 
 default: build
 
+deps:
+	go get golang.org/x/tools/cmd/goimports
+
 imports: $(SOURCES)
 	@goimports -w $(SOURCES)
 
@@ -44,4 +47,4 @@ clean:
 	@rm -f cpu.out
 	@go clean -i ./...
 
-ci-trigger: build check-all
+ci-trigger: deps build check-all
