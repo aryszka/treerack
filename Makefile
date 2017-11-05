@@ -30,7 +30,7 @@ show-cover: .coverprofile
 
 publish-coverage: .coverprofile
 	curl -s https://codecov.io/bash -o codecov
-	bash codecov -f .coverprofile
+	bash codecov -Zf .coverprofile
 
 cpu.out: $(SOURCES) $(PARSERS)
 	go test -v -run TestMMLFile -cpuprofile cpu.out
