@@ -24,6 +24,10 @@ cover: .coverprofile
 show-cover: .coverprofile
 	go tool cover -html .coverprofile
 
+publish-coverage: .coverprofile
+	curl -s https://codecov.io/bash -o codecov
+	CODECOV_TOKEN=a2b0290b-62b6-419f-bf61-4182e479aec4 bash codecov -f .coverprofile
+
 cpu.out: $(SOURCES) $(PARSERS)
 	go test -v -run TestMMLFile -cpuprofile cpu.out
 
