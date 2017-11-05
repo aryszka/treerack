@@ -5,7 +5,7 @@ default: build
 
 deps:
 	go get golang.org/x/tools/cmd/goimports
-	go get github.com/zalando/skipper/eskip
+	go get ./...
 
 imports: $(SOURCES)
 	@goimports -w $(SOURCES)
