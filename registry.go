@@ -5,7 +5,6 @@ type registry struct {
 	ids         map[string]int
 	names       map[int]string
 	definitions map[string]definition
-	parsers     map[string]parser
 }
 
 func newRegistry(defs ...definition) *registry {
@@ -13,7 +12,6 @@ func newRegistry(defs ...definition) *registry {
 		ids:         make(map[string]int),
 		names:       make(map[int]string),
 		definitions: make(map[string]definition),
-		parsers:     make(map[string]parser),
 	}
 
 	for _, def := range defs {

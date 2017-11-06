@@ -258,11 +258,11 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 	} else if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
 	} else {
-		if c.buildPending(c.offset, b.id, to) {
+		if c.pending(c.offset, b.id) {
 			return nil, false
 		}
 
-		c.markBuildPending(c.offset, b.id, to)
+		c.markPending(c.offset, b.id)
 	}
 
 	var (
@@ -303,7 +303,7 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 	}
 
 	if !parsed {
-		c.unmarkBuildPending(from, b.id, to)
+		c.unmarkPending(from, b.id)
 	}
 
 	if b.commit&Alias != 0 {

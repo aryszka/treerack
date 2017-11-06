@@ -52,9 +52,10 @@ precommit: fmt build check-full
 clean:
 	@rm -f *.test
 	@rm -f cpu.out
+	@rm -f .coverprofile
 	@go clean -i ./...
 
-ci-trigger: deps build check-full check-fmt
+ci-trigger: deps check-fmt build check-full
 ifeq ($(TRAVIS_BRANCH)_$(TRAVIS_PULL_REQUEST), master_false)
 	make publish-coverage
 endif

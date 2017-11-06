@@ -86,11 +86,11 @@ func TestPendingWithinCap(t *testing.T) {
 
 	t.Run("parse", func(t *testing.T) {
 		for i := 0; i < 16; i++ {
-			c.markBuildPending(0, i, 0)
+			c.markPending(0, i)
 		}
 
 		for i := 0; i < 16; i++ {
-			if !c.buildPending(0, i, 0) {
+			if !c.pending(0, i) {
 				t.Error("failed to mark build pending")
 			}
 		}

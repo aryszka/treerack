@@ -23,6 +23,7 @@ func (r *results) ensureOffset(offset int) {
 
 func (r *results) setMatch(offset, id, to int) {
 	r.ensureOffset(offset)
+
 	for i := 0; i < len(r.match[offset]); i += 2 {
 		if r.match[offset][i] != id || r.match[offset][i+1] != to {
 			continue
@@ -121,6 +122,55 @@ func (r *results) dropMatchTo(offset, id, to int) {
 		if r.match[offset][i+1] == to {
 			r.match[offset][i] = -1
 			return
+		}
+	}
+}
+
+func (c *context) resetPending() {
+	c.isPending = nil
+}
+
+func (c *context) pending(offset, id int) bool {
+	if len(c.isPending) <= id {
+		return false
+	}
+
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == offset {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *context) markPending(offset, id int) {
+	if len(c.isPending) <= id {
+		if cap(c.isPending) > id {
+			c.isPending = c.isPending[:id+1]
+		} else {
+			c.isPending = c.isPending[:cap(c.isPending)]
+			for i := cap(c.isPending); i <= id; i++ {
+				c.isPending = append(c.isPending, nil)
+			}
+		}
+	}
+
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == -1 {
+			c.isPending[id][i] = offset
+			return
+		}
+	}
+
+	c.isPending[id] = append(c.isPending[id], offset)
+}
+
+func (c *context) unmarkPending(offset, id int) {
+	for i := range c.isPending[id] {
+		if c.isPending[id][i] == offset {
+			c.isPending[id][i] = -1
+			break
 		}
 	}
 }

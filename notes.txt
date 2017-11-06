@@ -4,6 +4,7 @@ error reporting
 - print the line
 - print the deepest non-alias node name
 - print the documentation of the node name
+- make it work with custom tokens
 read, with error reporting
 what was the bug with the large json from eskip?
 

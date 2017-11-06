@@ -63,101 +63,6 @@ func (c *context) token() (rune, bool) {
 	return c.tokens[c.offset], true
 }
 
-func (c *context) pending(offset, id int) bool {
-	if len(c.isPending) <= id {
-		return false
-	}
-
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == offset {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *context) markPending(offset, id int) {
-	if len(c.isPending) <= id {
-		if cap(c.isPending) > id {
-			c.isPending = c.isPending[:id+1]
-		} else {
-			c.isPending = c.isPending[:cap(c.isPending)]
-			for i := cap(c.isPending); i <= id; i++ {
-				c.isPending = append(c.isPending, nil)
-			}
-		}
-	}
-
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == -1 {
-			c.isPending[id][i] = offset
-			return
-		}
-	}
-
-	c.isPending[id] = append(c.isPending[id], offset)
-}
-
-func (c *context) unmarkPending(offset, id int) {
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == offset {
-			c.isPending[id][i] = -1
-			break
-		}
-	}
-}
-
-func (c *context) resetPending() {
-	c.isPending = nil
-}
-
-func (c *context) buildPending(offset, id, to int) bool {
-	if len(c.isPending) <= id {
-		return false
-	}
-
-	for i := 0; i < len(c.isPending[id]); i += 2 {
-		if c.isPending[id][i] == offset && c.isPending[id][i+1] == to {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c *context) markBuildPending(offset, id, to int) {
-	if len(c.isPending) <= id {
-		if cap(c.isPending) > id {
-			c.isPending = c.isPending[:id+1]
-		} else {
-			c.isPending = c.isPending[:cap(c.isPending)]
-			for i := cap(c.isPending); i <= id; i++ {
-				c.isPending = append(c.isPending, nil)
-			}
-		}
-	}
-
-	for i := 0; i < len(c.isPending[id]); i += 2 {
-		if c.isPending[id][i] == -1 {
-			c.isPending[id][i] = offset
-			c.isPending[id][i+1] = to
-			return
-		}
-	}
-
-	c.isPending[id] = append(c.isPending[id], offset, to)
-}
-
-func (c *context) unmarkBuildPending(offset, id, to int) {
-	for i := 0; i < len(c.isPending[id]); i += 2 {
-		if c.isPending[id][i] == offset && c.isPending[id][i+1] == to {
-			c.isPending[id][i] = -1
-			break
-		}
-	}
-}
-
 func (c *context) fromResults(id int) bool {
 	to, m, ok := c.results.longestResult(c.offset, id)
 	if !ok {
@@ -172,6 +77,11 @@ func (c *context) fromResults(id int) bool {
 
 	return true
 }
+
+// TODO:
+// - try to move this to the parsers
+// - try to move more
+// - if doens't help performance, try move more from there to here
 
 func (c *context) success(to int) {
 	c.offset = to
