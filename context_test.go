@@ -66,33 +66,3 @@ func TestFailingRead(t *testing.T) {
 		}
 	})
 }
-
-func TestPendingWithinCap(t *testing.T) {
-	c := newContext(bytes.NewBuffer(nil))
-
-	t.Run("parse", func(t *testing.T) {
-		for i := 0; i < 16; i++ {
-			c.markPending(0, i)
-		}
-
-		for i := 0; i < 16; i++ {
-			if !c.pending(0, i) {
-				t.Error("failed to mark pending")
-			}
-		}
-	})
-
-	c.resetPending()
-
-	t.Run("parse", func(t *testing.T) {
-		for i := 0; i < 16; i++ {
-			c.markPending(0, i)
-		}
-
-		for i := 0; i < 16; i++ {
-			if !c.pending(0, i) {
-				t.Error("failed to mark build pending")
-			}
-		}
-	})
-}

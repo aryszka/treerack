@@ -1,8 +1,9 @@
 package treerack
 
 type results struct {
-	noMatch []*idSet
-	match   [][]int
+	noMatch   []*idSet
+	match     [][]int
+	isPending [][]int
 }
 
 func (r *results) ensureOffset(offset int) {
@@ -126,17 +127,17 @@ func (r *results) dropMatchTo(offset, id, to int) {
 	}
 }
 
-func (c *context) resetPending() {
-	c.isPending = nil
+func (r *results) resetPending() {
+	r.isPending = nil
 }
 
-func (c *context) pending(offset, id int) bool {
-	if len(c.isPending) <= id {
+func (r *results) pending(offset, id int) bool {
+	if len(r.isPending) <= id {
 		return false
 	}
 
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == offset {
+	for i := range r.isPending[id] {
+		if r.isPending[id][i] == offset {
 			return true
 		}
 	}
@@ -144,32 +145,32 @@ func (c *context) pending(offset, id int) bool {
 	return false
 }
 
-func (c *context) markPending(offset, id int) {
-	if len(c.isPending) <= id {
-		if cap(c.isPending) > id {
-			c.isPending = c.isPending[:id+1]
+func (r *results) markPending(offset, id int) {
+	if len(r.isPending) <= id {
+		if cap(r.isPending) > id {
+			r.isPending = r.isPending[:id+1]
 		} else {
-			c.isPending = c.isPending[:cap(c.isPending)]
-			for i := cap(c.isPending); i <= id; i++ {
-				c.isPending = append(c.isPending, nil)
+			r.isPending = r.isPending[:cap(r.isPending)]
+			for i := cap(r.isPending); i <= id; i++ {
+				r.isPending = append(r.isPending, nil)
 			}
 		}
 	}
 
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == -1 {
-			c.isPending[id][i] = offset
+	for i := range r.isPending[id] {
+		if r.isPending[id][i] == -1 {
+			r.isPending[id][i] = offset
 			return
 		}
 	}
 
-	c.isPending[id] = append(c.isPending[id], offset)
+	r.isPending[id] = append(r.isPending[id], offset)
 }
 
-func (c *context) unmarkPending(offset, id int) {
-	for i := range c.isPending[id] {
-		if c.isPending[id][i] == offset {
-			c.isPending[id][i] = -1
+func (r *results) unmarkPending(offset, id int) {
+	for i := range r.isPending[id] {
+		if r.isPending[id][i] == offset {
+			r.isPending[id][i] = -1
 			break
 		}
 	}

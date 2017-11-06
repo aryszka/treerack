@@ -19,3 +19,33 @@ func TestResults(t *testing.T) {
 		}
 	})
 }
+
+func TestPendingWithinCap(t *testing.T) {
+	r := &results{}
+
+	t.Run("parse", func(t *testing.T) {
+		for i := 0; i < 16; i++ {
+			r.markPending(0, i)
+		}
+
+		for i := 0; i < 16; i++ {
+			if !r.pending(0, i) {
+				t.Error("failed to mark pending")
+			}
+		}
+	})
+
+	r.resetPending()
+
+	t.Run("parse", func(t *testing.T) {
+		for i := 0; i < 16; i++ {
+			r.markPending(0, i)
+		}
+
+		for i := 0; i < 16; i++ {
+			if !r.pending(0, i) {
+				t.Error("failed to mark build pending")
+			}
+		}
+	})
+}

@@ -139,12 +139,12 @@ func (p *choiceParser) parse(c *context) {
 		return
 	}
 
-	if c.pending(c.offset, p.id) {
+	if c.results.pending(c.offset, p.id) {
 		c.fail(c.offset)
 		return
 	}
 
-	c.markPending(c.offset, p.id)
+	c.results.markPending(c.offset, p.id)
 	from := c.offset
 	to := c.offset
 
@@ -180,13 +180,13 @@ func (p *choiceParser) parse(c *context) {
 
 	if match {
 		c.success(to)
-		c.unmarkPending(from, p.id)
+		c.results.unmarkPending(from, p.id)
 		return
 	}
 
 	c.results.setNoMatch(from, p.id)
 	c.fail(from)
-	c.unmarkPending(from, p.id)
+	c.results.unmarkPending(from, p.id)
 }
 
 func (b *choiceBuilder) nodeName() string { return b.name }
@@ -204,11 +204,11 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 	if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
 	} else {
-		if c.pending(c.offset, b.id) {
+		if c.results.pending(c.offset, b.id) {
 			return nil, false
 		}
 
-		c.markPending(c.offset, b.id)
+		c.results.markPending(c.offset, b.id)
 	}
 
 	var option builder
@@ -221,7 +221,7 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 
 	n, _ := option.build(c)
 	if !parsed {
-		c.unmarkPending(from, b.id)
+		c.results.unmarkPending(from, b.id)
 	}
 
 	if b.commit&Alias != 0 {

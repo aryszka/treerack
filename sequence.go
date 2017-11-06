@@ -173,12 +173,12 @@ func (p *sequenceParser) nodeID() int      { return p.id }
 
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
-		if c.pending(c.offset, p.id) {
+		if c.results.pending(c.offset, p.id) {
 			c.fail(c.offset)
 			return
 		}
 
-		c.markPending(c.offset, p.id)
+		c.results.markPending(c.offset, p.id)
 	}
 
 	itemIndex := 0
@@ -192,9 +192,8 @@ func (p *sequenceParser) parse(c *context) {
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
 				c.fail(from)
-
 				if !p.allChars {
-					c.unmarkPending(from, p.id)
+					c.results.unmarkPending(from, p.id)
 				}
 
 				return
@@ -219,7 +218,7 @@ func (p *sequenceParser) parse(c *context) {
 	}
 
 	for _, g := range p.generalizations {
-		if c.pending(from, g) {
+		if c.results.pending(from, g) {
 			c.results.setMatch(from, g, to)
 		}
 	}
@@ -227,7 +226,7 @@ func (p *sequenceParser) parse(c *context) {
 	c.results.setMatch(from, p.id, to)
 	c.success(to)
 	if !p.allChars {
-		c.unmarkPending(from, p.id)
+		c.results.unmarkPending(from, p.id)
 	}
 }
 
@@ -258,11 +257,11 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 	} else if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
 	} else {
-		if c.pending(c.offset, b.id) {
+		if c.results.pending(c.offset, b.id) {
 			return nil, false
 		}
 
-		c.markPending(c.offset, b.id)
+		c.results.markPending(c.offset, b.id)
 	}
 
 	var (
@@ -303,7 +302,7 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 	}
 
 	if !parsed {
-		c.unmarkPending(from, b.id)
+		c.results.unmarkPending(from, b.id)
 	}
 
 	if b.commit&Alias != 0 {

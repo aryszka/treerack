@@ -2977,7 +2977,7 @@ func TestMMLFile(t *testing.T) {
 
 	s.Init()
 
-	f, err := os.Open("test.mml")
+	f, err := os.Open("examples/test.mml")
 	if err != nil {
 		t.Error(err)
 		return

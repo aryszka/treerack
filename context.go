@@ -14,7 +14,6 @@ type context struct {
 	results    *results
 	tokens     []rune
 	matchLast  bool
-	isPending  [][]int
 }
 
 func newContext(r io.RuneReader) *context {
@@ -77,11 +76,6 @@ func (c *context) fromResults(id int) bool {
 
 	return true
 }
-
-// TODO:
-// - try to move this to the parsers
-// - try to move more
-// - if doens't help performance, try move more from there to here
 
 func (c *context) success(to int) {
 	c.offset = to

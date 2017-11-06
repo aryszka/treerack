@@ -320,7 +320,7 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	c.offset = 0
-	c.resetPending()
+	c.results.resetPending()
 
 	n, _ := s.builder.build(c)
 	return n[0], nil
