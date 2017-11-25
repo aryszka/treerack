@@ -58,7 +58,7 @@ func (p *charParser) match(t rune) bool {
 
 func (p *charParser) parse(c *context) {
 	if tok, ok := c.token(); !ok || !p.match(tok) {
-		c.fail(p, c.offset)
+		c.fail(c.offset)
 		return
 	}
 

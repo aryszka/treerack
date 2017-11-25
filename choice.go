@@ -141,7 +141,7 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if c.results.pending(c.offset, p.id) {
-		c.fail(p, c.offset)
+		c.fail(c.offset)
 		return
 	}
 
@@ -186,7 +186,8 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	c.results.setNoMatch(from, p.id)
-	c.fail(p, from)
+	c.recordFailure(p)
+	c.fail(from)
 	c.results.unmarkPending(from, p.id)
 }
 

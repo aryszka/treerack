@@ -17,7 +17,6 @@ func openSyntaxReader(r io.Reader) (*Syntax, error) {
 		return nil, err
 	}
 
-	println("starting")
 	s := &Syntax{}
 	if err := define(s, doc); err != nil {
 		return nil, err

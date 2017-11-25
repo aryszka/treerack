@@ -53,26 +53,26 @@ func TestError(t *testing.T) {
 		column:     2,
 		definition: "c",
 	}, {
-		title:      "choice, longer option fails",
+		title:      "choice succeeds, document fails",
 		syntax:     `a = "12"; b = "1"; c:root = a | b`,
 		text:       "13",
 		offset:     1,
 		column:     1,
-		definition: "a",
+		definition: "c",
 	}, {
-		title:      "choice, shorter option fails",
-		syntax:     `a = "2"; b = "12"; c:root = a | b`,
-		text:       "123",
-		offset:     0,
-		column:     0,
-		definition: "1",
-	}, {
-		title:      "choice, both options fail",
+		title:      "choice fails",
 		syntax:     `a = "12"; b = "2"; c:root = a | b`,
 		text:       "13",
 		offset:     1,
 		column:     1,
 		definition: "a",
+	}, {
+		title:      "choice fails, longer option reported",
+		syntax:     `a = "12"; b = "134"; c:root = a | b`,
+		text:       "135",
+		offset:     2,
+		column:     2,
+		definition: "b",
 	}} {
 		t.Run(test.title, func(t *testing.T) {
 			s, err := openSyntaxString(test.syntax)

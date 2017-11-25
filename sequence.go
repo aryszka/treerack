@@ -175,7 +175,7 @@ func (p *sequenceParser) commitType() CommitType { return p.commit }
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
 		if c.results.pending(c.offset, p.id) {
-			c.fail(p, c.offset)
+			c.fail(c.offset)
 			return
 		}
 
@@ -192,7 +192,8 @@ func (p *sequenceParser) parse(c *context) {
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
-				c.fail(p, from)
+				c.recordFailure(p)
+				c.fail(from)
 				if !p.allChars {
 					c.results.unmarkPending(from, p.id)
 				}
