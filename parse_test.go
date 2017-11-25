@@ -710,3 +710,26 @@ func TestPartialRead(t *testing.T) {
 		}},
 	)
 }
+
+func TestChoiceSequencePriority(t *testing.T) {
+	runTests(
+		t,
+		`A = "a" | "b" "c"`,
+		[]testItem{{
+			title: "ac",
+			text:  "ac",
+			fail:  true,
+		}},
+	)
+
+	runTests(
+		t,
+		`A = "a" | "b" "c"`,
+		[]testItem{{
+			title:          "bc",
+			text:           "bc",
+			ignorePosition: true,
+			node:           &Node{Name: "A"},
+		}},
+	)
+}
