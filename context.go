@@ -6,14 +6,17 @@ import (
 )
 
 type context struct {
-	reader     io.RuneReader
-	offset     int
-	readOffset int
-	readErr    error
-	eof        bool
-	results    *results
-	tokens     []rune
-	matchLast  bool
+	reader        io.RuneReader
+	offset        int
+	readOffset    int
+	consumed      int
+	failOffset    int
+	failingParser parser
+	readErr       error
+	eof           bool
+	results       *results
+	tokens        []rune
+	matchLast     bool
 }
 
 func newContext(r io.RuneReader) *context {
@@ -62,8 +65,8 @@ func (c *context) token() (rune, bool) {
 	return c.tokens[c.offset], true
 }
 
-func (c *context) fromResults(id int) bool {
-	to, m, ok := c.results.longestResult(c.offset, id)
+func (c *context) fromResults(p parser) bool {
+	to, m, ok := c.results.longestResult(c.offset, p.nodeID())
 	if !ok {
 		return false
 	}
@@ -71,7 +74,7 @@ func (c *context) fromResults(id int) bool {
 	if m {
 		c.success(to)
 	} else {
-		c.fail(c.offset)
+		c.fail(p, c.offset)
 	}
 
 	return true
@@ -80,21 +83,66 @@ func (c *context) fromResults(id int) bool {
 func (c *context) success(to int) {
 	c.offset = to
 	c.matchLast = true
+	if to > c.consumed {
+		c.consumed = to
+	}
 }
 
-func (c *context) fail(offset int) {
+func (c *context) fail(p parser, offset int) {
 	c.offset = offset
 	c.matchLast = false
+	if c.failingParser == nil || c.consumed > c.failOffset {
+		// TODO: choice can be retried
+		println("setting fail", p.nodeName(), c.failingParser == nil, c.failOffset, c.consumed)
+		c.failOffset = c.consumed
+		if p.commitType()&userDefined != 0 {
+			c.failingParser = p
+		}
+	}
 }
 
-func (c *context) finalizeParse(rootID int) error {
-	if !c.matchLast {
-		return ErrInvalidInput
+func findLine(tokens []rune, offset int) (line, column int) {
+	tokens = tokens[:offset]
+	for i := range tokens {
+		column++
+		if tokens[i] == '\n' {
+			column = 0
+			line++
+		}
 	}
 
-	to, match, found := c.results.longestResult(0, rootID)
+	return
+}
+
+func (c *context) parseError(root parser) error {
+	definition := root.nodeName()
+	if c.failingParser == nil {
+		println("setting fail", c.failOffset, c.consumed)
+		c.failOffset = c.consumed
+	} else {
+		definition = c.failingParser.nodeName()
+	}
+
+	line, col := findLine(c.tokens, c.failOffset)
+
+	return &ParseError{
+		Offset:     c.failOffset,
+		Line:       line,
+		Column:     col,
+		Definition: definition,
+	}
+}
+
+func (c *context) finalizeParse(root parser) error {
+	if !c.matchLast {
+		return c.parseError(root)
+	}
+
+	to, match, found := c.results.longestResult(0, root.nodeID())
+
+	// TODO: test all three cases
 	if !found || !match || to < c.readOffset {
-		return ErrUnexpectedCharacter
+		return c.parseError(root)
 	}
 
 	if !c.eof {
@@ -104,7 +152,7 @@ func (c *context) finalizeParse(rootID int) error {
 				return c.readErr
 			}
 
-			return ErrUnexpectedCharacter
+			return c.parseError(root)
 		}
 	}
 

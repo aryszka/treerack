@@ -168,13 +168,14 @@ func (d *sequenceDefinition) parser() parser {
 
 func (d *sequenceDefinition) builder() builder { return d.sbuilder }
 
-func (p *sequenceParser) nodeName() string { return p.name }
-func (p *sequenceParser) nodeID() int      { return p.id }
+func (p *sequenceParser) nodeName() string       { return p.name }
+func (p *sequenceParser) nodeID() int            { return p.id }
+func (p *sequenceParser) commitType() CommitType { return p.commit }
 
 func (p *sequenceParser) parse(c *context) {
 	if !p.allChars {
 		if c.results.pending(c.offset, p.id) {
-			c.fail(c.offset)
+			c.fail(p, c.offset)
 			return
 		}
 
@@ -191,7 +192,7 @@ func (p *sequenceParser) parse(c *context) {
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
-				c.fail(from)
+				c.fail(p, from)
 				if !p.allChars {
 					c.results.unmarkPending(from, p.id)
 				}

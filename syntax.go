@@ -15,6 +15,8 @@ const (
 	Whitespace
 	NoWhitespace
 	Root
+
+	userDefined
 )
 
 // if min=0&&max=0, it means min=1,max=1
@@ -23,6 +25,29 @@ const (
 type SequenceItem struct {
 	Name     string
 	Min, Max int
+}
+
+// ParseError is returned when the input text doesn't match
+// the used syntax during parsing.
+type ParseError struct {
+
+	// Offset is the index of the right-most failing
+	// token in the input text.
+	Offset int
+
+	// Line tells the line index of the right-most failing
+	// token in the input text.
+	//
+	// It is zero-based, and for error reporting, it is
+	// recommended to increment it by one.
+	Line int
+
+	// Column tells the column index of the right-most failing
+	// token in the input text.
+	Column int
+
+	// Definition tells the right-most unmatched parser definition.
+	Definition string
 }
 
 type Syntax struct {
@@ -53,6 +78,7 @@ type definition interface {
 type parser interface {
 	nodeName() string
 	nodeID() int
+	commitType() CommitType
 	parse(*context)
 }
 
@@ -117,6 +143,10 @@ func intsContain(is []int, i int) bool {
 	return false
 }
 
+func (pe *ParseError) Error() string {
+	return "parse error"
+}
+
 func (s *Syntax) applyRoot(d definition) error {
 	explicitRoot := d.commitType()&Root != 0
 	if explicitRoot && s.explicitRoot {
@@ -164,7 +194,7 @@ func (s *Syntax) AnyChar(name string, ct CommitType) error {
 		return ErrInvalidSymbolName
 	}
 
-	return s.anyChar(name, ct)
+	return s.anyChar(name, ct|userDefined)
 }
 
 func childName(name string, childIndex int) string {
@@ -194,7 +224,7 @@ func (s *Syntax) Class(name string, ct CommitType, not bool, chars []rune, range
 		return ErrInvalidSymbolName
 	}
 
-	return s.class(name, ct, not, chars, ranges)
+	return s.class(name, ct|userDefined, not, chars, ranges)
 }
 
 func (s *Syntax) charSequence(name string, ct CommitType, chars []rune) error {
@@ -215,7 +245,7 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 		return ErrInvalidSymbolName
 	}
 
-	return s.charSequence(name, ct, chars)
+	return s.charSequence(name, ct|userDefined, chars)
 }
 
 func (s *Syntax) sequence(name string, ct CommitType, items ...SequenceItem) error {
@@ -229,7 +259,7 @@ func (s *Syntax) Sequence(name string, ct CommitType, items ...SequenceItem) err
 		return ErrInvalidSymbolName
 	}
 
-	return s.sequence(name, ct, items...)
+	return s.sequence(name, ct|userDefined, items...)
 }
 
 func (s *Syntax) choice(name string, ct CommitType, options ...string) error {
@@ -241,7 +271,7 @@ func (s *Syntax) Choice(name string, ct CommitType, options ...string) error {
 		return ErrInvalidSymbolName
 	}
 
-	return s.choice(name, ct, options...)
+	return s.choice(name, ct|userDefined, options...)
 }
 
 func (s *Syntax) Read(r io.Reader) error {
@@ -315,7 +345,7 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 		return nil, c.readErr
 	}
 
-	if err := c.finalizeParse(s.parser.nodeID()); err != nil {
+	if err := c.finalizeParse(s.parser); err != nil {
 		return nil, err
 	}
 

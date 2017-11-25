@@ -131,16 +131,17 @@ func (d *choiceDefinition) parser() parser {
 
 func (d *choiceDefinition) builder() builder { return d.cbuilder }
 
-func (p *choiceParser) nodeName() string { return p.name }
-func (p *choiceParser) nodeID() int      { return p.id }
+func (p *choiceParser) nodeName() string       { return p.name }
+func (p *choiceParser) nodeID() int            { return p.id }
+func (p *choiceParser) commitType() CommitType { return p.commit }
 
 func (p *choiceParser) parse(c *context) {
-	if c.fromResults(p.id) {
+	if c.fromResults(p) {
 		return
 	}
 
 	if c.results.pending(c.offset, p.id) {
-		c.fail(c.offset)
+		c.fail(p, c.offset)
 		return
 	}
 
@@ -185,7 +186,7 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	c.results.setNoMatch(from, p.id)
-	c.fail(from)
+	c.fail(p, from)
 	c.results.unmarkPending(from, p.id)
 }
 
