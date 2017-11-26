@@ -1,9 +1,12 @@
 package treerack
 
+import "strconv"
+
 type sequenceDefinition struct {
 	name            string
 	id              int
 	commit          CommitType
+	originalItems   []SequenceItem
 	items           []SequenceItem
 	itemDefs        []definition
 	ranges          [][]int
@@ -35,10 +38,16 @@ type sequenceBuilder struct {
 }
 
 func newSequence(name string, ct CommitType, items []SequenceItem) *sequenceDefinition {
+	original := make([]SequenceItem, len(items))
+	for i := range items {
+		original[i] = items[i]
+	}
+
 	return &sequenceDefinition{
-		name:   name,
-		commit: ct,
-		items:  items,
+		name:          name,
+		commit:        ct,
+		items:         items,
+		originalItems: original,
 	}
 }
 
@@ -49,20 +58,26 @@ func (d *sequenceDefinition) setID(id int)                { d.id = id }
 func (d *sequenceDefinition) commitType() CommitType      { return d.commit }
 func (d *sequenceDefinition) setCommitType(ct CommitType) { d.commit = ct }
 
+func normalizeItemRange(item SequenceItem) SequenceItem {
+	if item.Min == 0 && item.Max == 0 {
+		item.Min, item.Max = 1, 1
+		return item
+	}
+
+	if item.Min <= 0 {
+		item.Min = 0
+	}
+
+	if item.Max <= 0 {
+		item.Max = -1
+	}
+
+	return item
+}
+
 func (d *sequenceDefinition) initRanges() {
 	for i, item := range d.items {
-		if item.Min == 0 && item.Max == 0 {
-			item.Min, item.Max = 1, 1
-		} else {
-			if item.Min <= 0 {
-				item.Min = 0
-			}
-
-			if item.Max <= 0 {
-				item.Max = -1
-			}
-		}
-
+		item = normalizeItemRange(item)
 		d.items[i] = item
 		d.ranges = append(d.ranges, []int{item.Min, item.Max})
 	}
@@ -167,6 +182,111 @@ func (d *sequenceDefinition) parser() parser {
 }
 
 func (d *sequenceDefinition) builder() builder { return d.sbuilder }
+
+func (d *sequenceDefinition) isCharSequence(r *registry) bool {
+	for i := range d.originalItems {
+		item := normalizeItemRange(d.originalItems[i])
+		if item.Min != 1 || item.Max != 1 {
+			return false
+		}
+
+		itemDef, _ := r.definition(d.originalItems[i].Name)
+		c, ok := itemDef.(*charParser)
+		if !ok || !c.isSingleChar() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (d *sequenceDefinition) format(r *registry, f formatFlags) string {
+	if d.isCharSequence(r) {
+		var chars []rune
+		for i := range d.originalItems {
+			itemDef, _ := r.definition(d.originalItems[i].Name)
+			c, _ := itemDef.(*charParser)
+			chars = append(chars, c.chars[0])
+		}
+
+		chars = escape(charClassEscape, []rune(charClassBanned), chars)
+		return string(append([]rune{'"'}, append(chars, '"')...))
+	}
+
+	var chars []rune
+	for i := range d.originalItems {
+		if len(chars) > 0 {
+			chars = append(chars, ' ')
+		}
+
+		item := normalizeItemRange(d.originalItems[i])
+		needsQuantifier := item.Min != 1 || item.Max != 1
+
+		itemDef, _ := r.definition(item.Name)
+		isSymbol := itemDef.commitType()&userDefined != 0
+
+		ch, isChoice := itemDef.(*choiceDefinition)
+		isChoiceOfMultiple := isChoice && len(ch.options) > 1
+
+		seq, isSequence := itemDef.(*sequenceDefinition)
+		isSequenceOfMultiple := isSequence && len(seq.originalItems) > 1 && !seq.isCharSequence(r)
+
+		needsGrouping := isChoiceOfMultiple || isSequenceOfMultiple
+
+		if isSymbol {
+			chars = append(chars, []rune(itemDef.nodeName())...)
+		} else {
+			if needsGrouping {
+				chars = append(chars, '(')
+			}
+
+			chars = append(chars, []rune(itemDef.format(r, f))...)
+
+			if needsGrouping {
+				chars = append(chars, ')')
+			}
+		}
+
+		if !needsQuantifier {
+			continue
+		}
+
+		if item.Min == 0 && item.Max == 1 {
+			chars = append(chars, '?')
+			continue
+		}
+
+		if item.Min == 0 && item.Max < 0 {
+			chars = append(chars, '*')
+			continue
+		}
+
+		if item.Min == 1 && item.Max < 0 {
+			chars = append(chars, '+')
+			continue
+		}
+
+		chars = append(chars, '{')
+
+		if item.Min == item.Max {
+			chars = append(chars, []rune(strconv.Itoa(item.Min))...)
+		} else {
+			if item.Min > 0 {
+				chars = append(chars, []rune(strconv.Itoa(item.Min))...)
+			}
+
+			chars = append(chars, ',')
+
+			if item.Max >= 0 {
+				chars = append(chars, []rune(strconv.Itoa(item.Max))...)
+			}
+		}
+
+		chars = append(chars, '}')
+	}
+
+	return string(chars)
+}
 
 func (p *sequenceParser) nodeName() string { return p.name }
 func (p *sequenceParser) nodeID() int      { return p.id }

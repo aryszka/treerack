@@ -10,18 +10,51 @@ func runesContain(rs []rune, r rune) bool {
 	return false
 }
 
+func escapeChar(escape, c rune) []rune {
+	switch c {
+	case '\b':
+		return []rune{escape, 'b'}
+	case '\f':
+		return []rune{escape, 'f'}
+	case '\n':
+		return []rune{escape, 'n'}
+	case '\r':
+		return []rune{escape, 'r'}
+	case '\t':
+		return []rune{escape, 't'}
+	case '\v':
+		return []rune{escape, 'v'}
+	default:
+		return []rune{escape, c}
+	}
+}
+
+func escape(escape rune, banned, chars []rune) []rune {
+	var escaped []rune
+	for i := range chars {
+		if runesContain(banned, chars[i]) {
+			escaped = append(escaped, escapeChar(escape, chars[i])...)
+			continue
+		}
+
+		escaped = append(escaped, chars[i])
+	}
+
+	return escaped
+}
+
 func unescapeChar(c rune) rune {
 	switch c {
-	case 'n':
-		return '\n'
-	case 't':
-		return '\t'
 	case 'b':
 		return '\b'
 	case 'f':
 		return '\f'
+	case 'n':
+		return '\n'
 	case 'r':
 		return '\r'
+	case 't':
+		return '\t'
 	case 'v':
 		return '\v'
 	default:
@@ -29,7 +62,7 @@ func unescapeChar(c rune) rune {
 	}
 }
 
-func unescape(escape rune, banned []rune, chars []rune) ([]rune, error) {
+func unescape(escape rune, banned, chars []rune) ([]rune, error) {
 	var (
 		unescaped []rune
 		escaped   bool

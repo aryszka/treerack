@@ -131,6 +131,24 @@ func (d *choiceDefinition) parser() parser {
 
 func (d *choiceDefinition) builder() builder { return d.cbuilder }
 
+func (d *choiceDefinition) format(r *registry, f formatFlags) string {
+	var chars []rune
+	for i := range d.options {
+		if i > 0 {
+			chars = append(chars, []rune(" | ")...)
+		}
+
+		optionDef, _ := r.definition(d.options[i])
+		if optionDef.commitType()&userDefined != 0 {
+			chars = append(chars, []rune(optionDef.nodeName())...)
+		} else {
+			chars = append(chars, []rune(optionDef.format(r, f))...)
+		}
+	}
+
+	return string(chars)
+}
+
 func (p *choiceParser) nodeName() string { return p.name }
 func (p *choiceParser) nodeID() int      { return p.id }
 

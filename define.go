@@ -191,7 +191,7 @@ func defineDefinition(s *Syntax, n *Node) error {
 	return defineExpression(
 		s,
 		n.Nodes[0].Text(),
-		flagsToCommitType(n.Nodes[1:len(n.Nodes)-1]),
+		flagsToCommitType(n.Nodes[1:len(n.Nodes)-1])|userDefined,
 		n.Nodes[len(n.Nodes)-1],
 	)
 }
