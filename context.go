@@ -103,7 +103,7 @@ func (c *context) recordFailure(p parser) {
 	}
 
 	c.failOffset = c.offset
-	if p.commitType()&userDefined != 0 {
+	if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
 		c.failingParser = p
 	}
 }

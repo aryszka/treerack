@@ -93,6 +93,11 @@ func TestError(t *testing.T) {
 				return
 			}
 
+			if perr.Input != "<input>" {
+				t.Error("invalid default input name")
+				return
+			}
+
 			if perr.Offset != test.offset {
 				t.Error("invalid error offset", perr.Offset, test.offset)
 				return
@@ -112,4 +117,49 @@ func TestError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestErrorMessage(t *testing.T) {
+	const expected = "foo:4:10:failed to parse definition: bar"
+
+	perr := &ParseError{
+		Input:      "foo",
+		Offset:     42,
+		Line:       3,
+		Column:     9,
+		Definition: "bar",
+	}
+
+	message := perr.Error()
+	if message != expected {
+		t.Error("failed to return the right error message")
+		t.Log("got:     ", message)
+		t.Log("expected:", expected)
+	}
+}
+
+func TestErrorVerbose(t *testing.T) {
+	const expected = `
+`
+
+	const doc = `{
+		"a": 1,
+		"b": 2,
+		"c": 3,
+	}`
+
+	s, err := openSyntaxFile("examples/json.treerack")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = s.Parse(bytes.NewBufferString(doc))
+	perr, ok := err.(*ParseError)
+	if !ok {
+		t.Error("failed to return parse error")
+		return
+	}
+
+	t.Log(perr.Error())
 }

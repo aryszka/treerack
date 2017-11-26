@@ -38,6 +38,10 @@ type SequenceItem struct {
 // the used syntax during parsing.
 type ParseError struct {
 
+	// Input is the name of the input file or <input> if not
+	// available.
+	Input string
+
 	// Offset is the index of the right-most failing
 	// token in the input text.
 	Offset int
@@ -55,6 +59,8 @@ type ParseError struct {
 
 	// Definition tells the right-most unmatched parser definition.
 	Definition string
+
+	registry *registry
 }
 
 type Syntax struct {
@@ -152,7 +158,17 @@ func intsContain(is []int, i int) bool {
 }
 
 func (pe *ParseError) Error() string {
-	return "parse error"
+	return fmt.Sprintf(
+		"%s:%d:%d:failed to parse definition: %s",
+		pe.Input,
+		pe.Line+1,
+		pe.Column+1,
+		pe.Definition,
+	)
+}
+
+func (pe *ParseError) Verbose() string {
+	return ""
 }
 
 func (s *Syntax) applyRoot(d definition) error {
@@ -354,6 +370,11 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	}
 
 	if err := c.finalizeParse(s.parser); err != nil {
+		if perr, ok := err.(*ParseError); ok {
+			perr.Input = "<input>"
+			perr.registry = s.registry
+		}
+
 		return nil, err
 	}
 
