@@ -25,6 +25,9 @@ code generation js
 documentation flag
 support custom tokenization
 streaming
+verify choice and sequence preference
+formatter
+pretty
 
 [problems]
 can the root be an alias? check the commit mechanism

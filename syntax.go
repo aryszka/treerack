@@ -19,6 +19,13 @@ const (
 	userDefined
 )
 
+type formatFlags int
+
+const (
+	formatNone   formatFlags = 0
+	formatPretty formatFlags = 1 << iota
+)
+
 // if min=0&&max=0, it means min=1,max=1
 // else if max<=0, it means no max
 // else if min<=0, it means no min
@@ -73,6 +80,7 @@ type definition interface {
 	addGeneralization(int)
 	parser() parser
 	builder() builder
+	format(*registry, formatFlags) string
 }
 
 type parser interface {

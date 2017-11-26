@@ -27,3 +27,16 @@ func TestUnescape(t *testing.T) {
 		}
 	})
 }
+
+func TestEscape(t *testing.T) {
+	const (
+		banned    = "\b\f\n\r\t\v"
+		unescaped = "\b\f\n\r\t\v"
+		expected  = "\\b\\f\\n\\r\\t\\v"
+	)
+
+	e := escape('\\', []rune(banned), []rune(unescaped))
+	if string(e) != expected {
+		t.Error("failed to escape", string(e), expected)
+	}
+}
