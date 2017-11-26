@@ -73,6 +73,34 @@ func TestError(t *testing.T) {
 		offset:     2,
 		column:     2,
 		definition: "b",
+	}, {
+		title:      "failing choice on the failing branch",
+		syntax:     `a = "123"; b:root = a | "13"`,
+		text:       "124",
+		offset:     2,
+		column:     2,
+		definition: "a",
+	}, {
+		title:      "failing choice on a shorter branch",
+		syntax:     `a = "13"; b:root = "123" | a`,
+		text:       "124",
+		offset:     2,
+		column:     2,
+		definition: "b",
+	}, {
+		title:      "longer failure on a later pass",
+		syntax:     `a = "12"; b = "34"; c = "1" b; d:root = a | c`,
+		text:       "135",
+		offset:     2,
+		column:     2,
+		definition: "b",
+	}, {
+		title:      "char as a choice option",
+		syntax:     `a = "12"; b = [a] | [b]; c = a b`,
+		text:       "12c",
+		offset:     2,
+		column:     2,
+		definition: "b",
 	}} {
 		t.Run(test.title, func(t *testing.T) {
 			s, err := openSyntaxString(test.syntax)
@@ -81,6 +109,7 @@ func TestError(t *testing.T) {
 				return
 			}
 
+			// println("starting")
 			_, err = s.Parse(bytes.NewBufferString(test.text))
 			if err == nil {
 				t.Error("failed to fail")
@@ -119,8 +148,28 @@ func TestError(t *testing.T) {
 	}
 }
 
+func TestErrorRecursive(t *testing.T) {
+	const doc = `a[b][1a]`
+
+	s, err := openSyntaxFile("examples/mml.treerack")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// println("starting")
+	_, err = s.Parse(bytes.NewBufferString(doc))
+	perr, ok := err.(*ParseError)
+	if !ok {
+		t.Error("failed to return parse error")
+		return
+	}
+
+	t.Log(perr)
+}
+
 func TestErrorMessage(t *testing.T) {
-	const expected = "foo:4:10:failed to parse definition: bar"
+	const expected = "foo:4:10:failed to parse input, expecting: bar"
 
 	perr := &ParseError{
 		Input:      "foo",
@@ -143,9 +192,9 @@ func TestErrorVerbose(t *testing.T) {
 `
 
 	const doc = `{
-		"a": 1,
-		"b": 2,
-		"c": 3,
+		"a":1,
+		"b":2,
+		"c":3,
 	}`
 
 	s, err := openSyntaxFile("examples/json.treerack")

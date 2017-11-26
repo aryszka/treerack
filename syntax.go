@@ -159,7 +159,7 @@ func intsContain(is []int, i int) bool {
 
 func (pe *ParseError) Error() string {
 	return fmt.Sprintf(
-		"%s:%d:%d:failed to parse definition: %s",
+		"%s:%d:%d:failed to parse input, expecting: %s",
 		pe.Input,
 		pe.Line+1,
 		pe.Column+1,

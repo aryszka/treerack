@@ -93,17 +93,22 @@ func (c *context) fail(offset int) {
 	c.matchLast = false
 }
 
-func (c *context) recordFailure(p parser) {
-	if c.offset < c.failOffset {
+// TODO:
+// - need to know which choice branch the failure happened on because if there is a non-user branch that has the
+// longest failure, it can be reported to an unrelevant user defined choice on another branch
+
+func (c *context) recordFailure(offset int, p parser) {
+	if offset < c.failOffset {
 		return
 	}
 
-	if c.failingParser != nil && c.offset == c.failOffset {
+	if c.failingParser != nil && offset == c.failOffset {
 		return
 	}
 
-	c.failOffset = c.offset
+	c.failOffset = offset
 	if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
+		// println("setting failing sequence parser", p.nodeName(), offset)
 		c.failingParser = p
 	}
 }

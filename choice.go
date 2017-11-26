@@ -171,6 +171,17 @@ func (p *choiceParser) parse(c *context) {
 	var optionIndex int
 	var foundMatch bool
 
+	// TODO:
+	// - if there is a failure already, it should be left alone
+	// - what if reading more means that the previous failurs don't count
+	initialFailOffset := c.failOffset
+	initialFailingParser := c.failingParser
+	c.failingParser = nil
+	var (
+		failOffset    int
+		failingParser parser
+	)
+
 	for {
 		foundMatch = false
 		optionIndex = 0
@@ -181,6 +192,13 @@ func (p *choiceParser) parse(c *context) {
 
 			if !c.matchLast || match && c.offset <= to {
 				c.offset = from
+				if c.failOffset > failOffset {
+					failOffset = c.failOffset
+					failingParser = c.failingParser
+				}
+
+				c.failOffset = initialFailOffset
+				c.failingParser = nil
 				continue
 			}
 
@@ -188,7 +206,8 @@ func (p *choiceParser) parse(c *context) {
 			foundMatch = true
 			to = c.offset
 			c.offset = from
-
+			c.failOffset = initialFailOffset
+			c.failingParser = nil
 			c.results.setMatch(from, p.id, to)
 		}
 
@@ -198,13 +217,37 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if match {
+		c.failOffset = initialFailOffset
+		c.failingParser = initialFailingParser
 		c.success(to)
 		c.results.unmarkPending(from, p.id)
 		return
 	}
 
+	if failOffset > initialFailOffset {
+		// println("recording choice failure", p.name, failOffset)
+		c.failOffset = failOffset
+		if failingParser == nil && p.commit&userDefined != 0 && p.commit&Whitespace == 0 {
+			// println("setting failing choice parser", p.nodeName(), failOffset)
+			c.failingParser = p
+		} else {
+			c.failingParser = failingParser
+		}
+	} else if failOffset == initialFailOffset && initialFailingParser == nil {
+		// println("recording choice failure", p.name, failOffset)
+		c.failOffset = failOffset
+		if failingParser == nil && p.commit&userDefined != 0 && p.commit&Whitespace == 0 {
+			// println("setting failing choice parser", p.nodeName(), failOffset)
+			c.failingParser = p
+		} else {
+			c.failingParser = failingParser
+		}
+	} else {
+		c.failOffset = initialFailOffset
+		c.failingParser = initialFailingParser
+	}
+
 	c.results.setNoMatch(from, p.id)
-	c.recordFailure(p)
 	c.fail(from)
 	c.results.unmarkPending(from, p.id)
 }

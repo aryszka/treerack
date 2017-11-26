@@ -312,7 +312,8 @@ func (p *sequenceParser) parse(c *context) {
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
-				c.recordFailure(p)
+				// println("recording sequence failure", p.name, c.offset)
+				c.recordFailure(c.offset, p)
 				c.fail(from)
 				if !p.allChars {
 					c.results.unmarkPending(from, p.id)
