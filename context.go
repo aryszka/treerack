@@ -21,8 +21,9 @@ type context struct {
 
 func newContext(r io.RuneReader) *context {
 	return &context{
-		reader:  r,
-		results: &results{},
+		reader:     r,
+		results:    &results{},
+		failOffset: -1,
 	}
 }
 
@@ -145,13 +146,17 @@ func (c *context) parseError(p parser) error {
 func (c *context) finalizeParse(root parser) error {
 	p := c.failingParser
 	if p == nil {
+		// println("failing parser is nil")
 		p = root
 	}
+
+	// println("failing parser is", p.nodeName())
 
 	to, match, found := c.results.longestResult(0, root.nodeID())
 
 	if found && match && to < c.readOffset {
-		return c.parseError(root)
+		// println("forcing root", found, match, to, c.readOffset)
+		return c.parseError(p)
 	}
 
 	// TODO: test both cases

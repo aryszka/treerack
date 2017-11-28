@@ -149,7 +149,8 @@ func TestError(t *testing.T) {
 }
 
 func TestErrorRecursive(t *testing.T) {
-	const doc = `a[b][1a]`
+	// const doc = `a[b][1a]`
+	const doc = `a[1a]`
 
 	s, err := openSyntaxFile("examples/mml.treerack")
 	if err != nil {
@@ -157,7 +158,7 @@ func TestErrorRecursive(t *testing.T) {
 		return
 	}
 
-	// println("starting")
+	// println("\n<<<< starting >>>>\n")
 	_, err = s.Parse(bytes.NewBufferString(doc))
 	perr, ok := err.(*ParseError)
 	if !ok {

@@ -307,13 +307,19 @@ func (p *sequenceParser) parse(c *context) {
 	from := c.offset
 	to := c.offset
 	var parsed bool
+	initialFailOffset := c.failOffset
 
 	for itemIndex < len(p.items) {
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
 			if currentCount < p.ranges[itemIndex][0] {
-				// println("recording sequence failure", p.name, c.offset)
-				c.recordFailure(c.offset, p)
+				if c.failOffset > initialFailOffset && c.failingParser == nil {
+					if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
+						// println("recording sequence failure", p.name, from, c.failOffset)
+						c.failingParser = p
+					}
+				}
+
 				c.fail(from)
 				if !p.allChars {
 					c.results.unmarkPending(from, p.id)
@@ -344,6 +350,11 @@ func (p *sequenceParser) parse(c *context) {
 		if c.results.pending(from, g) {
 			c.results.setMatch(from, g, to)
 		}
+	}
+
+	if to >= c.failOffset {
+		c.failOffset = -1
+		c.failingParser = nil
 	}
 
 	c.results.setMatch(from, p.id, to)

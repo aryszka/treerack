@@ -163,6 +163,8 @@ func (p *choiceParser) parse(c *context) {
 		return
 	}
 
+	// println("parsing choice", p.name, c.offset)
+
 	c.results.markPending(c.offset, p.id)
 	from := c.offset
 	to := c.offset
@@ -175,12 +177,6 @@ func (p *choiceParser) parse(c *context) {
 	// - if there is a failure already, it should be left alone
 	// - what if reading more means that the previous failurs don't count
 	initialFailOffset := c.failOffset
-	initialFailingParser := c.failingParser
-	c.failingParser = nil
-	var (
-		failOffset    int
-		failingParser parser
-	)
 
 	for {
 		foundMatch = false
@@ -192,13 +188,6 @@ func (p *choiceParser) parse(c *context) {
 
 			if !c.matchLast || match && c.offset <= to {
 				c.offset = from
-				if c.failOffset > failOffset {
-					failOffset = c.failOffset
-					failingParser = c.failingParser
-				}
-
-				c.failOffset = initialFailOffset
-				c.failingParser = nil
 				continue
 			}
 
@@ -206,8 +195,6 @@ func (p *choiceParser) parse(c *context) {
 			foundMatch = true
 			to = c.offset
 			c.offset = from
-			c.failOffset = initialFailOffset
-			c.failingParser = nil
 			c.results.setMatch(from, p.id, to)
 		}
 
@@ -217,34 +204,23 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if match {
-		c.failOffset = initialFailOffset
-		c.failingParser = initialFailingParser
+		if to >= c.failOffset {
+			c.failOffset = -1
+			c.failingParser = nil
+		}
+
 		c.success(to)
 		c.results.unmarkPending(from, p.id)
 		return
 	}
 
-	if failOffset > initialFailOffset {
-		// println("recording choice failure", p.name, failOffset)
-		c.failOffset = failOffset
-		if failingParser == nil && p.commit&userDefined != 0 && p.commit&Whitespace == 0 {
-			// println("setting failing choice parser", p.nodeName(), failOffset)
+	// TODO:
+	// - what if all of it pending?
+	if c.failOffset > initialFailOffset && c.failingParser == nil {
+		if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
+			// println("recording choice failure", p.name, from, c.failOffset)
 			c.failingParser = p
-		} else {
-			c.failingParser = failingParser
 		}
-	} else if failOffset == initialFailOffset && initialFailingParser == nil {
-		// println("recording choice failure", p.name, failOffset)
-		c.failOffset = failOffset
-		if failingParser == nil && p.commit&userDefined != 0 && p.commit&Whitespace == 0 {
-			// println("setting failing choice parser", p.nodeName(), failOffset)
-			c.failingParser = p
-		} else {
-			c.failingParser = failingParser
-		}
-	} else {
-		c.failOffset = initialFailOffset
-		c.failingParser = initialFailingParser
 	}
 
 	c.results.setNoMatch(from, p.id)
