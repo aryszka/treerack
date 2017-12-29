@@ -273,8 +273,7 @@ func TestErrorMessage(t *testing.T) {
 }
 
 func TestErrorVerbose(t *testing.T) {
-	const expected = `
-`
+	const expected = `<input>:5:2:parse failed, parsing: string`
 
 	const doc = `{
 		"a":1,
@@ -295,5 +294,9 @@ func TestErrorVerbose(t *testing.T) {
 		return
 	}
 
-	t.Log(perr.Error())
+	if perr.Error() != expected {
+		t.Error("failed to get the right error message")
+		t.Log("got:     ", perr.Error())
+		t.Log("expected:", expected)
+	}
 }
