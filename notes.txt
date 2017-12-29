@@ -28,6 +28,8 @@ streaming
 verify choice and sequence preference
 formatter
 pretty
+notes in formatting
+format: test back and forth equivalence of char classes
 
 [problems]
 can the root be an alias? check the commit mechanism
