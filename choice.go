@@ -230,7 +230,8 @@ func (p *choiceParser) parse(c *context) {
 		c.failingParser = failingParser
 		if c.failingParser == nil &&
 			p.commitType()&userDefined != 0 &&
-			p.commitType()&Whitespace == 0 {
+			p.commitType()&Whitespace == 0 &&
+			p.commitType()&FailPass == 0 {
 			c.failingParser = p
 		}
 	}

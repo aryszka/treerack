@@ -305,9 +305,34 @@ func TestLongestFail(t *testing.T) {
 		doc:root                = (expression (statement-separator+ expression)*)?
 	`
 
+	const doc = `f(a b c)`
+
 	testParseError(t, syntax, []errorTestItem{{
-		title: "choice",
-		doc:   "f(a b c)",
+		title: "fail on longest failing parser",
+		doc:   doc,
+		perr: ParseError{
+			Offset:     4,
+			Line:       0,
+			Column:     4,
+			Definition: "function-application",
+		},
+	}})
+}
+
+func TestFailPass(t *testing.T) {
+	const syntax = `
+		space:ws                = " ";
+		symbol:nows             = [a-z]+;
+		list-separator:failpass = ",";
+		argument-list:failpass  = (symbol (list-separator+ symbol)*);
+		function-application    = symbol "(" argument-list? ")";
+	`
+
+	const doc = `f(a b c)`
+
+	testParseError(t, syntax, []errorTestItem{{
+		title: "fail in outer definition",
+		doc:   doc,
 		perr: ParseError{
 			Offset:     4,
 			Line:       0,

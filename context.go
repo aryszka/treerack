@@ -2,6 +2,7 @@ package treerack
 
 import (
 	"io"
+	"strings"
 	"unicode"
 )
 
@@ -128,6 +129,11 @@ func findLine(tokens []rune, offset int) (line, column int) {
 
 func (c *context) parseError(p parser) error {
 	definition := p.nodeName()
+	flagIndex := strings.Index(definition, ":")
+	if flagIndex > 0 {
+		definition = definition[:flagIndex]
+	}
+
 	if c.failingParser == nil {
 		c.failOffset = c.consumed
 	}
