@@ -9,12 +9,18 @@ import (
 type formatDefinitionTestItem struct {
 	title      string
 	definition string
+	syntax     string
 	output     string
 }
 
 func testDefinitionFormatItem(t *testing.T, treerack *Syntax, f formatFlags, test formatDefinitionTestItem) func(t *testing.T) {
 	return func(t *testing.T) {
-		nodes, err := treerack.Parse(bytes.NewBufferString(fmt.Sprintf("def = %s", test.definition)))
+		syntax := test.syntax
+		if test.definition != "" {
+			syntax = fmt.Sprintf("def = %s", test.definition)
+		}
+
+		nodes, err := treerack.Parse(bytes.NewBufferString(syntax))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -98,13 +104,7 @@ func TestCharFormat(t *testing.T) {
 }
 
 func TestSequenceFormat(t *testing.T) {
-	type testItem struct {
-		title  string
-		syntax string
-		output string
-	}
-
-	for _, test := range []testItem{{
+	testDefinitionFormat(t, formatNone, []formatDefinitionTestItem{{
 		title:  "empty char sequence",
 		syntax: `def = ""`,
 		output: `""`,
@@ -196,30 +196,11 @@ func TestSequenceFormat(t *testing.T) {
 		title:  "grouped quantifier",
 		syntax: `def = ("abc" "def"){3}`,
 		output: `("abc" "def"){3}`,
-	}} {
-		t.Run(test.title, func(t *testing.T) {
-			s, err := openSyntaxString(test.syntax)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			output := s.root.format(s.registry, formatNone)
-			if output != test.output {
-				t.Error("invalid output", output, test.output)
-			}
-		})
-	}
+	}})
 }
 
 func TestChoiceFormat(t *testing.T) {
-	type testItem struct {
-		title  string
-		syntax string
-		output string
-	}
-
-	for _, test := range []testItem{{
+	testDefinitionFormat(t, formatNone, []formatDefinitionTestItem{{
 		title:  "choice of char sequences, single char",
 		syntax: `def = "a" | "b" | "c"`,
 		output: `[a] | [b] | [c]`,
@@ -239,20 +220,7 @@ func TestChoiceFormat(t *testing.T) {
 		title:  "choice of symbol",
 		syntax: `a = "a"; b = "b"; c = "c"; def = a | b | c`,
 		output: "a | b | c",
-	}} {
-		t.Run(test.title, func(t *testing.T) {
-			s, err := openSyntaxString(test.syntax)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			output := s.root.format(s.registry, formatNone)
-			if output != test.output {
-				t.Error("invalid output", output, test.output)
-			}
-		})
-	}
+	}})
 }
 
 func TestMultiLine(t *testing.T) {
