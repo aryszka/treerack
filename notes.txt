@@ -36,6 +36,9 @@ test error report on invalid flag
 
 [optimization]
 try preallocate larger store chunks
+notes in formatting
+format: test back and forth equivalence of char classes
+format: test comments, first apply comments in the syntax
 
 [problems]
 can the root be an alias? check the commit mechanism

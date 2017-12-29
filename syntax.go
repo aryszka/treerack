@@ -25,6 +25,7 @@ type formatFlags int
 const (
 	formatNone   formatFlags = 0
 	formatPretty formatFlags = 1 << iota
+	formatIncludeComments
 )
 
 // if min=0&&max=0, it means min=1,max=1

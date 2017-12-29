@@ -202,6 +202,12 @@ func (d *sequenceDefinition) isCharSequence(r *registry) bool {
 
 func (d *sequenceDefinition) format(r *registry, f formatFlags) string {
 	if d.isCharSequence(r) {
+		if len(d.originalItems) == 1 {
+			itemDef, _ := r.definition(d.originalItems[0].Name)
+			c, _ := itemDef.(*charParser)
+			return c.format(r, f)
+		}
+
 		var chars []rune
 		for i := range d.originalItems {
 			itemDef, _ := r.definition(d.originalItems[i].Name)
