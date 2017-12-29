@@ -163,8 +163,6 @@ func (p *choiceParser) parse(c *context) {
 		return
 	}
 
-	// println("parsing choice", p.name, c.offset)
-
 	c.results.markPending(c.offset, p.id)
 	from := c.offset
 	to := c.offset
@@ -173,10 +171,10 @@ func (p *choiceParser) parse(c *context) {
 	var optionIndex int
 	var foundMatch bool
 
-	// TODO:
-	// - if there is a failure already, it should be left alone
-	// - what if reading more means that the previous failurs don't count
 	initialFailOffset := c.failOffset
+	initialFailingParser := c.failingParser
+	failOffset := initialFailOffset
+	var failingParser parser
 
 	for {
 		foundMatch = false
@@ -185,6 +183,13 @@ func (p *choiceParser) parse(c *context) {
 		for optionIndex < len(p.options) {
 			p.options[optionIndex].parse(c)
 			optionIndex++
+
+			if !c.matchLast {
+				if c.failOffset > failOffset {
+					failOffset = c.failOffset
+					failingParser = c.failingParser
+				}
+			}
 
 			if !c.matchLast || match && c.offset <= to {
 				c.offset = from
@@ -204,9 +209,12 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if match {
-		if to >= c.failOffset {
+		if to > initialFailOffset {
 			c.failOffset = -1
 			c.failingParser = nil
+		} else {
+			c.failOffset = initialFailOffset
+			c.failingParser = initialFailingParser
 		}
 
 		c.success(to)
@@ -214,11 +222,12 @@ func (p *choiceParser) parse(c *context) {
 		return
 	}
 
-	// TODO:
-	// - what if all of it pending?
-	if c.failOffset > initialFailOffset && c.failingParser == nil {
-		if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
-			// println("recording choice failure", p.name, from, c.failOffset)
+	if failOffset > initialFailOffset {
+		c.failOffset = failOffset
+		c.failingParser = failingParser
+		if c.failingParser == nil &&
+			p.commitType()&userDefined != 0 &&
+			p.commitType()&Whitespace == 0 {
 			c.failingParser = p
 		}
 	}

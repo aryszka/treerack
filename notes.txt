@@ -29,6 +29,9 @@ verify choice and sequence preference
 formatter
 pretty
 
+[optimization]
+try preallocate larger store chunks
+
 [problems]
 can the root be an alias? check the commit mechanism
 

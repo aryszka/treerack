@@ -97,7 +97,6 @@ func (p *charParser) parse(c *context) {
 	if tok, ok := c.token(); !ok || !p.match(tok) {
 		if c.offset > c.failOffset {
 			c.failOffset = c.offset
-			// println("clearing failing parser")
 			c.failingParser = nil
 		}
 
