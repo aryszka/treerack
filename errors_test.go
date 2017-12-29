@@ -6,21 +6,72 @@ import (
 	"testing"
 )
 
+type errorTestItem struct {
+	title  string
+	syntax string
+	doc    string
+	perr   ParseError
+}
+
 func checkParseError(left, right ParseError) bool {
 	left.registry = nil
 	right.registry = nil
 	return reflect.DeepEqual(left, right)
 }
 
-func TestError(t *testing.T) {
-	type testItem struct {
-		title  string
-		syntax string
-		text   string
-		perr   ParseError
+func testParseErrorItem(s *Syntax, test errorTestItem) func(t *testing.T) {
+	return func(t *testing.T) {
+		_, err := s.Parse(bytes.NewBufferString(test.doc))
+		if err == nil {
+			t.Fatal("failed to fail")
+		}
+
+		perr, ok := err.(*ParseError)
+		if !ok {
+			t.Fatal("invalid error type returned")
+		}
+
+		perr.Input = ""
+		perr.registry = nil
+
+		if !checkParseError(*perr, test.perr) {
+			t.Error("invalid error returned")
+			t.Log("got:     ", *perr)
+			t.Log("expected:", test.perr)
+		}
+	}
+}
+
+func testParseError(t *testing.T, syntax string, tests []errorTestItem) {
+	var s *Syntax
+	if syntax != "" {
+		var err error
+		s, err = openSyntaxString(syntax)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	for _, test := range []testItem{{
+	for _, test := range tests {
+		ts := s
+		if test.syntax != "" {
+			var err error
+			ts, err = openSyntaxString(test.syntax)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if ts == nil {
+			t.Fatal("no syntax defined")
+		}
+
+		t.Run(test.title, testParseErrorItem(ts, test))
+	}
+}
+
+func TestError(t *testing.T) {
+	testParseError(t, "", []errorTestItem{{
 		title:  "single def, empty text",
 		syntax: `a = "a"`,
 		perr: ParseError{
@@ -29,21 +80,21 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "single def, wrong text",
 		syntax: `a = "a"`,
-		text:   "b",
+		doc:    "b",
 		perr: ParseError{
 			Definition: "a",
 		},
 	}, {
 		title:  "single optional def, wrong text",
 		syntax: `a = "a"?`,
-		text:   "b",
+		doc:    "b",
 		perr: ParseError{
 			Definition: "a",
 		},
 	}, {
 		title:  "error on second line, second column",
 		syntax: `a = [a\n]*`,
-		text:   "aa\nabaa\naa",
+		doc:    "aa\nabaa\naa",
 		perr: ParseError{
 			Offset:     4,
 			Line:       1,
@@ -53,7 +104,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "multiple definitions",
 		syntax: `a = "aa"; A:root = a`,
-		text:   "ab",
+		doc:    "ab",
 		perr: ParseError{
 			Offset:     1,
 			Column:     1,
@@ -62,7 +113,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "choice, options succeed",
 		syntax: `a = "12"; b = "1"; c:root = a | b`,
-		text:   "123",
+		doc:    "123",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
@@ -71,7 +122,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "choice succeeds, document fails",
 		syntax: `a = "12"; b = "1"; c:root = a | b`,
-		text:   "13",
+		doc:    "13",
 		perr: ParseError{
 			Offset:     1,
 			Column:     1,
@@ -80,7 +131,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "choice fails",
 		syntax: `a = "12"; b = "2"; c:root = a | b`,
-		text:   "13",
+		doc:    "13",
 		perr: ParseError{
 			Offset:     1,
 			Column:     1,
@@ -89,7 +140,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "choice fails, longer option reported",
 		syntax: `a = "12"; b = "134"; c:root = a | b`,
-		text:   "135",
+		doc:    "135",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
@@ -98,7 +149,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "failing choice on the failing branch",
 		syntax: `a = "123"; b:root = a | "13"`,
-		text:   "124",
+		doc:    "124",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
@@ -107,7 +158,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "failing choice on a shorter branch",
 		syntax: `a = "13"; b:root = "123" | a`,
-		text:   "124",
+		doc:    "124",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
@@ -116,7 +167,7 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "longer failure on a later pass",
 		syntax: `a = "12"; b = "34"; c = "1" b; d:root = a | c`,
-		text:   "135",
+		doc:    "135",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
@@ -125,43 +176,13 @@ func TestError(t *testing.T) {
 	}, {
 		title:  "char as a choice option",
 		syntax: `a = "12"; b = [a] | [b]; c = a b`,
-		text:   "12c",
+		doc:    "12c",
 		perr: ParseError{
 			Offset:     2,
 			Column:     2,
 			Definition: "b",
 		},
-	}} {
-		t.Run(test.title, func(t *testing.T) {
-			s, err := openSyntaxString(test.syntax)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			_, err = s.Parse(bytes.NewBufferString(test.text))
-			if err == nil {
-				t.Error("failed to fail")
-				return
-			}
-
-			perr, ok := err.(*ParseError)
-			if !ok {
-				t.Error("invalid error returned", err)
-				return
-			}
-
-			if perr.Input != "<input>" {
-				t.Error("invalid default input name")
-				return
-			}
-
-			perr.Input = ""
-			if !checkParseError(*perr, test.perr) {
-				t.Error("failed to return the right error")
-			}
-		})
-	}
+	}})
 }
 
 func TestErrorRecursive(t *testing.T) {
@@ -173,21 +194,12 @@ func TestErrorRecursive(t *testing.T) {
 		doc:root = (expression (";" expression)*)+;
 	`
 
-	s, err := openSyntaxString(syntax)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, test := range []struct {
-		title string
-		doc   string
-		perr  ParseError
-	}{{
+	testParseError(t, syntax, []errorTestItem{{
 		title: "simple, open",
 		doc:   "a(",
 		perr: ParseError{
-			Offset:     1,
-			Column:     1,
+			Offset:     2,
+			Column:     2,
 			Definition: "function-application",
 		},
 	}, {
@@ -202,8 +214,8 @@ func TestErrorRecursive(t *testing.T) {
 		title: "inner, open",
 		doc:   "a(b()",
 		perr: ParseError{
-			Offset:     1,
-			Column:     1,
+			Offset:     5,
+			Column:     5,
 			Definition: "function-application",
 		},
 	}, {
@@ -218,8 +230,8 @@ func TestErrorRecursive(t *testing.T) {
 		title: "outer, open",
 		doc:   "a()b(",
 		perr: ParseError{
-			Offset:     4,
-			Column:     4,
+			Offset:     5,
+			Column:     5,
 			Definition: "function-application",
 		},
 	}, {
@@ -230,27 +242,7 @@ func TestErrorRecursive(t *testing.T) {
 			Column:     4,
 			Definition: "function-application",
 		},
-	}} {
-		t.Run(test.title, func(t *testing.T) {
-			_, err := s.Parse(bytes.NewBufferString(test.doc))
-			if err == nil {
-				t.Fatal("failed to fail")
-			}
-
-			perr, ok := err.(*ParseError)
-			if !ok {
-				t.Fatal("invalid error type")
-			}
-
-			perr.Input = ""
-
-			if !checkParseError(*perr, test.perr) {
-				t.Error("failed to return the right error")
-				t.Log("got:     ", *perr)
-				t.Log("expected:", test.perr)
-			}
-		})
-	}
+	}})
 }
 
 func TestErrorMessage(t *testing.T) {
@@ -299,4 +291,28 @@ func TestErrorVerbose(t *testing.T) {
 		t.Log("got:     ", perr.Error())
 		t.Log("expected:", expected)
 	}
+}
+
+func TestLongestFail(t *testing.T) {
+	const syntax = `
+		whitespace:ws           = [ \t];
+		number:nows             = [0-9]+;
+		symbol:nows             = [a-z]+;
+		list-separator          = [,\n];
+		function-application    = expression "(" (expression (list-separator+ expression)*)? ")";
+		expression              = number | symbol | function-application;
+		statement-separator     = [;\n];
+		doc:root                = (expression (statement-separator+ expression)*)?
+	`
+
+	testParseError(t, syntax, []errorTestItem{{
+		title: "choice",
+		doc:   "f(a b c)",
+		perr: ParseError{
+			Offset:     4,
+			Line:       0,
+			Column:     4,
+			Definition: "function-application",
+		},
+	}})
 }

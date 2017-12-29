@@ -14,6 +14,7 @@ const (
 	Alias CommitType = 1 << iota
 	Whitespace
 	NoWhitespace
+	FailPass
 	Root
 
 	userDefined

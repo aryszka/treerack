@@ -209,7 +209,10 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if match {
-		if to > initialFailOffset {
+		if failOffset > to {
+			c.failOffset = failOffset
+			c.failingParser = failingParser
+		} else if to > initialFailOffset {
 			c.failOffset = -1
 			c.failingParser = nil
 		} else {
