@@ -47,7 +47,7 @@ check-fmt: $(SOURCES)
 vet:
 	@go vet
 
-precommit: fmt build check-full
+precommit: fmt vet build check-full
 
 clean:
 	@rm -f *.test

@@ -13,12 +13,15 @@ func stringToCommitType(s string) CommitType {
 	switch s {
 	case "alias":
 		return Alias
-	case "ws":
-		return Whitespace
-	case "nows":
-		return NoWhitespace
-	case "failpass":
-		return FailPass
+
+	// not used during boot:
+	// case "ws":
+	// 	return Whitespace
+	// case "nows":
+	// 	return NoWhitespace
+	// case "failpass":
+	// 	return FailPass
+
 	case "root":
 		return Root
 	default:

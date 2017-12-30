@@ -169,9 +169,9 @@ func (pe *ParseError) Error() string {
 	)
 }
 
-func (pe *ParseError) Verbose() string {
-	return ""
-}
+// func (pe *ParseError) Verbose() string {
+// 	return ""
+// }
 
 func (s *Syntax) applyRoot(d definition) error {
 	explicitRoot := d.commitType()&Root != 0

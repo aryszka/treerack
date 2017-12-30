@@ -95,25 +95,6 @@ func (c *context) fail(offset int) {
 	c.matchLast = false
 }
 
-// TODO:
-// - need to know which choice branch the failure happened on because if there is a non-user branch that has the
-// longest failure, it can be reported to an unrelevant user defined choice on another branch
-
-func (c *context) recordFailure(offset int, p parser) {
-	if offset < c.failOffset {
-		return
-	}
-
-	if c.failingParser != nil && offset == c.failOffset {
-		return
-	}
-
-	c.failOffset = offset
-	if p.commitType()&userDefined != 0 && p.commitType()&Whitespace == 0 {
-		c.failingParser = p
-	}
-}
-
 func findLine(tokens []rune, offset int) (line, column int) {
 	tokens = tokens[:offset]
 	for i := range tokens {

@@ -267,40 +267,40 @@ func TestErrorMessage(t *testing.T) {
 func TestErrorVerbose(t *testing.T) {
 	t.Skip()
 
-	const expected = `<input>:5:2:parse failed, parsing: string
-
-		"c":3,
-	}<<<
-
-Parsing error on line: 5, column: 2, while parsing: string. Definition:
-
-	string:nows = "\"" ([^\\"\b\f\n\r\t] | "\\" (["\\/bfnrt] | "u" [0-9a-f]{4}))* "\"";
-`
-
-	const doc = `{
-		"a":1,
-		"b":2,
-		"c":3,
-	}`
-
-	s, err := openSyntaxFile("examples/json.treerack")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	_, err = s.Parse(bytes.NewBufferString(doc))
-	perr, ok := err.(*ParseError)
-	if !ok {
-		t.Error("failed to return parse error")
-		return
-	}
-
-	if perr.Verbose() != expected {
-		t.Error("failed to get the right error message")
-		t.Log("got:     ", perr.Verbose())
-		t.Log("expected:", expected)
-	}
+	// 	const expected = `<input>:5:2:parse failed, parsing: string
+	//
+	// 		"c":3,
+	// 	}<<<
+	//
+	// Parsing error on line: 5, column: 2, while parsing: string. Definition:
+	//
+	// 	string:nows = "\"" ([^\\"\b\f\n\r\t] | "\\" (["\\/bfnrt] | "u" [0-9a-f]{4}))* "\"";
+	// `
+	//
+	// 	const doc = `{
+	// 		"a":1,
+	// 		"b":2,
+	// 		"c":3,
+	// 	}`
+	//
+	// 	s, err := openSyntaxFile("examples/json.treerack")
+	// 	if err != nil {
+	// 		t.Error(err)
+	// 		return
+	// 	}
+	//
+	// 	_, err = s.Parse(bytes.NewBufferString(doc))
+	// 	perr, ok := err.(*ParseError)
+	// 	if !ok {
+	// 		t.Error("failed to return parse error")
+	// 		return
+	// 	}
+	//
+	// 	if perr.Verbose() != expected {
+	// 		t.Error("failed to get the right error message")
+	// 		t.Log("got:     ", perr.Verbose())
+	// 		t.Log("expected:", expected)
+	// 	}
 }
 
 func TestLongestFail(t *testing.T) {
