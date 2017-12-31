@@ -2,15 +2,11 @@ package treerack
 
 type registry struct {
 	idSeed      int
-	ids         map[string]int
-	names       map[int]string
 	definitions map[string]definition
 }
 
 func newRegistry(defs ...definition) *registry {
 	r := &registry{
-		ids:         make(map[string]int),
-		names:       make(map[int]string),
 		definitions: make(map[string]definition),
 	}
 
@@ -34,8 +30,6 @@ func (r *registry) setDefinition(d definition) error {
 	r.idSeed++
 	id := r.idSeed
 	d.setID(id)
-	r.ids[d.nodeName()] = id
-	r.names[id] = d.nodeName()
 
 	r.definitions[d.nodeName()] = d
 	return nil

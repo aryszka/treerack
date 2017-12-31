@@ -351,3 +351,11 @@ func TestFailPass(t *testing.T) {
 		},
 	}})
 }
+
+func TestFailPassRoot(t *testing.T) {
+	const syntax = `foo:failpass = "foo"`
+	_, err := openSyntaxString(syntax)
+	if err == nil {
+		t.Error("failed to fail")
+	}
+}

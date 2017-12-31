@@ -73,7 +73,7 @@ func (p *charParser) format(_ *registry, f formatFlags) string {
 	return string(s)
 }
 
-func matchChars(chars []rune, ranges [][]rune, not bool, char rune) bool {
+func matchChar(chars []rune, ranges [][]rune, not bool, char rune) bool {
 	for _, ci := range chars {
 		if ci == char {
 			return !not
@@ -90,7 +90,7 @@ func matchChars(chars []rune, ranges [][]rune, not bool, char rune) bool {
 }
 
 func (p *charParser) match(t rune) bool {
-	return matchChars(p.chars, p.ranges, p.not, t)
+	return matchChar(p.chars, p.ranges, p.not, t)
 }
 
 func (p *charParser) parse(c *context) {

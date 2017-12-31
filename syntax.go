@@ -115,6 +115,7 @@ var (
 	ErrInvalidSyntax           = errors.New("invalid syntax")
 	ErrRootAlias               = errors.New("root node cannot be an alias")
 	ErrRootWhitespace          = errors.New("root node cannot be a whitespace")
+	ErrRootFailPass            = errors.New("root node cannot pass failing definition")
 	ErrNotImplemented          = errors.New("not implemented")
 	ErrMultipleRoots           = errors.New("multiple roots")
 	ErrInvalidSymbolName       = errors.New("invalid symbol name")
@@ -130,6 +131,71 @@ func parserNotFound(name string) error {
 
 const symbolChars = "^\\\\ \\n\\t\\b\\f\\r\\v/.\\[\\]\\\"{}\\^+*?|():=;"
 
+func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err error) {
+	if class[0] == '^' {
+		not = true
+		class = class[1:]
+	}
+
+	for {
+		if len(class) == 0 {
+			return
+		}
+
+		var c0 rune
+		c0, class = class[0], class[1:]
+
+		/*
+			this doesn't happen:
+			switch c0 {
+			case '[', ']', '^', '-':
+				err = errInvalidDefinition
+				return
+			}
+		*/
+
+		if c0 == '\\' {
+			/*
+				this doesn't happen:
+				if len(class) == 0 {
+					err = errInvalidDefinition
+					return
+				}
+			*/
+
+			c0, class = unescapeChar(class[0]), class[1:]
+		}
+
+		if len(class) < 2 || class[0] != '-' {
+			chars = append(chars, c0)
+			continue
+		}
+
+		var c1 rune
+		c1, class = class[1], class[2:]
+
+		/*
+			this doesn't happen:
+			switch c1 {
+			case '[', ']', '^', '-':
+				err = errInvalidDefinition
+				return
+			}
+
+			if c1 == '\\' {
+				if len(class) == 0 {
+					err = errInvalidDefinition
+					return
+				}
+
+				c1, class = unescapeChar(class[0]), class[1:]
+			}
+		*/
+
+		ranges = append(ranges, []rune{c0, c1})
+	}
+}
+
 func parseSymbolChars(c []rune) []rune {
 	_, chars, _, _ := parseClass(c)
 	return chars
@@ -140,7 +206,7 @@ var symbolCharRunes = parseSymbolChars([]rune(symbolChars))
 func isValidSymbol(n string) bool {
 	runes := []rune(n)
 	for _, r := range runes {
-		if !matchChars(symbolCharRunes, nil, true, r) {
+		if !matchChar(symbolCharRunes, nil, true, r) {
 			return false
 		}
 	}
@@ -275,8 +341,6 @@ func (s *Syntax) CharSequence(name string, ct CommitType, chars []rune) error {
 }
 
 func (s *Syntax) sequence(name string, ct CommitType, items ...SequenceItem) error {
-	citems := make([]SequenceItem, len(items))
-	copy(citems, items)
 	return s.register(newSequence(name, ct, items))
 }
 
@@ -327,6 +391,10 @@ func (s *Syntax) Init() error {
 
 	if s.root.commitType()&Whitespace != 0 {
 		return ErrRootWhitespace
+	}
+
+	if s.root.commitType()&FailPass != 0 {
+		return ErrRootFailPass
 	}
 
 	defs := s.registry.getDefinitions()

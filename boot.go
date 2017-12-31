@@ -29,71 +29,6 @@ func stringToCommitType(s string) CommitType {
 	}
 }
 
-func parseClass(class []rune) (not bool, chars []rune, ranges [][]rune, err error) {
-	if class[0] == '^' {
-		not = true
-		class = class[1:]
-	}
-
-	for {
-		if len(class) == 0 {
-			return
-		}
-
-		var c0 rune
-		c0, class = class[0], class[1:]
-
-		/*
-			this doesn't happen:
-			switch c0 {
-			case '[', ']', '^', '-':
-				err = errInvalidDefinition
-				return
-			}
-		*/
-
-		if c0 == '\\' {
-			/*
-				this doesn't happen:
-				if len(class) == 0 {
-					err = errInvalidDefinition
-					return
-				}
-			*/
-
-			c0, class = unescapeChar(class[0]), class[1:]
-		}
-
-		if len(class) < 2 || class[0] != '-' {
-			chars = append(chars, c0)
-			continue
-		}
-
-		var c1 rune
-		c1, class = class[1], class[2:]
-
-		/*
-			this doesn't happen:
-			switch c1 {
-			case '[', ']', '^', '-':
-				err = errInvalidDefinition
-				return
-			}
-
-			if c1 == '\\' {
-				if len(class) == 0 {
-					err = errInvalidDefinition
-					return
-				}
-
-				c1, class = unescapeChar(class[0]), class[1:]
-			}
-		*/
-
-		ranges = append(ranges, []rune{c0, c1})
-	}
-}
-
 func defineBootAnything(s *Syntax, d []string) error {
 	ct := stringToCommitType(d[2])
 	return s.anyChar(d[1], ct)
@@ -233,6 +168,7 @@ func createBoot() (*Syntax, error) {
 func bootSyntax() (*Syntax, error) {
 	/*
 		never fails:
+
 		b, err := createBoot()
 		if err != nil {
 			return nil, err

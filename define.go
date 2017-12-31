@@ -189,7 +189,7 @@ func defineExpression(s *Syntax, name string, ct CommitType, expression *Node) e
 	return err
 }
 
-func defineDefinition(s *Syntax, n *Node) error {
+func addDefinition(s *Syntax, n *Node) error {
 	return defineExpression(
 		s,
 		n.Nodes[0].Text(),
@@ -198,11 +198,11 @@ func defineDefinition(s *Syntax, n *Node) error {
 	)
 }
 
-func define(s *Syntax, n *Node) error {
-	n = dropComments(n)
+func define(s *Syntax, syntaxTree *Node) error {
+	syntaxTree = dropComments(syntaxTree)
 
-	for _, ni := range n.Nodes {
-		if err := defineDefinition(s, ni); err != nil {
+	for _, n := range syntaxTree.Nodes {
+		if err := addDefinition(s, n); err != nil {
 			return err
 		}
 	}
