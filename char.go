@@ -41,38 +41,6 @@ func (p *charParser) addGeneralization(int)       {}
 func (p *charParser) parser() parser              { return p }
 func (p *charParser) builder() builder            { return p }
 
-func (p *charParser) isSingleChar() bool {
-	return !p.not && len(p.chars) == 1 && len(p.ranges) == 0
-}
-
-func (p *charParser) format(_ *registry, f formatFlags) string {
-	if p.not && len(p.chars) == 0 && len(p.ranges) == 0 {
-		return "."
-	}
-
-	esc := func(c ...rune) []rune {
-		return escape(charClassEscape, []rune(charClassBanned), c)
-	}
-
-	var s []rune
-	s = append(s, '[')
-
-	if p.not {
-		s = append(s, '^')
-	}
-
-	s = append(s, esc(p.chars...)...)
-
-	for i := range p.ranges {
-		s = append(s, esc(p.ranges[i][0])...)
-		s = append(s, '-')
-		s = append(s, esc(p.ranges[i][1])...)
-	}
-
-	s = append(s, ']')
-	return string(s)
-}
-
 func matchChar(chars []rune, ranges [][]rune, not bool, char rune) bool {
 	for _, ci := range chars {
 		if ci == char {
@@ -109,4 +77,36 @@ func (p *charParser) parse(c *context) {
 
 func (p *charParser) build(c *context) ([]*Node, bool) {
 	return nil, false
+}
+
+func (p *charParser) isSingleChar() bool {
+	return !p.not && len(p.chars) == 1 && len(p.ranges) == 0
+}
+
+func (p *charParser) format(_ *registry, f formatFlags) string {
+	if p.not && len(p.chars) == 0 && len(p.ranges) == 0 {
+		return "."
+	}
+
+	esc := func(c ...rune) []rune {
+		return escape(charClassEscape, []rune(charClassBanned), c)
+	}
+
+	var s []rune
+	s = append(s, '[')
+
+	if p.not {
+		s = append(s, '^')
+	}
+
+	s = append(s, esc(p.chars...)...)
+
+	for i := range p.ranges {
+		s = append(s, esc(p.ranges[i][0])...)
+		s = append(s, '-')
+		s = append(s, esc(p.ranges[i][1])...)
+	}
+
+	s = append(s, ']')
+	return string(s)
 }
