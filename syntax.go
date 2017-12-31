@@ -61,8 +61,6 @@ type ParseError struct {
 
 	// Definition tells the right-most unmatched parser definition.
 	Definition string
-
-	registry *registry
 }
 
 type Syntax struct {
@@ -442,7 +440,6 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	if err := c.finalizeParse(s.parser); err != nil {
 		if perr, ok := err.(*ParseError); ok {
 			perr.Input = "<input>"
-			perr.registry = s.registry
 		}
 
 		return nil, err

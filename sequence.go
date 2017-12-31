@@ -196,34 +196,37 @@ func (p *sequenceParser) parse(c *context) {
 		c.results.markPending(c.offset, p.id)
 	}
 
+	var (
+		currentCount int
+		parsed       bool
+	)
+
 	itemIndex := 0
-	var currentCount int
 	from := c.offset
 	to := c.offset
-	var parsed bool
 
 	for itemIndex < len(p.items) {
 		p.items[itemIndex].parse(c)
 		if !c.matchLast {
-			if currentCount < p.ranges[itemIndex][0] {
-				if c.failingParser == nil &&
-					p.commitType()&userDefined != 0 &&
-					p.commitType()&Whitespace == 0 &&
-					p.commitType()&FailPass == 0 {
-					c.failingParser = p
-				}
-
-				c.fail(from)
-				if !p.allChars {
-					c.results.unmarkPending(from, p.id)
-				}
-
-				return
+			if currentCount >= p.ranges[itemIndex][0] {
+				itemIndex++
+				currentCount = 0
+				continue
 			}
 
-			itemIndex++
-			currentCount = 0
-			continue
+			if c.failingParser == nil &&
+				p.commitType()&userDefined != 0 &&
+				p.commitType()&Whitespace == 0 &&
+				p.commitType()&FailPass == 0 {
+				c.failingParser = p
+			}
+
+			c.fail(from)
+			if !p.allChars {
+				c.results.unmarkPending(from, p.id)
+			}
+
+			return
 		}
 
 		parsed = c.offset > to

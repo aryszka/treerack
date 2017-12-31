@@ -13,12 +13,6 @@ type errorTestItem struct {
 	perr   ParseError
 }
 
-func checkParseError(left, right ParseError) bool {
-	left.registry = nil
-	right.registry = nil
-	return reflect.DeepEqual(left, right)
-}
-
 func testParseErrorItem(s *Syntax, test errorTestItem) func(t *testing.T) {
 	return func(t *testing.T) {
 		_, err := s.Parse(bytes.NewBufferString(test.doc))
@@ -32,9 +26,8 @@ func testParseErrorItem(s *Syntax, test errorTestItem) func(t *testing.T) {
 		}
 
 		perr.Input = ""
-		perr.registry = nil
 
-		if !checkParseError(*perr, test.perr) {
+		if !reflect.DeepEqual(*perr, test.perr) {
 			t.Error("invalid error returned")
 			t.Log("got:     ", *perr)
 			t.Log("expected:", test.perr)

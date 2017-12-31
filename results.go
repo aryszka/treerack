@@ -6,24 +6,44 @@ type results struct {
 	isPending [][]int
 }
 
-func (r *results) ensureOffset(offset int) {
-	if len(r.match) > offset {
-		return
+func ensureOffsetInts(ints [][]int, offset int) [][]int {
+	if len(ints) > offset {
+		return ints
 	}
 
-	if cap(r.match) > offset {
-		r.match = r.match[:offset+1]
-		return
+	if cap(ints) > offset {
+		ints = ints[:offset+1]
+		return ints
 	}
 
-	r.match = r.match[:cap(r.match)]
-	for i := len(r.match); i <= offset; i++ {
-		r.match = append(r.match, nil)
+	ints = ints[:cap(ints)]
+	for i := len(ints); i <= offset; i++ {
+		ints = append(ints, nil)
 	}
+
+	return ints
+}
+
+func ensureOffsetIDs(ids []*idSet, offset int) []*idSet {
+	if len(ids) > offset {
+		return ids
+	}
+
+	if cap(ids) > offset {
+		ids = ids[:offset+1]
+		return ids
+	}
+
+	ids = ids[:cap(ids)]
+	for i := len(ids); i <= offset; i++ {
+		ids = append(ids, nil)
+	}
+
+	return ids
 }
 
 func (r *results) setMatch(offset, id, to int) {
-	r.ensureOffset(offset)
+	r.match = ensureOffsetInts(r.match, offset)
 
 	for i := 0; i < len(r.match[offset]); i += 2 {
 		if r.match[offset][i] != id || r.match[offset][i+1] != to {
@@ -47,17 +67,7 @@ func (r *results) setNoMatch(offset, id int) {
 		}
 	}
 
-	if len(r.noMatch) <= offset {
-		if cap(r.noMatch) > offset {
-			r.noMatch = r.noMatch[:offset+1]
-		} else {
-			r.noMatch = r.noMatch[:cap(r.noMatch)]
-			for i := cap(r.noMatch); i <= offset; i++ {
-				r.noMatch = append(r.noMatch, nil)
-			}
-		}
-	}
-
+	r.noMatch = ensureOffsetIDs(r.noMatch, offset)
 	if r.noMatch[offset] == nil {
 		r.noMatch[offset] = &idSet{}
 	}
@@ -146,17 +156,7 @@ func (r *results) pending(offset, id int) bool {
 }
 
 func (r *results) markPending(offset, id int) {
-	if len(r.isPending) <= id {
-		if cap(r.isPending) > id {
-			r.isPending = r.isPending[:id+1]
-		} else {
-			r.isPending = r.isPending[:cap(r.isPending)]
-			for i := cap(r.isPending); i <= id; i++ {
-				r.isPending = append(r.isPending, nil)
-			}
-		}
-	}
-
+	r.isPending = ensureOffsetInts(r.isPending, id)
 	for i := range r.isPending[id] {
 		if r.isPending[id][i] == -1 {
 			r.isPending[id][i] = offset

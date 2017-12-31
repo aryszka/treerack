@@ -131,24 +131,6 @@ func (d *choiceDefinition) parser() parser {
 
 func (d *choiceDefinition) builder() builder { return d.cbuilder }
 
-func (d *choiceDefinition) format(r *registry, f formatFlags) string {
-	var chars []rune
-	for i := range d.options {
-		if i > 0 {
-			chars = append(chars, []rune(" | ")...)
-		}
-
-		optionDef, _ := r.definition(d.options[i])
-		if optionDef.commitType()&userDefined != 0 {
-			chars = append(chars, []rune(optionDef.nodeName())...)
-		} else {
-			chars = append(chars, []rune(optionDef.format(r, f))...)
-		}
-	}
-
-	return string(chars)
-}
-
 func (p *choiceParser) nodeName() string       { return p.name }
 func (p *choiceParser) nodeID() int            { return p.id }
 func (p *choiceParser) commitType() CommitType { return p.commit }
@@ -164,17 +146,19 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	c.results.markPending(c.offset, p.id)
+
+	var (
+		match         bool
+		optionIndex   int
+		foundMatch    bool
+		failingParser parser
+	)
+
 	from := c.offset
 	to := c.offset
-
-	var match bool
-	var optionIndex int
-	var foundMatch bool
-
 	initialFailOffset := c.failOffset
 	initialFailingParser := c.failingParser
 	failOffset := initialFailOffset
-	var failingParser parser
 
 	for {
 		foundMatch = false
@@ -287,4 +271,22 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 		Nodes:  n,
 		tokens: c.tokens,
 	}}, true
+}
+
+func (d *choiceDefinition) format(r *registry, f formatFlags) string {
+	var chars []rune
+	for i := range d.options {
+		if i > 0 {
+			chars = append(chars, []rune(" | ")...)
+		}
+
+		optionDef, _ := r.definition(d.options[i])
+		if optionDef.commitType()&userDefined != 0 {
+			chars = append(chars, []rune(optionDef.nodeName())...)
+		} else {
+			chars = append(chars, []rune(optionDef.format(r, f))...)
+		}
+	}
+
+	return string(chars)
 }

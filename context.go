@@ -136,25 +136,18 @@ func (c *context) finalizeParse(root parser) error {
 	}
 
 	to, match, found := c.results.longestResult(0, root.nodeID())
-
-	if found && match && to < c.readOffset {
+	if !found || !match || found && match && to < c.readOffset {
 		return c.parseError(p)
 	}
 
-	if !found || !match {
-		return c.parseError(p)
+	c.read()
+	if c.eof {
+		return nil
 	}
 
-	if !c.eof {
-		c.read()
-		if !c.eof {
-			if c.readErr != nil {
-				return c.readErr
-			}
-
-			return c.parseError(root)
-		}
+	if c.readErr != nil {
+		return c.readErr
 	}
 
-	return nil
+	return c.parseError(root)
 }
