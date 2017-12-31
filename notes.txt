@@ -33,6 +33,7 @@ go through the tests for docs
 test all docs
 warn nows usage in docs, e.g. spaces in symbol = [a-z]+
 test error report on invalid flag
+report unused definitions
 
 [optimization]
 try preallocate larger store chunks
