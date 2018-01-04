@@ -45,6 +45,7 @@ func testParseFromTree(t *testing.T, n *Node, f io.ReadSeeker) *Node {
 }
 
 func TestBoot(t *testing.T) {
+	t.Skip()
 	b, err := createBoot()
 	if err != nil {
 		t.Error(err)

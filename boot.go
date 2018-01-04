@@ -186,10 +186,14 @@ func bootSyntax() (*Syntax, error) {
 			return nil, err
 		}
 	*/
-	b, _ := createBoot()
+	// b, _ := createBoot()
 	f, _ := os.Open("syntax.treerack")
 	defer f.Close()
-	doc, _ := b.Parse(f)
+	// doc, _ := b.Parse(f)
+	doc, err := parsegen(f)
+	if err != nil {
+		panic(err)
+	}
 
 	s := &Syntax{}
 	return s, define(s, doc)

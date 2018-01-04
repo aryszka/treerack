@@ -94,12 +94,14 @@ type parser interface {
 	nodeID() int
 	commitType() CommitType
 	parse(*context)
+	generate(io.Writer, map[string]bool) error
 }
 
 type builder interface {
 	nodeName() string
 	nodeID() int
 	build(*context) ([]*Node, bool)
+	generate(io.Writer, map[string]bool) error
 }
 
 var (
@@ -362,12 +364,22 @@ func (s *Syntax) Choice(name string, ct CommitType, options ...string) error {
 	return s.choice(name, ct|userDefined, options...)
 }
 
-func (s *Syntax) Read(r io.Reader) error {
+func (s *Syntax) ReadSyntax(r io.Reader) error {
 	if s.initialized {
 		return ErrSyntaxInitialized
 	}
 
-	return ErrNotImplemented
+	b, err := bootSyntax()
+	if err != nil {
+		return err
+	}
+
+	n, err := b.Parse(r)
+	if err != nil {
+		return err
+	}
+
+	return define(s, n)
 }
 
 func (s *Syntax) Init() error {
@@ -423,7 +435,56 @@ func (s *Syntax) Generate(w io.Writer) error {
 		return err
 	}
 
-	return ErrNotImplemented
+	if _, err := fmt.Fprint(w, `
+package treerack
+
+import (
+	"bufio"
+	"io"
+)
+
+func parsegen(r io.Reader) (*Node, error) {
+`); err != nil {
+		return err
+	}
+
+	done := make(map[string]bool)
+	if err := s.parser.generate(w, done); err != nil {
+		return err
+	}
+
+	done = make(map[string]bool)
+	if err := s.builder.generate(w, done); err != nil {
+		return err
+	}
+
+	if _, err := fmt.Fprintf(w, `
+
+	c := newContext(bufio.NewReader(r))
+	p%d.parse(c)
+	if c.readErr != nil {
+		return nil, c.readErr
+	}
+
+	if err := c.finalizeParse(&p%d); err != nil {
+		if perr, ok := err.(*ParseError); ok {
+			perr.Input = "<input>"
+		}
+
+		return nil, err
+	}
+
+	c.offset = 0
+	c.results.resetPending()
+
+	n, _ := b%d.build(c)
+	return n[0], nil
+}
+	`, s.parser.nodeID(), s.parser.nodeID(), s.builder.nodeID()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {

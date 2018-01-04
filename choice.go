@@ -1,5 +1,10 @@
 package treerack
 
+import (
+	"fmt"
+	"io"
+)
+
 type choiceDefinition struct {
 	name            string
 	id              int
@@ -131,6 +136,24 @@ func (d *choiceDefinition) parser() parser {
 
 func (d *choiceDefinition) builder() builder { return d.cbuilder }
 
+func (d *choiceDefinition) format(r *registry, f formatFlags) string {
+	var chars []rune
+	for i := range d.options {
+		if i > 0 {
+			chars = append(chars, []rune(" | ")...)
+		}
+
+		optionDef, _ := r.definition(d.options[i])
+		if optionDef.commitType()&userDefined != 0 {
+			chars = append(chars, []rune(optionDef.nodeName())...)
+		} else {
+			chars = append(chars, []rune(optionDef.format(r, f))...)
+		}
+	}
+
+	return string(chars)
+}
+
 func (p *choiceParser) nodeName() string       { return p.name }
 func (p *choiceParser) nodeID() int            { return p.id }
 func (p *choiceParser) commitType() CommitType { return p.commit }
@@ -225,6 +248,50 @@ func (p *choiceParser) parse(c *context) {
 	c.results.unmarkPending(from, p.id)
 }
 
+func (p *choiceParser) generate(w io.Writer, done map[string]bool) error {
+	if done[p.name] {
+		return nil
+	}
+
+	done[p.name] = true
+
+	var err error
+	fprintf := func(f string, args ...interface{}) {
+		if err != nil {
+			return
+		}
+
+		_, err = fmt.Fprintf(w, f, args...)
+	}
+
+	fprintf("var p%d = choiceParser{", p.id)
+	fprintf("id: %d, commit: %d,", p.id, p.commit)
+	if p.commitType()&userDefined != 0 {
+		fprintf("name: \"%s\",", p.name)
+	}
+
+	fprintf("generalizations: []int{")
+	for i := range p.generalizations {
+		fprintf("%d,", p.generalizations[i])
+	}
+
+	fprintf("}};")
+
+	for i := range p.options {
+		if err := p.options[i].generate(w, done); err != nil {
+			return err
+		}
+	}
+
+	fprintf("p%d.options = []parser{", p.id)
+	for i := range p.options {
+		fprintf("&p%d,", p.options[i].nodeID())
+	}
+
+	fprintf("};")
+	return err
+}
+
 func (b *choiceBuilder) nodeName() string { return b.name }
 func (b *choiceBuilder) nodeID() int      { return b.id }
 
@@ -273,20 +340,41 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 	}}, true
 }
 
-func (d *choiceDefinition) format(r *registry, f formatFlags) string {
-	var chars []rune
-	for i := range d.options {
-		if i > 0 {
-			chars = append(chars, []rune(" | ")...)
+func (b *choiceBuilder) generate(w io.Writer, done map[string]bool) error {
+	if done[b.name] {
+		return nil
+	}
+
+	done[b.name] = true
+
+	var err error
+	fprintf := func(f string, args ...interface{}) {
+		if err != nil {
+			return
 		}
 
-		optionDef, _ := r.definition(d.options[i])
-		if optionDef.commitType()&userDefined != 0 {
-			chars = append(chars, []rune(optionDef.nodeName())...)
-		} else {
-			chars = append(chars, []rune(optionDef.format(r, f))...)
+		_, err = fmt.Fprintf(w, f, args...)
+	}
+
+	fprintf("var b%d = choiceBuilder{", b.id)
+	fprintf("id: %d, commit: %d,", b.id, b.commit)
+	if b.commit&Alias == 0 {
+		fprintf("name: \"%s\",", b.name)
+	}
+
+	fprintf("};")
+
+	for i := range b.options {
+		if err := b.options[i].generate(w, done); err != nil {
+			return err
 		}
 	}
 
-	return string(chars)
+	fprintf("b%d.options = []builder{", b.id)
+	for i := range b.options {
+		fprintf("&b%d,", b.options[i].nodeID())
+	}
+
+	fprintf("};")
+	return err
 }
