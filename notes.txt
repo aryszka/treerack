@@ -34,6 +34,8 @@ test all docs
 warn nows usage in docs, e.g. spaces in symbol = [a-z]+
 test error report on invalid flag
 report unused definitions
+simplify generated output
+parse hashed, storing only the results
 
 [optimization]
 try preallocate larger store chunks

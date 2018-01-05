@@ -130,14 +130,14 @@ func (c *context) parseError(p parser) error {
 }
 
 func (c *context) finalizeParse(root parser) error {
-	p := c.failingParser
-	if p == nil {
-		p = root
+	fp := c.failingParser
+	if fp == nil {
+		fp = root
 	}
 
 	to, match, found := c.results.longestResult(0, root.nodeID())
 	if !found || !match || found && match && to < c.readOffset {
-		return c.parseError(p)
+		return c.parseError(fp)
 	}
 
 	c.read()

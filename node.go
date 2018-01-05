@@ -1,13 +1,6 @@
 package treerack
 
-import "fmt"
-
-type Node struct {
-	Name     string
-	Nodes    []*Node
-	From, To int
-	tokens   []rune
-}
+import "github.com/aryszka/treerack/self"
 
 func mapNodes(m func(n *Node) *Node, n []*Node) []*Node {
 	var nn []*Node
@@ -29,10 +22,17 @@ func filterNodes(f func(n *Node) bool, n []*Node) []*Node {
 	return nn
 }
 
-func (n *Node) String() string {
-	return fmt.Sprintf("%s:%d:%d:%s", n.Name, n.From, n.To, n.Text())
-}
+func mapSelfNode(n *self.Node) *Node {
+	nn := Node{
+		Name:   n.Name,
+		From:   n.From,
+		To:     n.To,
+		tokens: n.Tokens(),
+	}
 
-func (n *Node) Text() string {
-	return string(n.tokens[n.From:n.To])
+	for i := range n.Nodes {
+		nn.Nodes = append(nn.Nodes, mapSelfNode(n.Nodes[i]))
+	}
+
+	return &nn
 }

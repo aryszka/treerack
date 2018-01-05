@@ -376,7 +376,7 @@ func TestGenerateSyntax(t *testing.T) {
 			return
 		}
 
-		if err := s.Generate(bytes.NewBuffer(nil)); err == nil {
+		if err := s.Generate(GeneratorOptions{}, bytes.NewBuffer(nil)); err == nil {
 			t.Error(err)
 		}
 	})
@@ -388,7 +388,7 @@ func TestGenerateSyntax(t *testing.T) {
 			return
 		}
 
-		if err := s.Generate(bytes.NewBuffer(nil)); err == nil {
+		if err := s.Generate(GeneratorOptions{}, bytes.NewBuffer(nil)); err == nil {
 			t.Error(err)
 		}
 	})

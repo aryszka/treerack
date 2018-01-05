@@ -1,31 +1,11 @@
 package treerack
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
-)
 
-type CommitType int
-
-const (
-	None  CommitType = 0
-	Alias CommitType = 1 << iota
-	Whitespace
-	NoWhitespace
-	FailPass
-	Root
-
-	userDefined
-)
-
-type formatFlags int
-
-const (
-	formatNone   formatFlags = 0
-	formatPretty formatFlags = 1 << iota
-	formatIncludeComments
+	"github.com/aryszka/treerack/self"
 )
 
 // if min=0&&max=0, it means min=1,max=1
@@ -36,33 +16,6 @@ type SequenceItem struct {
 	Min, Max int
 }
 
-// ParseError is returned when the input text doesn't match
-// the used syntax during parsing.
-type ParseError struct {
-
-	// Input is the name of the input file or <input> if not
-	// available.
-	Input string
-
-	// Offset is the index of the right-most failing
-	// token in the input text.
-	Offset int
-
-	// Line tells the line index of the right-most failing
-	// token in the input text.
-	//
-	// It is zero-based, and for error reporting, it is
-	// recommended to increment it by one.
-	Line int
-
-	// Column tells the column index of the right-most failing
-	// token in the input text.
-	Column int
-
-	// Definition tells the right-most unmatched parser definition.
-	Definition string
-}
-
 type Syntax struct {
 	registry     *registry
 	initialized  bool
@@ -71,6 +24,15 @@ type Syntax struct {
 	root         definition
 	parser       parser
 	builder      builder
+}
+
+type GeneratorOptions struct {
+	PackageName string
+}
+
+// applied in a non-type-checked way
+type generator interface {
+	generate(io.Writer, map[string]bool) error
 }
 
 type definition interface {
@@ -89,36 +51,16 @@ type definition interface {
 	format(*registry, formatFlags) string
 }
 
-type parser interface {
-	nodeName() string
-	nodeID() int
-	commitType() CommitType
-	parse(*context)
-	generate(io.Writer, map[string]bool) error
-}
-
-type builder interface {
-	nodeName() string
-	nodeID() int
-	build(*context) ([]*Node, bool)
-	generate(io.Writer, map[string]bool) error
-}
-
 var (
-	ErrSyntaxInitialized       = errors.New("syntax initialized")
-	ErrInitFailed              = errors.New("init failed")
-	ErrNoParsersDefined        = errors.New("no parsers defined")
-	ErrInvalidInput            = errors.New("invalid input")
-	ErrInvalidUnicodeCharacter = errors.New("invalid unicode character")
-	ErrInvalidEscapeCharacter  = errors.New("invalid escape character")
-	ErrUnexpectedCharacter     = errors.New("unexpected character")
-	ErrInvalidSyntax           = errors.New("invalid syntax")
-	ErrRootAlias               = errors.New("root node cannot be an alias")
-	ErrRootWhitespace          = errors.New("root node cannot be a whitespace")
-	ErrRootFailPass            = errors.New("root node cannot pass failing definition")
-	ErrNotImplemented          = errors.New("not implemented")
-	ErrMultipleRoots           = errors.New("multiple roots")
-	ErrInvalidSymbolName       = errors.New("invalid symbol name")
+	ErrSyntaxInitialized      = errors.New("syntax initialized")
+	ErrInitFailed             = errors.New("init failed")
+	ErrNoParsersDefined       = errors.New("no parsers defined")
+	ErrInvalidEscapeCharacter = errors.New("invalid escape character")
+	ErrRootAlias              = errors.New("root node cannot be an alias")
+	ErrRootWhitespace         = errors.New("root node cannot be a whitespace")
+	ErrRootFailPass           = errors.New("root node cannot pass failing definition")
+	ErrMultipleRoots          = errors.New("multiple roots")
+	ErrInvalidSymbolName      = errors.New("invalid symbol name")
 )
 
 func duplicateDefinition(name string) error {
@@ -215,6 +157,10 @@ func isValidSymbol(n string) bool {
 
 }
 
+// func (pe *ParseError) Verbose() string {
+// 	return ""
+// }
+
 func intsContain(is []int, i int) bool {
 	for _, ii := range is {
 		if ii == i {
@@ -224,20 +170,6 @@ func intsContain(is []int, i int) bool {
 
 	return false
 }
-
-func (pe *ParseError) Error() string {
-	return fmt.Sprintf(
-		"%s:%d:%d:parse failed, parsing: %s",
-		pe.Input,
-		pe.Line+1,
-		pe.Column+1,
-		pe.Definition,
-	)
-}
-
-// func (pe *ParseError) Verbose() string {
-// 	return ""
-// }
 
 func (s *Syntax) applyRoot(d definition) error {
 	explicitRoot := d.commitType()&Root != 0
@@ -369,16 +301,12 @@ func (s *Syntax) ReadSyntax(r io.Reader) error {
 		return ErrSyntaxInitialized
 	}
 
-	b, err := bootSyntax()
+	sn, err := self.Parse(r)
 	if err != nil {
 		return err
 	}
 
-	n, err := b.Parse(r)
-	if err != nil {
-		return err
-	}
-
+	n := mapSelfNode(sn)
 	return define(s, n)
 }
 
@@ -430,59 +358,68 @@ func (s *Syntax) Init() error {
 	return nil
 }
 
-func (s *Syntax) Generate(w io.Writer) error {
+func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	if _, err := fmt.Fprint(w, `
-package treerack
-
-import (
-	"bufio"
-	"io"
-)
-
-func parsegen(r io.Reader) (*Node, error) {
-`); err != nil {
-		return err
+	if o.PackageName == "" {
+		o.PackageName = "main"
 	}
 
+	var err error
+	fprintf := func(f string, args ...interface{}) {
+		if err != nil {
+			return
+		}
+
+		_, err = fmt.Fprintf(w, f, args...)
+	}
+
+	fprint := func(args ...interface{}) {
+		if err != nil {
+			return
+		}
+
+		_, err = fmt.Fprint(w, args...)
+	}
+
+	fprintln := func() {
+		fprint("\n")
+	}
+
+	fprint(gendoc)
+	fprintln()
+	fprintln()
+
+	fprintf("package %s", o.PackageName)
+	fprintln()
+	fprintln()
+
+	// generate headCode with scripts/createhead.go
+	fprint(headCode)
+	fprintln()
+	fprintln()
+
+	fprint(`func Parse(r io.Reader) (*Node, error) {`)
+	fprintln()
+
 	done := make(map[string]bool)
-	if err := s.parser.generate(w, done); err != nil {
+	if err := s.parser.(generator).generate(w, done); err != nil {
 		return err
 	}
 
 	done = make(map[string]bool)
-	if err := s.builder.generate(w, done); err != nil {
+	if err := s.builder.(generator).generate(w, done); err != nil {
 		return err
 	}
 
-	if _, err := fmt.Fprintf(w, `
-
-	c := newContext(bufio.NewReader(r))
-	p%d.parse(c)
-	if c.readErr != nil {
-		return nil, c.readErr
-	}
-
-	if err := c.finalizeParse(&p%d); err != nil {
-		if perr, ok := err.(*ParseError); ok {
-			perr.Input = "<input>"
-		}
-
-		return nil, err
-	}
-
-	c.offset = 0
-	c.results.resetPending()
-
-	n, _ := b%d.build(c)
-	return n[0], nil
-}
-	`, s.parser.nodeID(), s.parser.nodeID(), s.builder.nodeID()); err != nil {
-		return err
-	}
+	fprintln()
+	fprintln()
+	fprintf(`return parse(r, &p%d, &b%d)`, s.parser.nodeID(), s.builder.nodeID())
+	fprintln()
+	fprint(`}`)
+	fprintln()
 
 	return nil
 }
@@ -492,23 +429,5 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 		return nil, err
 	}
 
-	c := newContext(bufio.NewReader(r))
-	s.parser.parse(c)
-	if c.readErr != nil {
-		return nil, c.readErr
-	}
-
-	if err := c.finalizeParse(s.parser); err != nil {
-		if perr, ok := err.(*ParseError); ok {
-			perr.Input = "<input>"
-		}
-
-		return nil, err
-	}
-
-	c.offset = 0
-	c.results.resetPending()
-
-	n, _ := s.builder.build(c)
-	return n[0], nil
+	return parse(r, s.parser, s.builder)
 }

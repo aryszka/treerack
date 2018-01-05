@@ -7,11 +7,6 @@ import (
 	"github.com/aryszka/treerack"
 )
 
-const (
-	syntaxPath = "syntax.treerack"
-	outputPath = "parser.go"
-)
-
 func main() {
 	s := &treerack.Syntax{}
 
@@ -19,7 +14,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if err := s.Generate(os.Stdout); err != nil {
+	if err := s.Generate(treerack.GeneratorOptions{PackageName: "self"}, os.Stdout); err != nil {
 		log.Fatalln(err)
 	}
 }
