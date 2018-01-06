@@ -10,12 +10,6 @@ type Node struct {
 }
 
 func (n *Node) Tokens() []rune {
-	defer func() {
-		if err := recover(); err != nil {
-			println(len(n.tokens), n.From, n.To)
-			panic(err)
-		}
-	}()
 	return n.tokens
 }
 

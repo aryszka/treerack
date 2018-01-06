@@ -339,8 +339,6 @@ func TestDefinition(t *testing.T) {
 }
 
 func TestReadSyntax(t *testing.T) {
-	t.Skip()
-
 	t.Run("already initialized", func(t *testing.T) {
 		s := &Syntax{}
 		if err := s.AnyChar("a", None); err != nil {
@@ -358,38 +356,27 @@ func TestReadSyntax(t *testing.T) {
 		}
 	})
 
-	t.Run("not implemented", func(t *testing.T) {
+	t.Run("read invalid syntax", func(t *testing.T) {
 		s := &Syntax{}
-		if err := s.ReadSyntax(bytes.NewBuffer(nil)); err == nil {
-			t.Error(err)
+		if err := s.ReadSyntax(bytes.NewBufferString("foo")); err == nil {
+			t.Error("failed to fail")
 		}
 	})
 }
 
-func TestGenerateSyntax(t *testing.T) {
-	t.Skip()
+func TestUserDefinedClassRange(t *testing.T) {
+	s := &Syntax{}
+	if err := s.Class("symbol-char", None, false, []rune{'_'}, [][]rune{{'a', 'z'}, {'A', 'Z'}}); err != nil {
+		t.Error(err)
+		return
+	}
 
-	t.Run("init fails", func(t *testing.T) {
-		s := &Syntax{}
-		if err := s.Choice("a", None, "b"); err != nil {
-			t.Error(err)
-			return
-		}
+	if err := s.Sequence("symbol", None, SequenceItem{Name: "symbol-char", Min: 1, Max: -1}); err != nil {
+		t.Error(err)
+		return
+	}
 
-		if err := s.Generate(GeneratorOptions{}, bytes.NewBuffer(nil)); err == nil {
-			t.Error(err)
-		}
-	})
-
-	t.Run("not implemented", func(t *testing.T) {
-		s := &Syntax{}
-		if err := s.AnyChar("a", None); err != nil {
-			t.Error(err)
-			return
-		}
-
-		if err := s.Generate(GeneratorOptions{}, bytes.NewBuffer(nil)); err == nil {
-			t.Error(err)
-		}
-	})
+	if _, err := s.Parse(bytes.NewBufferString("_abc")); err != nil {
+		t.Error(err)
+	}
 }

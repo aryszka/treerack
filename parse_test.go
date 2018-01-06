@@ -1,6 +1,10 @@
 package treerack
 
-import "testing"
+import (
+	"bufio"
+	"bytes"
+	"testing"
+)
 
 func TestRecursion(t *testing.T) {
 	runTests(
@@ -732,4 +736,40 @@ func TestChoiceSequencePriority(t *testing.T) {
 			node:           &Node{Name: "A"},
 		}},
 	)
+}
+
+func TestCharBuildNoop(t *testing.T) {
+	c := newChar("foo", false, nil, nil)
+	c.init(newRegistry())
+	b := c.builder()
+	ctx := newContext(bufio.NewReader(bytes.NewBuffer(nil)))
+	if n, ok := b.build(ctx); len(n) != 0 || ok {
+		t.Error("char build not noop")
+	}
+}
+
+func TestCharBuilderProps(t *testing.T) {
+	b := &charBuilder{
+		name: "foo",
+		id:   42,
+	}
+
+	if b.nodeName() != "foo" {
+		t.Error("invalid char builder prop")
+	}
+
+	if b.nodeID() != 42 {
+		t.Error("invalid char builder prop")
+	}
+}
+
+func TestCharAddGeneralizationNoEffect(t *testing.T) {
+	(&charParser{}).addGeneralization(42)
+}
+
+func TestSequenceProps(t *testing.T) {
+	d := &sequenceParser{commit: Alias | userDefined}
+	if d.commitType() != Alias|userDefined {
+		t.Error("invalid commit type")
+	}
 }

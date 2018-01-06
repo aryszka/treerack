@@ -14,7 +14,7 @@ unless explicitly stated otherwise, if treerack's license allows changing the
 license of this source code.
 
 Treerack's license: MIT https://opensource.org/licenses/MIT
-where YEAR=2018, COPYRIGHT HOLDER=Arpad Ryszka (arpad.ryszka@gmail.com)
+where YEAR=2017, COPYRIGHT HOLDER=Arpad Ryszka (arpad.ryszka@gmail.com)
 
 The rest of the content of this file falls under the same license as the one
 that the user of treerack generating this file declares for it, or it is

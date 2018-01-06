@@ -91,7 +91,3 @@ func unescape(escape rune, banned, chars []rune) ([]rune, error) {
 
 	return unescaped, nil
 }
-
-func unescapeCharSequence(s string) ([]rune, error) {
-	return unescape('\\', []rune{'"', '\\'}, []rune(s))
-}
