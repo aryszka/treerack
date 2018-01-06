@@ -41,7 +41,7 @@ regenerate: $(SOURCES) $(PARSERS) head
 check: imports build $(PARSERS)
 	go test -test.short -run ^Test
 
-check-full: imports build $(PARSERS)
+checkall: imports build $(PARSERS)
 	go test
 
 .coverprofile: $(SOURCES) imports
@@ -50,10 +50,10 @@ check-full: imports build $(PARSERS)
 cover: .coverprofile
 	go tool cover -func .coverprofile
 
-show-cover: .coverprofile
+showcover: .coverprofile
 	go tool cover -html .coverprofile
 
-publish-coverage: .coverprofile
+publishcoverage: .coverprofile
 	curl -s https://codecov.io/bash -o codecov
 	bash codecov -Zf .coverprofile
 
@@ -67,14 +67,14 @@ fmt: $(SOURCES)
 	@echo fmt
 	@gofmt -w -s $(SOURCES)
 
-check-fmt: $(SOURCES)
+checkfmt: $(SOURCES)
 	@echo check fmt
 	@if [ "$$(gofmt -s -d $(SOURCES))" != "" ]; then false; else true; fi
 
 vet:
 	go vet
 
-precommit: regenerate fmt vet build check-full
+precommit: regenerate fmt vet build checkall
 
 clean:
 	rm -f *.test
@@ -82,7 +82,7 @@ clean:
 	rm -f .coverprofile
 	go clean -i ./...
 
-ci-trigger: deps check-fmt build check-full
+ci-trigger: deps checkfmt build checkall
 ifeq ($(TRAVIS_BRANCH)_$(TRAVIS_PULL_REQUEST), master_false)
-	make publish-coverage
+	make publishcoverage
 endif

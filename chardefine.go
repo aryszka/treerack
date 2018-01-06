@@ -72,13 +72,7 @@ func (p *charParser) format(_ *registry, f formatFlags) string {
 	return string(s)
 }
 
-func (p *charParser) generate(w io.Writer, done map[string]bool) error {
-	if done[p.name] {
-		return nil
-	}
-
-	done[p.name] = true
-
+func (p *charParser) generate(w io.Writer, _ map[string]bool) error {
 	var err error
 	fprintf := func(f string, args ...interface{}) {
 		if err != nil {
@@ -116,12 +110,7 @@ func (p *charParser) generate(w io.Writer, done map[string]bool) error {
 	return err
 }
 
-func (b *charBuilder) generate(w io.Writer, done map[string]bool) error {
-	if done[b.name] {
-		return nil
-	}
-
-	done[b.name] = true
+func (b *charBuilder) generate(w io.Writer, _ map[string]bool) error {
 	_, err := fmt.Fprintf(w, "var b%d = charBuilder{};", b.id)
 	return err
 }

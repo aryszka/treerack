@@ -747,29 +747,3 @@ func TestCharBuildNoop(t *testing.T) {
 		t.Error("char build not noop")
 	}
 }
-
-func TestCharBuilderProps(t *testing.T) {
-	b := &charBuilder{
-		name: "foo",
-		id:   42,
-	}
-
-	if b.nodeName() != "foo" {
-		t.Error("invalid char builder prop")
-	}
-
-	if b.nodeID() != 42 {
-		t.Error("invalid char builder prop")
-	}
-}
-
-func TestCharAddGeneralizationNoEffect(t *testing.T) {
-	(&charParser{}).addGeneralization(42)
-}
-
-func TestSequenceProps(t *testing.T) {
-	d := &sequenceParser{commit: Alias | userDefined}
-	if d.commitType() != Alias|userDefined {
-		t.Error("invalid commit type")
-	}
-}
