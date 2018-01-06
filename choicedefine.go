@@ -157,29 +157,37 @@ func (p *choiceParser) generate(w io.Writer, done map[string]bool) error {
 
 	fprintf("var p%d = choiceParser{", p.id)
 	fprintf("id: %d, commit: %d,", p.id, p.commit)
+
 	if p.commitType()&userDefined != 0 {
 		fprintf("name: \"%s\",", p.name)
 	}
 
-	fprintf("generalizations: []int{")
-	for i := range p.generalizations {
-		fprintf("%d,", p.generalizations[i])
-	}
-
-	fprintf("}};")
-
-	for i := range p.options {
-		if err := p.options[i].(generator).generate(w, done); err != nil {
-			return err
+	if len(p.generalizations) > 0 {
+		fprintf("generalizations: []int{")
+		for i := range p.generalizations {
+			fprintf("%d,", p.generalizations[i])
 		}
-	}
 
-	fprintf("p%d.options = []parser{", p.id)
-	for i := range p.options {
-		fprintf("&p%d,", p.options[i].nodeID())
+		fprintf("},")
 	}
 
 	fprintf("};")
+
+	if len(p.options) > 0 {
+		for i := range p.options {
+			if err := p.options[i].(generator).generate(w, done); err != nil {
+				return err
+			}
+		}
+
+		fprintf("p%d.options = []parser{", p.id)
+		for i := range p.options {
+			fprintf("&p%d,", p.options[i].nodeID())
+		}
+
+		fprintf("};")
+	}
+
 	return err
 }
 
@@ -201,23 +209,27 @@ func (b *choiceBuilder) generate(w io.Writer, done map[string]bool) error {
 
 	fprintf("var b%d = choiceBuilder{", b.id)
 	fprintf("id: %d, commit: %d,", b.id, b.commit)
+
 	if b.commit&Alias == 0 {
 		fprintf("name: \"%s\",", b.name)
 	}
 
 	fprintf("};")
 
-	for i := range b.options {
-		if err := b.options[i].(generator).generate(w, done); err != nil {
-			return err
+	if len(b.options) > 0 {
+		for i := range b.options {
+			if err := b.options[i].(generator).generate(w, done); err != nil {
+				return err
+			}
 		}
+
+		fprintf("b%d.options = []builder{", b.id)
+		for i := range b.options {
+			fprintf("&b%d,", b.options[i].nodeID())
+		}
+
+		fprintf("};")
 	}
 
-	fprintf("b%d.options = []builder{", b.id)
-	for i := range b.options {
-		fprintf("&b%d,", b.options[i].nodeID())
-	}
-
-	fprintf("};")
 	return err
 }

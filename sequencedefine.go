@@ -296,37 +296,51 @@ func (p *sequenceParser) generate(w io.Writer, done map[string]bool) error {
 	}
 
 	fprintf("var p%d = sequenceParser{", p.id)
-	fprintf("id: %d, commit: %d, allChars: %t,", p.id, p.commit, p.allChars)
+	fprintf("id: %d, commit: %d,", p.id, p.commit)
+
 	if p.commit&userDefined != 0 {
 		fprintf("name: \"%s\",", p.name)
 	}
 
-	fprintf("ranges: [][]int{")
-	for i := range p.ranges {
-		fprintf("{%d, %d},", p.ranges[i][0], p.ranges[i][1])
+	if p.allChars {
+		fprintf("allChars: true,")
 	}
 
-	fprintf("},")
-
-	fprintf("generalizations: []int{")
-	for i := range p.generalizations {
-		fprintf("%d,", p.generalizations[i])
-	}
-
-	fprintf("}};")
-
-	for i := range p.items {
-		if err := p.items[i].(generator).generate(w, done); err != nil {
-			return err
+	if len(p.ranges) > 0 {
+		fprintf("ranges: [][]int{")
+		for i := range p.ranges {
+			fprintf("{%d, %d},", p.ranges[i][0], p.ranges[i][1])
 		}
+
+		fprintf("},")
 	}
 
-	fprintf("p%d.items = []parser{", p.id)
-	for i := range p.items {
-		fprintf("&p%d,", p.items[i].nodeID())
+	if len(p.generalizations) > 0 {
+		fprintf("generalizations: []int{")
+		for i := range p.generalizations {
+			fprintf("%d,", p.generalizations[i])
+		}
+
+		fprintf("},")
 	}
 
 	fprintf("};")
+
+	if len(p.items) > 0 {
+		for i := range p.items {
+			if err := p.items[i].(generator).generate(w, done); err != nil {
+				return err
+			}
+		}
+
+		fprintf("p%d.items = []parser{", p.id)
+		for i := range p.items {
+			fprintf("&p%d,", p.items[i].nodeID())
+		}
+
+		fprintf("};")
+	}
+
 	return err
 }
 
@@ -347,29 +361,41 @@ func (b *sequenceBuilder) generate(w io.Writer, done map[string]bool) error {
 	}
 
 	fprintf("var b%d = sequenceBuilder{", b.id)
-	fprintf("id: %d, commit: %d, allChars: %t,", b.id, b.commit, b.allChars)
+	fprintf("id: %d, commit: %d,", b.id, b.commit)
+
 	if b.commit&Alias == 0 {
 		fprintf("name: \"%s\",", b.name)
 	}
 
-	fprintf("ranges: [][]int{")
-	for i := range b.ranges {
-		fprintf("{%d, %d},", b.ranges[i][0], b.ranges[i][1])
+	if b.allChars {
+		fprintf("allChars: true,")
 	}
 
-	fprintf("}};")
-
-	for i := range b.items {
-		if err := b.items[i].(generator).generate(w, done); err != nil {
-			return err
+	if len(b.ranges) > 0 {
+		fprintf("ranges: [][]int{")
+		for i := range b.ranges {
+			fprintf("{%d, %d},", b.ranges[i][0], b.ranges[i][1])
 		}
-	}
 
-	fprintf("b%d.items = []builder{", b.id)
-	for i := range b.items {
-		fprintf("&b%d,", b.items[i].nodeID())
+		fprintf("},")
 	}
 
 	fprintf("};")
+
+	if len(b.items) > 0 {
+		for i := range b.items {
+			if err := b.items[i].(generator).generate(w, done); err != nil {
+				return err
+			}
+		}
+
+		fprintf("b%d.items = []builder{", b.id)
+		for i := range b.items {
+			fprintf("&b%d,", b.items[i].nodeID())
+		}
+
+		fprintf("};")
+	}
+
 	return err
 }

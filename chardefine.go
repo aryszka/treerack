@@ -89,21 +89,30 @@ func (p *charParser) generate(w io.Writer, done map[string]bool) error {
 	}
 
 	fprintf("var p%d = charParser{", p.id)
-	fprintf("id: %d, not: %t,", p.id, p.not)
-
-	fprintf("chars: []rune{")
-	for i := range p.chars {
-		fprintf("%d,", p.chars[i])
+	fprintf("id: %d,", p.id)
+	if p.not {
+		fprintf("not: true,")
 	}
 
-	fprintf("},")
+	if len(p.chars) > 0 {
+		fprintf("chars: []rune{")
+		for i := range p.chars {
+			fprintf("%d,", p.chars[i])
+		}
 
-	fprintf("ranges: [][]rune{")
-	for i := range p.ranges {
-		fprintf("{%d, %d},", p.ranges[i][0], p.ranges[i][1])
+		fprintf("},")
 	}
 
-	fprintf("}};")
+	if len(p.ranges) > 0 {
+		fprintf("ranges: [][]rune{")
+		for i := range p.ranges {
+			fprintf("{%d, %d},", p.ranges[i][0], p.ranges[i][1])
+		}
+
+		fprintf("},")
+	}
+
+	fprintf("};")
 	return err
 }
 
