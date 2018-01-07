@@ -13,6 +13,10 @@ imports: $(SOURCES)
 
 build: $(SOURCES)
 	go build
+	go build -o cmd/treerack/treerack ./cmd/treerack
+
+install: $(SOURCES)
+	go install ./cmd/treerack
 
 head: $(SOURCES)
 	go run scripts/createhead.go -- \
@@ -26,15 +30,15 @@ head: $(SOURCES)
 		syntaxhead.go \
 	> head.go
 
-generate: $(SOURCES) $(PARSERS) head
-	go run scripts/boot.go < syntax.treerack > self/self.go.next
+generate: $(SOURCES) $(PARSERS) head install
+	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	@gofmt -s -w self/self.go
 
-regenerate: $(SOURCES) $(PARSERS) head
-	go run scripts/boot.go < syntax.treerack > self/self.go.next
+regenerate: $(SOURCES) $(PARSERS) head install
+	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
-	go run scripts/boot.go < syntax.treerack > self/self.go.next
+	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	@gofmt -s -w self/self.go
 

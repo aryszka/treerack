@@ -2,3 +2,4 @@
 *.out
 .coverprofile
 codecov
+cmd/treerack/treerack

@@ -28,6 +28,7 @@ type Syntax struct {
 
 type GeneratorOptions struct {
 	PackageName string
+	Export      bool
 }
 
 // applied in a non-type-checked way
@@ -329,7 +330,12 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	fprintln()
 	fprintln()
 
-	fprint(`func Parse(r io.Reader) (*Node, error) {`)
+	if o.Export {
+		fprint(`func Parse(r io.Reader) (*Node, error) {`)
+	} else {
+		fprint(`func parse(r io.Reader) (*Node, error) {`)
+	}
+
 	fprintln()
 
 	done := make(map[string]bool)
@@ -344,7 +350,7 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 
 	fprintln()
 	fprintln()
-	fprintf(`return parse(r, &p%d, &b%d)`, s.parser.nodeID(), s.builder.nodeID())
+	fprintf(`return parseInput(r, &p%d, &b%d)`, s.parser.nodeID(), s.builder.nodeID())
 	fprintln()
 	fprint(`}`)
 	fprintln()
@@ -357,5 +363,5 @@ func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 		return nil, err
 	}
 
-	return parse(r, s.parser, s.builder)
+	return parseInput(r, s.parser, s.builder)
 }

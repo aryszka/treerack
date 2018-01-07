@@ -80,7 +80,7 @@ func (pe *ParseError) Error() string {
 	)
 }
 
-func parse(r io.Reader, p parser, b builder) (*Node, error) {
+func parseInput(r io.Reader, p parser, b builder) (*Node, error) {
 	c := newContext(bufio.NewReader(r))
 	p.parse(c)
 	if c.readErr != nil {
