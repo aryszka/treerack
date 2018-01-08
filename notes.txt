@@ -1,25 +1,23 @@
 [next]
+errors
 formatter
 report unused parsers
 parse hashed, storing only the results
 linux packaging
 
-[parser]
-custom tokens
-indentation
-streaming support // ReadNode(io.Reader)
-
 [cmd]
-check
-parse
 help for positional argument
-test explicit input priority
 
 [errors]
 take the last
 test error report on invalid flag
 input name: may be just dropped because completely controlled by the client
 input name needed in command to differentiate between syntax and input in check and parse subcommands
+
+[parser]
+custom tokens
+indentation
+streaming support // ReadNode(io.Reader)
 
 [generator]
 allchars: can have char sequence

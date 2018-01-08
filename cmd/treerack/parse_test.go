@@ -57,6 +57,17 @@ var parseTests = []mainTest{
 	},
 
 	{
+		title: "explicit over stdin",
+		args: []string{
+			"treerack", "parse", "-syntax", "foo_test.treerack", "-input-string", "bar",
+		},
+		stdin: "invalid",
+		stdout: []string{
+			`"name":"foo"`,
+		},
+	},
+
+	{
 		title: "pretty",
 		args: []string{
 			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty",

@@ -112,6 +112,14 @@ var checkSyntaxTests = []mainTest{
 			"treerack", "check-syntax", "-syntax-string", `foo = "bar"`,
 		},
 	},
+
+	{
+		title: "explicit over stdin",
+		args: []string{
+			"treerack", "check-syntax", "-syntax", "foo_test.treerack",
+		},
+		stdin: "invalid",
+	},
 }
 
 func TestCheckSyntax(t *testing.T) {

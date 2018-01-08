@@ -47,6 +47,40 @@ var generateTests = []mainTest{
 			"func Parse",
 		},
 	},
+
+	{
+		title: "default package name",
+		args: []string{
+			"treerack", "generate", "-export", "-syntax-string", `foo = "bar"`,
+		},
+		stdout: []string{
+			"package main",
+			"func Parse",
+		},
+	},
+
+	{
+		title: "no export",
+		args: []string{
+			"treerack", "generate", "-package-name", "foo", "-syntax-string", `foo = "bar"`,
+		},
+		stdout: []string{
+			"package foo",
+			"func parse",
+		},
+	},
+
+	{
+		title: "explicit over stdin",
+		args: []string{
+			"treerack", "generate", "-export", "-package-name", "foo", "-syntax", "foo_test.treerack",
+		},
+		stdin: "invalid",
+		stdout: []string{
+			"package foo",
+			"func Parse",
+		},
+	},
 }
 
 func TestGenerate(t *testing.T) {

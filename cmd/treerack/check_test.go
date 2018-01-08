@@ -188,6 +188,14 @@ var checkTests = []mainTest{
 			"treerack", "check", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
 		},
 	},
+
+	{
+		title: "explicit over stdin",
+		args: []string{
+			"treerack", "check", "-syntax", "foo_test.treerack", "-input-string", "bar",
+		},
+		stdin: "invalid",
+	},
 }
 
 func TestCheck(t *testing.T) {
