@@ -2,20 +2,18 @@ package main
 
 import "testing"
 
-func TestGenerate(t *testing.T) {
+func TestCheckSyntax(t *testing.T) {
 	runMainTest(t,
 		mainTest{
 			title: "help",
 			args: []string{
-				"treerack", "generate", "-help",
+				"treerack", "check-syntax", "-help",
 			},
 			stdout: []string{
-				generateUsage,
-				"-export",
-				"-package-name",
+				checkSyntaxUsage,
 				"-syntax",
 				"-syntax-string",
-				generateExample,
+				checkSyntaxExample,
 				docRef,
 			},
 		},
@@ -23,12 +21,10 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "invalid flag",
 			args: []string{
-				"treerack", "generate", "-foo",
+				"treerack", "check-syntax", "-foo",
 			},
 			exit: -1,
 			stderr: []string{
-				"-export",
-				"-package-name",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -37,13 +33,11 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "multiple inputs",
 			args: []string{
-				"treerack", "generate", "-syntax", "foo.treerack", "-syntax-string", `foo = "bar"`,
+				"treerack", "check-syntax", "-syntax", "foo.treerack", "-syntax-string", `foo = "bar"`,
 			},
 			exit: -1,
 			stderr: []string{
 				"only one",
-				"-export",
-				"-package-name",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -52,13 +46,11 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "multiple inputs, positional",
 			args: []string{
-				"treerack", "generate", "foo.treerack", "bar.treerack",
+				"treerack", "check-syntax", "foo.treerack", "bar.treerack",
 			},
 			exit: -1,
 			stderr: []string{
 				"only one",
-				"-export",
-				"-package-name",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -67,13 +59,11 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "multiple inputs, positional and explicit file",
 			args: []string{
-				"treerack", "generate", "-syntax", "foo.treerack", "bar.treerack",
+				"treerack", "check-syntax", "-syntax", "foo.treerack", "bar.treerack",
 			},
 			exit: -1,
 			stderr: []string{
 				"only one",
-				"-export",
-				"-package-name",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -82,13 +72,11 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "no input",
 			args: []string{
-				"treerack", "generate",
+				"treerack", "check-syntax",
 			},
 			exit: -1,
 			stderr: []string{
 				"missing syntax input",
-				"-export",
-				"-package-name",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -97,7 +85,7 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "invalid input",
 			args: []string{
-				"treerack", "generate", "-syntax-string", "foo",
+				"treerack", "check-syntax", "-syntax-string", "foo",
 			},
 			exit: -1,
 			stderr: []string{
@@ -108,7 +96,7 @@ func TestGenerate(t *testing.T) {
 		mainTest{
 			title: "file open fails",
 			args: []string{
-				"treerack", "generate", "-syntax", "noexist.treerack",
+				"treerack", "check-syntax", "-syntax", "noexist.treerack",
 			},
 			exit: -1,
 			stderr: []string{
@@ -117,45 +105,24 @@ func TestGenerate(t *testing.T) {
 		},
 
 		mainTest{
-			title: "failing output",
-			args: []string{
-				"treerack", "generate", "-syntax-string", `foo = "bar"`,
-			},
-			failingOutput: true,
-			exit:          -1,
-		},
-
-		mainTest{
 			title: "syntax as stdin",
 			args: []string{
-				"treerack", "generate", "-export", "-package-name", "foo",
+				"treerack", "check-syntax",
 			},
 			stdin: `foo = "bar"`,
-			stdout: []string{
-				"package foo",
-				"func Parse",
-			},
 		},
 
 		mainTest{
 			title: "syntax as file",
 			args: []string{
-				"treerack", "generate", "-export", "-package-name", "foo", "-syntax", "foo_test.treerack",
-			},
-			stdout: []string{
-				"package foo",
-				"func Parse",
+				"treerack", "generate", "-syntax", "foo_test.treerack",
 			},
 		},
 
 		mainTest{
 			title: "syntax as string",
 			args: []string{
-				"treerack", "generate", "-export", "-package-name", "foo", "-syntax-string", `foo = "bar"`,
-			},
-			stdout: []string{
-				"package foo",
-				"func Parse",
+				"treerack", "generate", "-syntax-string", `foo = "bar"`,
 			},
 		},
 	)

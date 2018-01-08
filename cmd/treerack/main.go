@@ -21,19 +21,27 @@ func main() {
 		return
 	}
 
+	var cmd func([]string) int
+
 	switch os.Args[1] {
-	case "check":
-		code := check(os.Args[2:])
-		exit(code)
+	case "check-syntax":
+		cmd = checkSyntax
 	case "generate":
-		code := generate(os.Args[2:])
-		exit(code)
+		cmd = generate
+	case "check":
+		cmd = check
+	case "parse":
+		cmd = parse
 	case "help", "-help":
 		mainHelp()
+		return
 	default:
 		stderr("invalid command")
 		stderr()
 		stderr(commandsHelp)
 		exit(-1)
+		return
 	}
+
+	exit(cmd(os.Args[2:]))
 }

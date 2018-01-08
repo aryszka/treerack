@@ -10,11 +10,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-type syntaxOptions struct {
-	syntax     string
-	syntaxFile string
-}
-
 func multipleSyntaxesError(fs *flag.FlagSet) {
 	stderr("only one of syntax file or syntax string is allowed")
 	stderr()
@@ -29,27 +24,62 @@ func missingSyntaxError(fs *flag.FlagSet) {
 	fs.PrintDefaults()
 }
 
-func open(options syntaxOptions, fs *flag.FlagSet) (*treerack.Syntax, int) {
-	if options.syntaxFile != "" && options.syntax != "" {
-		multipleSyntaxesError(fs)
-		return nil, -1
+func getSource(options *syntaxOptions) (hasInput bool, fileName string, syntax string, code int) {
+	if len(options.positional) > 1 {
+		multipleSyntaxesError(options.flagSet)
+		code = -1
+		return
 	}
 
-	var hasInput bool
-	if options.syntaxFile == "" && options.syntax == "" {
-		hasInput = isTest && rin != nil || !isTest && !terminal.IsTerminal(0)
+	hasPositional := len(options.positional) == 1
+	hasFile := options.syntaxFile != ""
+	hasSyntax := options.syntax != ""
+
+	var has bool
+	for _, h := range []bool{hasPositional, hasFile, hasSyntax} {
+		if h && has {
+			multipleSyntaxesError(options.flagSet)
+			code = -1
+			return
+		}
+
+		has = h
 	}
 
-	if !hasInput && options.syntaxFile == "" && options.syntax == "" {
-		missingSyntaxError(fs)
-		return nil, -1
+	switch {
+	case hasPositional:
+		fileName = options.positional[0]
+		return
+	case hasFile:
+		fileName = options.syntaxFile
+		return
+	case hasSyntax:
+		syntax = options.syntax
+		return
+	}
+
+	// check input last to allow explicit syntax in non-TTY environments:
+	hasInput = isTest && rin != nil || !isTest && !terminal.IsTerminal(0)
+	if !hasInput {
+		missingSyntaxError(options.flagSet)
+		code = -1
+		return
+	}
+
+	return
+}
+
+func openSyntax(options *syntaxOptions) (*treerack.Syntax, int) {
+	hasInput, fileName, syntax, code := getSource(options)
+	if code != 0 {
+		return nil, code
 	}
 
 	var input io.Reader
 	if hasInput {
 		input = rin
-	} else if options.syntaxFile != "" {
-		f, err := os.Open(options.syntaxFile)
+	} else if fileName != "" {
+		f, err := os.Open(fileName)
 		if err != nil {
 			stderr(err)
 			return nil, -1
@@ -57,8 +87,8 @@ func open(options syntaxOptions, fs *flag.FlagSet) (*treerack.Syntax, int) {
 
 		defer f.Close()
 		input = f
-	} else if options.syntax != "" {
-		input = bytes.NewBufferString(options.syntax)
+	} else {
+		input = bytes.NewBufferString(syntax)
 	}
 
 	s := &treerack.Syntax{}
