@@ -18,8 +18,6 @@ type generateOptions struct {
 	export      bool
 }
 
-var isTest bool
-
 func flagSet(o *generateOptions, output io.Writer) *flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	fs.Usage = func() {}
@@ -35,10 +33,12 @@ func helpGenerate() {
 	stdout(generateUsage)
 	stdout()
 	stdout("Options:")
-	fs := flagSet(&generateOptions{}, os.Stdout)
+	fs := flagSet(&generateOptions{}, wout)
 	fs.PrintDefaults()
 	stdout()
 	stdout(generateExample)
+	stdout()
+	stdout(docRef)
 }
 
 func flagError(fs *flag.FlagSet) {
@@ -68,7 +68,7 @@ func generate(args []string) int {
 	}
 
 	var options generateOptions
-	fs := flagSet(&options, os.Stderr)
+	fs := flagSet(&options, werr)
 	if err := fs.Parse(args); err != nil {
 		flagError(fs)
 		return -1
@@ -81,8 +81,7 @@ func generate(args []string) int {
 
 	var hasInput bool
 	if options.syntaxFile == "" && options.syntax == "" {
-		fdint := int(os.Stdin.Fd())
-		hasInput = !isTest && !terminal.IsTerminal(fdint)
+		hasInput = isTest && rin != nil || !isTest && !terminal.IsTerminal(0)
 	}
 
 	if !hasInput && options.syntaxFile == "" && options.syntax == "" {
@@ -92,7 +91,7 @@ func generate(args []string) int {
 
 	var input io.Reader
 	if hasInput {
-		input = os.Stdin
+		input = rin
 	} else if options.syntaxFile != "" {
 		f, err := os.Open(options.syntaxFile)
 		if err != nil {
@@ -116,7 +115,7 @@ func generate(args []string) int {
 	goptions.PackageName = options.packageName
 	goptions.Export = options.export
 
-	if err := s.Generate(goptions, os.Stdout); err != nil {
+	if err := s.Generate(goptions, wout); err != nil {
 		stderr(err)
 		return -1
 	}

@@ -9,6 +9,10 @@ read, with error reporting
 what was the bug with the large json from eskip?
 
 [next]
+error reports
+- take the last
+simplify generator output
+make generator output non-random (track parsers in a list in definition order)
 missing tests, coverage:
 - validation
 - error cases
@@ -36,6 +40,8 @@ test error report on invalid flag
 report unused definitions
 simplify generated output
 parse hashed, storing only the results
+allchars: can have char sequence
+input name: may be just dropped because completely controlled by the client
 
 [optimization]
 try preallocate larger store chunks

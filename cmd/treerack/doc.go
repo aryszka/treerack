@@ -15,11 +15,11 @@ const syntaxFileUsage = "path to the syntax file in treerack format"
 
 const syntaxStringUsage = "inline syntax in treerack format"
 
-const packageNameUsage = `package name of the generated code`
+const packageNameUsage = `package name of the generated Go code`
 
 const exportUsage = `when the export flag is set, the generated code will have exported symbols to allow using it as a separate package`
 
-const generateUsage = `treerack generate takes a syntax description from the standard input, or a file, or inline string, and generates code implementing a parser. It prints the parser code to the standard output.`
+const generateUsage = `treerack generate takes a syntax description from the standard input, or a file, or inline string, and generates parser code implementing the described syntax. It prints the parser code to the standard output.`
 
 const generateExample = `Example:
-treerack generate < syntax.treerack > parser.go`
+treerack generate -syntax syntax.treerack > parser.go`

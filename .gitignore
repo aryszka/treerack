@@ -1,5 +1,6 @@
 *.test
 *.out
 .coverprofile
+.coverprofile-cmd
 codecov
 cmd/treerack/treerack

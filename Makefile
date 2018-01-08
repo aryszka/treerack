@@ -44,9 +44,11 @@ regenerate: $(SOURCES) $(PARSERS) head install
 
 check: imports build $(PARSERS)
 	go test -test.short -run ^Test
+	go test ./cmd/treerack -test.short -run ^Test
 
 checkall: imports build $(PARSERS)
 	go test
+	go test ./cmd/treerack
 
 .coverprofile: $(SOURCES) imports
 	go test -coverprofile .coverprofile
@@ -57,6 +59,16 @@ cover: .coverprofile
 showcover: .coverprofile
 	go tool cover -html .coverprofile
 
+.coverprofile-cmd: $(SOURCES) imports
+	go test ./cmd/treerack -coverprofile .coverprofile-cmd
+
+cover-cmd: .coverprofile-cmd
+	go tool cover -func .coverprofile-cmd
+
+showcover-cmd: .coverprofile-cmd
+	go tool cover -html .coverprofile-cmd
+
+# command line interface not included
 publishcoverage: .coverprofile
 	curl -s https://codecov.io/bash -o codecov
 	bash codecov -Zf .coverprofile
@@ -76,7 +88,7 @@ checkfmt: $(SOURCES)
 	@if [ "$$(gofmt -s -d $(SOURCES))" != "" ]; then false; else true; fi
 
 vet:
-	go vet
+	go vet ./...
 
 precommit: regenerate fmt vet build checkall
 

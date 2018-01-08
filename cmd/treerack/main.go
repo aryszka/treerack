@@ -1,8 +1,6 @@
 package main
 
-import (
-	"os"
-)
+import "os"
 
 func mainHelp() {
 	stdout(summary)
@@ -17,21 +15,22 @@ func main() {
 		stderr("missing command")
 		stderr()
 		stderr(commandsHelp)
-		stdout()
-		stdout(docRef)
-		os.Exit(-1)
+		stderr()
+		stderr(docRef)
+		exit(-1)
+		return
 	}
 
 	switch os.Args[1] {
 	case "generate":
-		exit := generate(os.Args[2:])
-		os.Exit(exit)
+		code := generate(os.Args[2:])
+		exit(code)
 	case "help", "-help":
 		mainHelp()
 	default:
 		stderr("invalid command")
 		stderr()
 		stderr(commandsHelp)
-		os.Exit(-1)
+		exit(-1)
 	}
 }
