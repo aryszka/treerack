@@ -19,7 +19,7 @@ func generate(args []string) int {
 	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
 	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
 
-	if o.command.checkHelp() {
+	if o.command.help() {
 		return 0
 	}
 

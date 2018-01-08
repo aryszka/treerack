@@ -38,7 +38,7 @@ func (o *commandOptions) parseArgs() (exit int) {
 	return
 }
 
-func (o *commandOptions) help() {
+func (o *commandOptions) printHelp() {
 	stdout(o.usage)
 	stdout()
 
@@ -52,11 +52,11 @@ func (o *commandOptions) help() {
 	stdout(docRef)
 }
 
-func (o *commandOptions) checkHelp() bool {
+func (o *commandOptions) help() bool {
 	if len(o.args) == 0 || o.args[0] != "-help" {
 		return false
 	}
 
-	o.help()
+	o.printHelp()
 	return true
 }

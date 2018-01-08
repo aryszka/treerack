@@ -28,6 +28,10 @@ const packageNameUsage = `package name of the generated Go code`
 const exportUsage = `when the export flag is set, the generated code will have exported symbols to allow using
 it as a separate package.`
 
+const prettyUsage = `when the pretty flag is set, the AST will be pretty printed`
+
+const indentUsage = `string used for indentation of the printed AST`
+
 const checkUsage = `'treerack check' takes a syntax description from a file or inline string, an arbitrary piece
 of text from the standard input, or a file, or inline string, and parses the input text with the defined syntax.
 It returns non-zero exit code and prints the problem if the provided syntax is not valid or the intput cannot be

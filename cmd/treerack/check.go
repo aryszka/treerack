@@ -18,7 +18,7 @@ func check(args []string) int {
 	o.command.flagSet.StringVar(&o.input.inline, "input-string", "", inputStringUsage)
 	o.command.flagSet.StringVar(&o.input.fileName, "input", "", inputFileUsage)
 
-	if o.command.checkHelp() {
+	if o.command.help() {
 		return 0
 	}
 
@@ -26,13 +26,13 @@ func check(args []string) int {
 		return code
 	}
 
-	o.input.positional = o.command.flagSet.Args()
-	input, code := o.input.open()
+	s, code := o.syntax.openSyntax()
 	if code != 0 {
 		return code
 	}
 
-	s, code := o.syntax.openSyntax()
+	o.input.positional = o.command.flagSet.Args()
+	input, code := o.input.open()
 	if code != 0 {
 		return code
 	}

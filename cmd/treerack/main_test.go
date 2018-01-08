@@ -32,6 +32,23 @@ func init() {
 	isTest = true
 }
 
+func convertTest(cmd string, t mainTest) mainTest {
+	args := make([]string, len(t.args))
+	copy(args, t.args)
+	args[1] = cmd
+	t.args = args
+	return t
+}
+
+func convertTests(cmd string, t []mainTest) []mainTest {
+	tt := make([]mainTest, len(t))
+	for i := range t {
+		tt[i] = convertTest(cmd, t[i])
+	}
+
+	return tt
+}
+
 func mockArgs(args ...string) (reset func()) {
 	original := os.Args
 	os.Args = args
