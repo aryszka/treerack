@@ -22,6 +22,9 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "check":
+		code := check(os.Args[2:])
+		exit(code)
 	case "generate":
 		code := generate(os.Args[2:])
 		exit(code)

@@ -123,19 +123,29 @@ func (mt mainTest) run(t *testing.T) {
 		}
 
 		if stdout != nil {
+			var failed bool
 			for i := range mt.stdout {
 				if !strings.Contains(stdout.String(), mt.stdout[i]) {
 					t.Error("invalid output")
-					t.Log(stdout.String())
+					failed = true
 				}
+			}
+
+			if failed {
+				t.Log(stdout.String())
 			}
 		}
 
+		var failed bool
 		for i := range mt.stderr {
 			if !strings.Contains(stderr.String(), mt.stderr[i]) {
 				t.Error("invalid error output")
-				t.Log(stderr.String())
+				failed = true
 			}
+		}
+
+		if failed {
+			t.Log(stderr.String())
 		}
 	}
 

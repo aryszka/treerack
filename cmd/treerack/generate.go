@@ -1,24 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"io"
-	"os"
 
 	"github.com/aryszka/treerack"
-
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 type generateOptions struct {
-	syntax      string
-	syntaxFile  string
+	syntaxOptions
 	packageName string
 	export      bool
 }
 
-func flagSet(o *generateOptions, output io.Writer) *flag.FlagSet {
+func flagSetGenerate(o *generateOptions, output io.Writer) *flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	fs.Usage = func() {}
 	fs.SetOutput(output)
@@ -29,36 +24,22 @@ func flagSet(o *generateOptions, output io.Writer) *flag.FlagSet {
 	return fs
 }
 
+func flagErrorGenerate(fs *flag.FlagSet) {
+	stderr()
+	stderr("Options:")
+	fs.PrintDefaults()
+}
+
 func helpGenerate() {
 	stdout(generateUsage)
 	stdout()
 	stdout("Options:")
-	fs := flagSet(&generateOptions{}, wout)
+	fs := flagSetGenerate(&generateOptions{}, wout)
 	fs.PrintDefaults()
 	stdout()
 	stdout(generateExample)
 	stdout()
 	stdout(docRef)
-}
-
-func flagError(fs *flag.FlagSet) {
-	stderr()
-	stderr("Options:")
-	fs.PrintDefaults()
-}
-
-func multipleInputsError(fs *flag.FlagSet) {
-	stderr("only one of syntax file or syntax string is allowed")
-	stderr()
-	stderr("Options:")
-	fs.PrintDefaults()
-}
-
-func noInputError(fs *flag.FlagSet) {
-	stderr("missing syntax input")
-	stderr()
-	stderr("Options:")
-	fs.PrintDefaults()
 }
 
 func generate(args []string) int {
@@ -68,47 +49,15 @@ func generate(args []string) int {
 	}
 
 	var options generateOptions
-	fs := flagSet(&options, werr)
+	fs := flagSetGenerate(&options, werr)
 	if err := fs.Parse(args); err != nil {
-		flagError(fs)
+		flagErrorGenerate(fs)
 		return -1
 	}
 
-	if options.syntaxFile != "" && options.syntax != "" {
-		multipleInputsError(fs)
-		return -1
-	}
-
-	var hasInput bool
-	if options.syntaxFile == "" && options.syntax == "" {
-		hasInput = isTest && rin != nil || !isTest && !terminal.IsTerminal(0)
-	}
-
-	if !hasInput && options.syntaxFile == "" && options.syntax == "" {
-		noInputError(fs)
-		return -1
-	}
-
-	var input io.Reader
-	if hasInput {
-		input = rin
-	} else if options.syntaxFile != "" {
-		f, err := os.Open(options.syntaxFile)
-		if err != nil {
-			stderr(err)
-			return -1
-		}
-
-		defer f.Close()
-		input = f
-	} else if options.syntax != "" {
-		input = bytes.NewBufferString(options.syntax)
-	}
-
-	s := &treerack.Syntax{}
-	if err := s.ReadSyntax(input); err != nil {
-		stderr(err)
-		return -1
+	s, code := open(options.syntaxOptions, fs)
+	if code != 0 {
+		return code
 	}
 
 	var goptions treerack.GeneratorOptions

@@ -23,3 +23,8 @@ const generateUsage = `treerack generate takes a syntax description from the sta
 
 const generateExample = `Example:
 treerack generate -syntax syntax.treerack > parser.go`
+
+const checkUsage = `treerack check takes a syntax description from the standard input, or a file, or inline string, and validates it to check whether it represents a valid syntax. It returns with non-zero exit code and prints the problem if the syntax is not valid.`
+
+const checkExample = `Example:
+treerack check -syntax syntax.treerack`
