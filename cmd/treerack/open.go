@@ -12,41 +12,42 @@ import (
 )
 
 type fileOptions struct {
+	typ        string
 	inline     string
 	fileName   string
 	positional []string
 	flagSet    *flag.FlagSet
 }
 
-func multipleSyntaxesError(fs *flag.FlagSet) {
-	stderr("only one of syntax file or syntax string is allowed")
+func (o *fileOptions) multipleInputsError() {
+	stderr("only one", o.typ, "is allowed")
 	stderr()
 	stderr("Options:")
-	fs.PrintDefaults()
+	o.flagSet.PrintDefaults()
 }
 
-func missingSyntaxError(fs *flag.FlagSet) {
-	stderr("missing syntax input")
+func (o *fileOptions) missingInputError() {
+	stderr("missing", o.typ)
 	stderr()
 	stderr("Options:")
-	fs.PrintDefaults()
+	o.flagSet.PrintDefaults()
 }
 
-func getSource(options *fileOptions) (hasInput bool, fileName string, syntax string, code int) {
-	if len(options.positional) > 1 {
-		multipleSyntaxesError(options.flagSet)
+func (o *fileOptions) getSource() (hasInput bool, fileName string, inline string, code int) {
+	if len(o.positional) > 1 {
+		o.multipleInputsError()
 		code = -1
 		return
 	}
 
-	hasPositional := len(options.positional) == 1
-	hasFile := options.fileName != ""
-	hasSyntax := options.inline != ""
+	hasPositional := len(o.positional) == 1
+	hasFile := o.fileName != ""
+	hasInline := o.inline != ""
 
 	var has bool
-	for _, h := range []bool{hasPositional, hasFile, hasSyntax} {
+	for _, h := range []bool{hasPositional, hasFile, hasInline} {
 		if h && has {
-			multipleSyntaxesError(options.flagSet)
+			o.multipleInputsError()
 			code = -1
 			return
 		}
@@ -56,20 +57,20 @@ func getSource(options *fileOptions) (hasInput bool, fileName string, syntax str
 
 	switch {
 	case hasPositional:
-		fileName = options.positional[0]
+		fileName = o.positional[0]
 		return
 	case hasFile:
-		fileName = options.fileName
+		fileName = o.fileName
 		return
-	case hasSyntax:
-		syntax = options.inline
+	case hasInline:
+		inline = o.inline
 		return
 	}
 
-	// check input last to allow explicit syntax in non-TTY environments:
+	// check input last to allow explicit input in non-TTY environments:
 	hasInput = isTest && rin != nil || !isTest && !terminal.IsTerminal(0)
 	if !hasInput {
-		missingSyntaxError(options.flagSet)
+		o.missingInputError()
 		code = -1
 		return
 	}
@@ -77,8 +78,8 @@ func getSource(options *fileOptions) (hasInput bool, fileName string, syntax str
 	return
 }
 
-func open(options *fileOptions) (io.ReadCloser, int) {
-	hasInput, fileName, syntax, code := getSource(options)
+func (o *fileOptions) open() (io.ReadCloser, int) {
+	hasInput, fileName, inline, code := o.getSource()
 	if code != 0 {
 		return nil, code
 	}
@@ -95,14 +96,14 @@ func open(options *fileOptions) (io.ReadCloser, int) {
 
 		r = f
 	} else {
-		r = ioutil.NopCloser(bytes.NewBufferString(syntax))
+		r = ioutil.NopCloser(bytes.NewBufferString(inline))
 	}
 
 	return r, 0
 }
 
-func openSyntax(options *fileOptions) (*treerack.Syntax, int) {
-	input, code := open(options)
+func (o *fileOptions) openSyntax() (*treerack.Syntax, int) {
+	input, code := o.open()
 	if code != 0 {
 		return nil, code
 	}

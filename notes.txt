@@ -19,6 +19,7 @@ test explicit input priority
 take the last
 test error report on invalid flag
 input name: may be just dropped because completely controlled by the client
+input name needed in command to differentiate between syntax and input in check and parse subcommands
 
 [generator]
 allchars: can have char sequence

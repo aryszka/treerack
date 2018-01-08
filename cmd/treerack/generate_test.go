@@ -41,7 +41,7 @@ func TestGenerate(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-export",
 				"-package-name",
 				"-syntax",
@@ -56,7 +56,7 @@ func TestGenerate(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-export",
 				"-package-name",
 				"-syntax",
@@ -71,7 +71,7 @@ func TestGenerate(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-export",
 				"-package-name",
 				"-syntax",
@@ -86,7 +86,7 @@ func TestGenerate(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"missing syntax input",
+				"missing syntax",
 				"-export",
 				"-package-name",
 				"-syntax",

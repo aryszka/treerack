@@ -1,14 +1,14 @@
 package main
 
-type checkOptions struct {
+type checkSyntaxOptions struct {
 	command *commandOptions
 	syntax  *fileOptions
 }
 
 func checkSyntax(args []string) int {
-	var o checkOptions
+	var o checkSyntaxOptions
 	o.command = initOptions(checkSyntaxUsage, checkSyntaxExample, args)
-	o.syntax = &fileOptions{flagSet: o.command.flagSet}
+	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet}
 
 	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
 	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
@@ -22,6 +22,6 @@ func checkSyntax(args []string) int {
 	}
 
 	o.syntax.positional = o.command.flagSet.Args()
-	_, code := openSyntax(o.syntax)
+	_, code := o.syntax.openSyntax()
 	return code
 }

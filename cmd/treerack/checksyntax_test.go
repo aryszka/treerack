@@ -37,7 +37,7 @@ func TestCheckSyntax(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -50,7 +50,7 @@ func TestCheckSyntax(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -63,7 +63,7 @@ func TestCheckSyntax(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"only one",
+				"only one syntax",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -76,7 +76,7 @@ func TestCheckSyntax(t *testing.T) {
 			},
 			exit: -1,
 			stderr: []string{
-				"missing syntax input",
+				"missing syntax",
 				"-syntax",
 				"-syntax-string",
 			},
@@ -115,14 +115,14 @@ func TestCheckSyntax(t *testing.T) {
 		mainTest{
 			title: "syntax as file",
 			args: []string{
-				"treerack", "generate", "-syntax", "foo_test.treerack",
+				"treerack", "check-syntax", "-syntax", "foo_test.treerack",
 			},
 		},
 
 		mainTest{
 			title: "syntax as string",
 			args: []string{
-				"treerack", "generate", "-syntax-string", `foo = "bar"`,
+				"treerack", "check-syntax", "-syntax-string", `foo = "bar"`,
 			},
 		},
 	)
