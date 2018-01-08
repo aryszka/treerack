@@ -4,11 +4,19 @@ import (
 	"bytes"
 	"flag"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/aryszka/treerack"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+type fileOptions struct {
+	inline     string
+	fileName   string
+	positional []string
+	flagSet    *flag.FlagSet
+}
 
 func multipleSyntaxesError(fs *flag.FlagSet) {
 	stderr("only one of syntax file or syntax string is allowed")
@@ -24,7 +32,7 @@ func missingSyntaxError(fs *flag.FlagSet) {
 	fs.PrintDefaults()
 }
 
-func getSource(options *syntaxOptions) (hasInput bool, fileName string, syntax string, code int) {
+func getSource(options *fileOptions) (hasInput bool, fileName string, syntax string, code int) {
 	if len(options.positional) > 1 {
 		multipleSyntaxesError(options.flagSet)
 		code = -1
@@ -32,8 +40,8 @@ func getSource(options *syntaxOptions) (hasInput bool, fileName string, syntax s
 	}
 
 	hasPositional := len(options.positional) == 1
-	hasFile := options.syntaxFile != ""
-	hasSyntax := options.syntax != ""
+	hasFile := options.fileName != ""
+	hasSyntax := options.inline != ""
 
 	var has bool
 	for _, h := range []bool{hasPositional, hasFile, hasSyntax} {
@@ -51,10 +59,10 @@ func getSource(options *syntaxOptions) (hasInput bool, fileName string, syntax s
 		fileName = options.positional[0]
 		return
 	case hasFile:
-		fileName = options.syntaxFile
+		fileName = options.fileName
 		return
 	case hasSyntax:
-		syntax = options.syntax
+		syntax = options.inline
 		return
 	}
 
@@ -69,15 +77,15 @@ func getSource(options *syntaxOptions) (hasInput bool, fileName string, syntax s
 	return
 }
 
-func openSyntax(options *syntaxOptions) (*treerack.Syntax, int) {
+func open(options *fileOptions) (io.ReadCloser, int) {
 	hasInput, fileName, syntax, code := getSource(options)
 	if code != 0 {
 		return nil, code
 	}
 
-	var input io.Reader
+	var r io.ReadCloser
 	if hasInput {
-		input = rin
+		r = ioutil.NopCloser(rin)
 	} else if fileName != "" {
 		f, err := os.Open(fileName)
 		if err != nil {
@@ -85,10 +93,18 @@ func openSyntax(options *syntaxOptions) (*treerack.Syntax, int) {
 			return nil, -1
 		}
 
-		defer f.Close()
-		input = f
+		r = f
 	} else {
-		input = bytes.NewBufferString(syntax)
+		r = ioutil.NopCloser(bytes.NewBufferString(syntax))
+	}
+
+	return r, 0
+}
+
+func openSyntax(options *fileOptions) (*treerack.Syntax, int) {
+	input, code := open(options)
+	if code != 0 {
+		return nil, code
 	}
 
 	s := &treerack.Syntax{}

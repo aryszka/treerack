@@ -3,35 +3,41 @@ package main
 import "github.com/aryszka/treerack"
 
 type generateOptions struct {
-	*syntaxOptions
+	command     *commandOptions
+	syntax      *fileOptions
 	packageName string
 	export      bool
 }
 
 func generate(args []string) int {
-	var options generateOptions
-	options.syntaxOptions = initOptions(generateUsage, generateExample, args)
-	options.flagSet.BoolVar(&options.export, "export", false, exportUsage)
-	options.flagSet.StringVar(&options.packageName, "package-name", "", packageNameUsage)
+	var o generateOptions
+	o.command = initOptions(generateUsage, generateExample, args)
+	o.syntax = &fileOptions{flagSet: o.command.flagSet}
 
-	if options.checkHelp() {
+	o.command.flagSet.BoolVar(&o.export, "export", false, exportUsage)
+	o.command.flagSet.StringVar(&o.packageName, "package-name", "", packageNameUsage)
+	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
+	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
+
+	if o.command.checkHelp() {
 		return 0
 	}
 
-	if code := options.parse(); code != 0 {
+	if code := o.command.parseArgs(); code != 0 {
 		return code
 	}
 
-	var goptions treerack.GeneratorOptions
-	goptions.PackageName = options.packageName
-	goptions.Export = options.export
-
-	s, code := openSyntax(options.syntaxOptions)
+	o.syntax.positional = o.command.flagSet.Args()
+	s, code := openSyntax(o.syntax)
 	if code != 0 {
 		return code
 	}
 
-	if err := s.Generate(goptions, wout); err != nil {
+	var g treerack.GeneratorOptions
+	g.PackageName = o.packageName
+	g.Export = o.export
+
+	if err := s.Generate(g, wout); err != nil {
 		stderr(err)
 		return -1
 	}
