@@ -37,6 +37,8 @@ func check(args []string) int {
 		return code
 	}
 
+	defer input.Close()
+
 	_, err := s.Parse(input)
 	if err != nil {
 		stderr(err)

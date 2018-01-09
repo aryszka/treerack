@@ -22,6 +22,15 @@ func checkSyntax(args []string) int {
 	}
 
 	o.syntax.positional = o.command.flagSet.Args()
-	_, code := o.syntax.openSyntax()
-	return code
+	s, code := o.syntax.openSyntax()
+	if code != 0 {
+		return code
+	}
+
+	if err := s.Init(); err != nil {
+		stderr(err)
+		return -1
+	}
+
+	return 0
 }

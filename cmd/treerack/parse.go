@@ -74,6 +74,8 @@ func parse(args []string) int {
 		return code
 	}
 
+	defer input.Close()
+
 	n, err := s.Parse(input)
 	if err != nil {
 		stderr(err)

@@ -112,6 +112,13 @@ var checkSyntaxTests = []mainTest{
 	},
 
 	{
+		title: "syntax as positional",
+		args: []string{
+			"treerack", "check-syntax", "foo_test.treerack",
+		},
+	},
+
+	{
 		title: "syntax as string",
 		args: []string{
 			"treerack", "check-syntax", "-syntax-string", `foo = "bar"`,
@@ -124,6 +131,17 @@ var checkSyntaxTests = []mainTest{
 			"treerack", "check-syntax", "-syntax", "foo_test.treerack",
 		},
 		stdin: "invalid",
+	},
+
+	{
+		title: "invalid syntax semantics",
+		args: []string{
+			"treerack", "check-syntax", "-syntax-string", `foo:alias = "bar"`,
+		},
+		exit: -1,
+		stderr: []string{
+			"root",
+		},
 	},
 }
 

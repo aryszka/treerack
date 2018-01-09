@@ -38,6 +38,17 @@ var generateTests = []mainTest{
 	},
 
 	{
+		title: "syntax as positional",
+		args: []string{
+			"treerack", "generate", "-export", "-package-name", "foo", "foo_test.treerack",
+		},
+		stdout: []string{
+			"package foo",
+			"func Parse",
+		},
+	},
+
+	{
 		title: "syntax as string",
 		args: []string{
 			"treerack", "generate", "-export", "-package-name", "foo", "-syntax-string", `foo = "bar"`,

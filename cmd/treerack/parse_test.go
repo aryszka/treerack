@@ -47,6 +47,16 @@ var parseTests = []mainTest{
 	},
 
 	{
+		title: "input as positional",
+		args: []string{
+			"treerack", "parse", "-syntax-string", `foo = "bar"`, "bar_test.txt",
+		},
+		stdout: []string{
+			`"name":"foo"`,
+		},
+	},
+
+	{
 		title: "input as string",
 		args: []string{
 			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar",

@@ -113,6 +113,8 @@ func (o *fileOptions) openSyntax() (*treerack.Syntax, int) {
 		return nil, code
 	}
 
+	defer input.Close()
+
 	s := &treerack.Syntax{}
 	if err := s.ReadSyntax(input); err != nil {
 		stderr(err)

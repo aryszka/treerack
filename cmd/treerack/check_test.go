@@ -190,6 +190,13 @@ var checkTests = []mainTest{
 	},
 
 	{
+		title: "input as positional",
+		args: []string{
+			"treerack", "check", "-syntax-string", `foo = "bar"`, "bar_test.txt",
+		},
+	},
+
+	{
 		title: "input as string",
 		args: []string{
 			"treerack", "check", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
