@@ -20,6 +20,7 @@ input name needed in command to differentiate between syntax and input in check 
 allchars: can have char sequence
 make generator output non-random (track parsers in a list in definition order)
 fix the license in the output
+play with the int sizes
 
 [releasing]
 spellcheck

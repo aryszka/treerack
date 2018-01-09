@@ -30,8 +30,8 @@ func main() {
 		cmd = generate
 	case "check":
 		cmd = check
-	case "parse":
-		cmd = parse
+	case "show":
+		cmd = show
 	case "help", "-help":
 		mainHelp()
 		return

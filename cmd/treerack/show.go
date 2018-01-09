@@ -6,7 +6,7 @@ import (
 	"github.com/aryszka/treerack"
 )
 
-type parseOptions struct {
+type showOptions struct {
 	command *commandOptions
 	syntax  *fileOptions
 	input   *fileOptions
@@ -40,9 +40,9 @@ func mapNode(n *treerack.Node) *node {
 	return &nn
 }
 
-func parse(args []string) int {
-	var o parseOptions
-	o.command = initOptions(parseUsage, parseExample, positionalInputUsage, args)
+func show(args []string) int {
+	var o showOptions
+	o.command = initOptions(showUsage, showExample, positionalInputUsage, args)
 	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
 	o.input = &fileOptions{typ: "input", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
 

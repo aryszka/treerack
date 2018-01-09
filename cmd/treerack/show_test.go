@@ -2,13 +2,13 @@ package main
 
 import "testing"
 
-var parseFailureTests = convertTests("parse", checkFailureTests)
+var showFailureTests = convertTests("show", checkFailureTests)
 
-var parseTests = []mainTest{
+var showTests = []mainTest{
 	{
 		title: "syntax as file",
 		args: []string{
-			"treerack", "parse", "-syntax", "foo_test.treerack", "-input-string", "bar",
+			"treerack", "show", "-syntax", "foo_test.treerack", "-input-string", "bar",
 		},
 		stdout: []string{
 			`"name":"foo"`,
@@ -18,7 +18,7 @@ var parseTests = []mainTest{
 	{
 		title: "syntax as string",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
 		},
 		stdout: []string{
 			`"name":"foo"`,
@@ -28,7 +28,7 @@ var parseTests = []mainTest{
 	{
 		title: "input as stdin",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`,
+			"treerack", "show", "-syntax-string", `foo = "bar"`,
 		},
 		stdin: "bar",
 		stdout: []string{
@@ -39,7 +39,7 @@ var parseTests = []mainTest{
 	{
 		title: "input as file",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input", "bar_test.txt",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input", "bar_test.txt",
 		},
 		stdout: []string{
 			`"name":"foo"`,
@@ -49,7 +49,7 @@ var parseTests = []mainTest{
 	{
 		title: "input as positional",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "bar_test.txt",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "bar_test.txt",
 		},
 		stdout: []string{
 			`"name":"foo"`,
@@ -59,7 +59,7 @@ var parseTests = []mainTest{
 	{
 		title: "input as string",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input-string", "bar",
 		},
 		stdout: []string{
 			`"name":"foo"`,
@@ -69,7 +69,7 @@ var parseTests = []mainTest{
 	{
 		title: "explicit over stdin",
 		args: []string{
-			"treerack", "parse", "-syntax", "foo_test.treerack", "-input-string", "bar",
+			"treerack", "show", "-syntax", "foo_test.treerack", "-input-string", "bar",
 		},
 		stdin: "invalid",
 		stdout: []string{
@@ -80,7 +80,7 @@ var parseTests = []mainTest{
 	{
 		title: "pretty",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty",
 		},
 		stdout: []string{
 			`    "name": "foo"`,
@@ -90,7 +90,7 @@ var parseTests = []mainTest{
 	{
 		title: "pretty and indent",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty", "-indent", "xx",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty", "-indent", "xx",
 		},
 		stdout: []string{
 			`xx"name": "foo"`,
@@ -100,7 +100,7 @@ var parseTests = []mainTest{
 	{
 		title: "indent without pretty",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty", "-indent", "xx",
+			"treerack", "show", "-syntax-string", `foo = "bar"`, "-input-string", "bar", "-pretty", "-indent", "xx",
 		},
 		stdout: []string{
 			`xx"name": "foo"`,
@@ -110,7 +110,7 @@ var parseTests = []mainTest{
 	{
 		title: "with child nodes",
 		args: []string{
-			"treerack", "parse", "-syntax-string", `foo = "bar"; doc = foo`, "-input-string", "bar",
+			"treerack", "show", "-syntax-string", `foo = "bar"; doc = foo`, "-input-string", "bar",
 		},
 		stdout: []string{
 			`"nodes":[`,
@@ -119,14 +119,14 @@ var parseTests = []mainTest{
 	},
 }
 
-func TestParse(t *testing.T) {
+func TestShow(t *testing.T) {
 	runMainTest(t, mainTest{
 		title: "help",
 		args: []string{
-			"treerack", "parse", "-help",
+			"treerack", "show", "-help",
 		},
 		stdout: []string{
-			wrapLines(parseUsage),
+			wrapLines(showUsage),
 			"-syntax",
 			"-syntax-string",
 			"-input",
@@ -134,11 +134,11 @@ func TestParse(t *testing.T) {
 			"-pretty",
 			"-indent",
 			wrapLines(positionalInputUsage),
-			wrapLines(parseExample),
+			wrapLines(showExample),
 			wrapLines(docRef),
 		},
 	})
 
-	runMainTest(t, parseFailureTests...)
-	runMainTest(t, parseTests...)
+	runMainTest(t, showFailureTests...)
+	runMainTest(t, showTests...)
 }
