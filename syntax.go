@@ -264,8 +264,8 @@ func (s *Syntax) Init() error {
 		return ErrRootFailPass
 	}
 
-	defs := s.registry.getDefinitions()
-	for i := range defs {
+	defs := s.registry.definitions
+	for i := range s.registry.definitions {
 		defs[i].preinit()
 	}
 

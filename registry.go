@@ -2,12 +2,13 @@ package treerack
 
 type registry struct {
 	idSeed      int
-	definitions map[string]definition
+	definition  map[string]definition
+	definitions []definition
 }
 
 func newRegistry(defs ...definition) *registry {
 	r := &registry{
-		definitions: make(map[string]definition),
+		definition: make(map[string]definition),
 	}
 
 	for _, def := range defs {
@@ -17,13 +18,8 @@ func newRegistry(defs ...definition) *registry {
 	return r
 }
 
-func (r *registry) definition(name string) (definition, bool) {
-	d, ok := r.definitions[name]
-	return d, ok
-}
-
 func (r *registry) setDefinition(d definition) error {
-	if _, ok := r.definitions[d.nodeName()]; ok {
+	if _, ok := r.definition[d.nodeName()]; ok {
 		return duplicateDefinition(d.nodeName())
 	}
 
@@ -31,15 +27,7 @@ func (r *registry) setDefinition(d definition) error {
 	id := r.idSeed
 	d.setID(id)
 
-	r.definitions[d.nodeName()] = d
+	r.definition[d.nodeName()] = d
+	r.definitions = append(r.definitions, d)
 	return nil
-}
-
-func (r *registry) getDefinitions() []definition {
-	var defs []definition
-	for _, def := range r.definitions {
-		defs = append(defs, def)
-	}
-
-	return defs
 }

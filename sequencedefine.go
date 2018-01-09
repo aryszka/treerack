@@ -79,7 +79,7 @@ func (d *sequenceDefinition) validate(r *registry) error {
 
 	d.validated = true
 	for i := range d.items {
-		ii, ok := r.definition(d.items[i].Name)
+		ii, ok := r.definition[d.items[i].Name]
 		if !ok {
 			return parserNotFound(d.items[i].Name)
 		}
@@ -104,7 +104,7 @@ func (d *sequenceDefinition) createBuilder() {
 func (d *sequenceDefinition) initItems(r *registry) {
 	allChars := true
 	for _, item := range d.items {
-		def := r.definitions[item.Name]
+		def := r.definition[item.Name]
 		d.itemDefs = append(d.itemDefs, def)
 		def.init(r)
 		d.sbuilder.items = append(d.sbuilder.items, def.builder())
@@ -175,7 +175,7 @@ func (d *sequenceDefinition) isCharSequence(r *registry) bool {
 			return false
 		}
 
-		itemDef, _ := r.definition(d.originalItems[i].Name)
+		itemDef := r.definition[d.originalItems[i].Name]
 		c, ok := itemDef.(*charParser)
 		if !ok || !c.isSingleChar() {
 			return false
@@ -188,14 +188,14 @@ func (d *sequenceDefinition) isCharSequence(r *registry) bool {
 func (d *sequenceDefinition) format(r *registry, f formatFlags) string {
 	if d.isCharSequence(r) {
 		if len(d.originalItems) == 1 {
-			itemDef, _ := r.definition(d.originalItems[0].Name)
+			itemDef := r.definition[d.originalItems[0].Name]
 			c, _ := itemDef.(*charParser)
 			return c.format(r, f)
 		}
 
 		var chars []rune
 		for i := range d.originalItems {
-			itemDef, _ := r.definition(d.originalItems[i].Name)
+			itemDef := r.definition[d.originalItems[i].Name]
 			c, _ := itemDef.(*charParser)
 			chars = append(chars, c.chars[0])
 		}
@@ -213,7 +213,7 @@ func (d *sequenceDefinition) format(r *registry, f formatFlags) string {
 		item := normalizeItemRange(d.originalItems[i])
 		needsQuantifier := item.Min != 1 || item.Max != 1
 
-		itemDef, _ := r.definition(item.Name)
+		itemDef := r.definition[item.Name]
 		isSymbol := itemDef.commitType()&userDefined != 0
 
 		ch, isChoice := itemDef.(*choiceDefinition)

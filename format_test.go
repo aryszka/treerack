@@ -30,7 +30,7 @@ func testDefinitionFormatItem(t *testing.T, treerack *Syntax, f formatFlags, tes
 			t.Fatal(err)
 		}
 
-		def, ok := s.registry.definition("def")
+		def, ok := s.registry.definition["def"]
 		if !ok {
 			t.Fatal("failed to register definition")
 		}

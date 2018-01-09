@@ -18,7 +18,7 @@ build: $(SOURCES)
 install: $(SOURCES)
 	go install ./cmd/treerack
 
-head: $(SOURCES)
+head: $(SOURCES) fmt
 	go run scripts/createhead.go -- \
 		char.go \
 		sequence.go \
@@ -29,18 +29,53 @@ head: $(SOURCES)
 		nodehead.go \
 		syntaxhead.go \
 	> head.go
+	@gofmt -s -w head.go
 
-generate: $(SOURCES) $(PARSERS) head install
+generate: $(SOURCES) $(PARSERS) fmt head install
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	@gofmt -s -w self/self.go
 
-regenerate: $(SOURCES) $(PARSERS) head install
+regenerate: $(SOURCES) $(PARSERS) fmt head install
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	@gofmt -s -w self/self.go
+
+check-generate: $(SOURCES) $(PARSERS)
+	@echo checking head
+	@mv head.go head.go.backup
+	@go run scripts/createhead.go -- \
+		char.go \
+		sequence.go \
+		choice.go \
+		idset.go \
+		results.go \
+		context.go \
+		nodehead.go \
+		syntaxhead.go \
+	> head.go
+	@gofmt -s -w head.go
+	@if ! diff head.go head.go.backup > /dev/null; then \
+		mv head.go.backup head.go; \
+		echo head does not match; \
+		false; \
+	fi
+	@echo checking self
+	@mv self/self.go self/self.go.backup
+	@treerack generate -export -package-name self < syntax.treerack > self/self.go.next
+	@mv self/self.go{.next,}
+	@gofmt -s -w self/self.go
+	@if ! diff self/self.go self/self.go.backup > /dev/null; then \
+		mv self/self.go.backup self/self.go; \
+		echo self does not match; \
+		false; \
+	fi
+
+	@echo ok
+	@mv head.go.backup head.go
+	@mv self/self.go.backup self/self.go
 
 check: imports build $(PARSERS)
 	go test -test.short -run ^Test
@@ -90,7 +125,7 @@ checkfmt: $(SOURCES)
 vet:
 	go vet ./...
 
-precommit: regenerate fmt vet build checkall
+precommit: fmt check-generate vet build checkall
 
 clean:
 	rm -f *.test

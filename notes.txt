@@ -1,9 +1,10 @@
 [next]
 no random generator output and generator output check
 errors
-spellcheck
-linting
+generator 1
 releasing
+parser
+generator 2
 formatter
 report unused parsers
 parse hashed, storing only the results
@@ -15,14 +16,23 @@ test error report on invalid flag
 input name: may be just dropped because completely controlled by the client
 input name needed in command to differentiate between syntax and input in check and parse subcommands
 
+[generator 1]
+allchars: can have char sequence
+make generator output non-random (track parsers in a list in definition order)
+fix the license in the output
+
+[releasing]
+spellcheck
+linting
+convert notes into issues
+try to remove some files
+
 [parser]
 custom tokens
 indentation
 streaming support // ReadNode(io.Reader)
 
-[generator]
-allchars: can have char sequence
-make generator output non-random (track parsers in a list in definition order)
+[generator 2]
 js
 
 [optimization]

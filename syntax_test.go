@@ -104,7 +104,7 @@ func TestInit(t *testing.T) {
 			}
 
 			s.Init()
-			if len(s.registry.definitions["a"].(*sequenceDefinition).generalizations) != 1 {
+			if len(s.registry.definition["a"].(*sequenceDefinition).generalizations) != 1 {
 				t.Error("invalid number of generalizations")
 			}
 		})
@@ -291,7 +291,7 @@ func TestDefinition(t *testing.T) {
 				t.Error(err)
 			}
 
-			if _, ok := s.registry.definition("a"); !ok {
+			if _, ok := s.registry.definition["a"]; !ok {
 				t.Error("definition failed")
 			}
 		})
@@ -301,7 +301,7 @@ func TestDefinition(t *testing.T) {
 				t.Error(err)
 			}
 
-			if _, ok := s.registry.definition("b"); !ok {
+			if _, ok := s.registry.definition["b"]; !ok {
 				t.Error("definition failed")
 			}
 		})
@@ -311,7 +311,7 @@ func TestDefinition(t *testing.T) {
 				t.Error(err)
 			}
 
-			if _, ok := s.registry.definition("c"); !ok {
+			if _, ok := s.registry.definition["c"]; !ok {
 				t.Error("definition failed")
 			}
 		})
@@ -321,7 +321,7 @@ func TestDefinition(t *testing.T) {
 				t.Error(err)
 			}
 
-			if _, ok := s.registry.definition("d"); !ok {
+			if _, ok := s.registry.definition["d"]; !ok {
 				t.Error("definition failed")
 			}
 		})
@@ -331,7 +331,7 @@ func TestDefinition(t *testing.T) {
 				t.Error(err)
 			}
 
-			if _, ok := s.registry.definition("e"); !ok {
+			if _, ok := s.registry.definition["e"]; !ok {
 				t.Error("definition failed")
 			}
 		})

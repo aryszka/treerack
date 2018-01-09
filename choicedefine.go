@@ -41,7 +41,7 @@ func (d *choiceDefinition) validate(r *registry) error {
 
 	d.validated = true
 	for i := range d.options {
-		o, ok := r.definitions[d.options[i]]
+		o, ok := r.definition[d.options[i]]
 		if !ok {
 			return parserNotFound(d.options[i])
 		}
@@ -64,7 +64,7 @@ func (d *choiceDefinition) createBuilder() {
 
 func (d *choiceDefinition) initOptions(r *registry) {
 	for _, o := range d.options {
-		def := r.definitions[o]
+		def := r.definition[o]
 		d.optionDefs = append(d.optionDefs, def)
 		def.init(r)
 		d.cbuilder.options = append(d.cbuilder.options, def.builder())
@@ -128,7 +128,7 @@ func (d *choiceDefinition) format(r *registry, f formatFlags) string {
 			chars = append(chars, []rune(" | ")...)
 		}
 
-		optionDef, _ := r.definition(d.options[i])
+		optionDef := r.definition[d.options[i]]
 		if optionDef.commitType()&userDefined != 0 {
 			chars = append(chars, []rune(optionDef.nodeName())...)
 		} else {
