@@ -14,6 +14,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -29,6 +30,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -44,6 +46,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -59,6 +62,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -74,6 +78,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -89,6 +94,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -104,6 +110,7 @@ var checkFailureTests = []mainTest{
 			"-syntax-string",
 			"-input",
 			"-input-string",
+			joinLines(positionalInputUsage),
 		},
 	},
 
@@ -205,13 +212,14 @@ func TestCheck(t *testing.T) {
 			"treerack", "check", "-help",
 		},
 		stdout: []string{
-			checkUsage,
+			joinLines(checkUsage),
 			"-syntax",
 			"-syntax-string",
 			"-input",
 			"-input-string",
-			checkExample,
-			docRef,
+			joinLines(positionalInputUsage),
+			joinLines(checkExample),
+			joinLines(docRef),
 		},
 	})
 

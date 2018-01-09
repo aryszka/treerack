@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 const summary = `treerack - parser generator - https://github.com/aryszka/treerack`
 
 const commandsHelp = `Available commands:
@@ -14,6 +16,10 @@ treerack <command> -help`
 
 const docRef = `See more documentation about the definition syntax and the parser output at
 https://github.com/aryszka/treerack.`
+
+const positionalSyntaxUsage = "The path to the syntax file is accepted as a positional argument."
+
+const positionalInputUsage = "The path to the input file is accepted as a positional argument."
 
 const syntaxFileUsage = "path to the syntax file in treerack format"
 
@@ -60,3 +66,7 @@ standard output.`
 
 const generateExample = `Example:
 treerack generate example.treerack > parser.go`
+
+func joinLines(s string) string {
+	return strings.Replace(s, "\n", " ", -1)
+}

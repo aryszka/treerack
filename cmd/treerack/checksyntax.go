@@ -7,11 +7,11 @@ type checkSyntaxOptions struct {
 
 func checkSyntax(args []string) int {
 	var o checkSyntaxOptions
-	o.command = initOptions(checkSyntaxUsage, checkSyntaxExample, args)
-	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet}
+	o.command = initOptions(checkSyntaxUsage, checkSyntaxExample, positionalSyntaxUsage, args)
+	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet, positionalDoc: positionalSyntaxUsage}
 
-	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
-	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
+	o.command.stringFlag(&o.syntax.inline, "syntax-string", syntaxStringUsage)
+	o.command.stringFlag(&o.syntax.fileName, "syntax", syntaxFileUsage)
 
 	if o.command.help() {
 		return 0

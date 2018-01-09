@@ -11,13 +11,13 @@ type generateOptions struct {
 
 func generate(args []string) int {
 	var o generateOptions
-	o.command = initOptions(generateUsage, generateExample, args)
-	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet}
+	o.command = initOptions(generateUsage, generateExample, positionalSyntaxUsage, args)
+	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet, positionalDoc: positionalSyntaxUsage}
 
-	o.command.flagSet.BoolVar(&o.export, "export", false, exportUsage)
-	o.command.flagSet.StringVar(&o.packageName, "package-name", "", packageNameUsage)
-	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
-	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
+	o.command.boolFlag(&o.export, "export", exportUsage)
+	o.command.stringFlag(&o.packageName, "package-name", packageNameUsage)
+	o.command.stringFlag(&o.syntax.inline, "syntax-string", syntaxStringUsage)
+	o.command.stringFlag(&o.syntax.fileName, "syntax", syntaxFileUsage)
 
 	if o.command.help() {
 		return 0

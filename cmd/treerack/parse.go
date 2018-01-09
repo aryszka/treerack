@@ -42,18 +42,18 @@ func mapNode(n *treerack.Node) *node {
 
 func parse(args []string) int {
 	var o parseOptions
-	o.command = initOptions(parseUsage, parseExample, args)
-	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet}
-	o.input = &fileOptions{typ: "input", flagSet: o.command.flagSet}
+	o.command = initOptions(parseUsage, parseExample, positionalInputUsage, args)
+	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
+	o.input = &fileOptions{typ: "input", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
 
-	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
-	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
+	o.command.stringFlag(&o.syntax.inline, "syntax-string", syntaxStringUsage)
+	o.command.stringFlag(&o.syntax.fileName, "syntax", syntaxFileUsage)
 
-	o.command.flagSet.StringVar(&o.input.inline, "input-string", "", inputStringUsage)
-	o.command.flagSet.StringVar(&o.input.fileName, "input", "", inputFileUsage)
+	o.command.stringFlag(&o.input.inline, "input-string", inputStringUsage)
+	o.command.stringFlag(&o.input.fileName, "input", inputFileUsage)
 
-	o.command.flagSet.BoolVar(&o.pretty, "pretty", false, prettyUsage)
-	o.command.flagSet.StringVar(&o.indent, "indent", "", indentUsage)
+	o.command.boolFlag(&o.pretty, "pretty", prettyUsage)
+	o.command.stringFlag(&o.indent, "indent", indentUsage)
 
 	if o.command.help() {
 		return 0

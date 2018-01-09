@@ -3,17 +3,19 @@ package main
 import "flag"
 
 type commandOptions struct {
-	usage   string
-	example string
-	args    []string
-	flagSet *flag.FlagSet
+	usage         string
+	example       string
+	args          []string
+	flagSet       *flag.FlagSet
+	positionalDoc string
 }
 
-func initOptions(usage, example string, args []string) *commandOptions {
+func initOptions(usage, example, positionalDoc string, args []string) *commandOptions {
 	var o commandOptions
 
-	o.usage = usage
-	o.example = example
+	o.usage = joinLines(usage)
+	o.example = joinLines(example)
+	o.positionalDoc = joinLines(positionalDoc)
 	o.args = args
 
 	o.flagSet = flag.NewFlagSet("", flag.ContinueOnError)
@@ -23,10 +25,22 @@ func initOptions(usage, example string, args []string) *commandOptions {
 	return &o
 }
 
+func (o *commandOptions) boolFlag(v *bool, name, usage string) {
+	usage = joinLines(usage)
+	o.flagSet.BoolVar(v, name, *v, usage)
+}
+
+func (o *commandOptions) stringFlag(v *string, name, usage string) {
+	usage = joinLines(usage)
+	o.flagSet.StringVar(v, name, *v, usage)
+}
+
 func (o *commandOptions) flagError() {
 	stderr()
 	stderr("Options:")
 	o.flagSet.PrintDefaults()
+	stderr()
+	stderr(o.positionalDoc)
 }
 
 func (o *commandOptions) parseArgs() (exit int) {
@@ -45,11 +59,13 @@ func (o *commandOptions) printHelp() {
 	stdout("Options:")
 	o.flagSet.SetOutput(wout)
 	o.flagSet.PrintDefaults()
+	stdout()
+	stdout(o.positionalDoc)
 
 	stdout()
 	stdout(o.example)
 	stdout()
-	stdout(docRef)
+	stdout(joinLines(docRef))
 }
 
 func (o *commandOptions) help() bool {

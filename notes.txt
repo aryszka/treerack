@@ -1,4 +1,5 @@
 [next]
+no random generator output and generator output check
 errors
 formatter
 report unused parsers

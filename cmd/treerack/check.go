@@ -8,15 +8,15 @@ type checkOptions struct {
 
 func check(args []string) int {
 	var o checkOptions
-	o.command = initOptions(checkUsage, checkExample, args)
-	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet}
-	o.input = &fileOptions{typ: "input", flagSet: o.command.flagSet}
+	o.command = initOptions(checkUsage, checkExample, positionalInputUsage, args)
+	o.syntax = &fileOptions{typ: "syntax", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
+	o.input = &fileOptions{typ: "input", flagSet: o.command.flagSet, positionalDoc: positionalInputUsage}
 
-	o.command.flagSet.StringVar(&o.syntax.inline, "syntax-string", "", syntaxStringUsage)
-	o.command.flagSet.StringVar(&o.syntax.fileName, "syntax", "", syntaxFileUsage)
+	o.command.stringFlag(&o.syntax.inline, "syntax-string", syntaxStringUsage)
+	o.command.stringFlag(&o.syntax.fileName, "syntax", syntaxFileUsage)
 
-	o.command.flagSet.StringVar(&o.input.inline, "input-string", "", inputStringUsage)
-	o.command.flagSet.StringVar(&o.input.fileName, "input", "", inputFileUsage)
+	o.command.stringFlag(&o.input.inline, "input-string", inputStringUsage)
+	o.command.stringFlag(&o.input.fileName, "input", inputFileUsage)
 
 	if o.command.help() {
 		return 0

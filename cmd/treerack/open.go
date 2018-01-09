@@ -12,11 +12,12 @@ import (
 )
 
 type fileOptions struct {
-	typ        string
-	inline     string
-	fileName   string
-	positional []string
-	flagSet    *flag.FlagSet
+	typ           string
+	inline        string
+	fileName      string
+	positional    []string
+	flagSet       *flag.FlagSet
+	positionalDoc string
 }
 
 func (o *fileOptions) multipleInputsError() {
@@ -24,6 +25,8 @@ func (o *fileOptions) multipleInputsError() {
 	stderr()
 	stderr("Options:")
 	o.flagSet.PrintDefaults()
+	stderr()
+	stderr(joinLines(o.positionalDoc))
 }
 
 func (o *fileOptions) missingInputError() {
@@ -31,6 +34,8 @@ func (o *fileOptions) missingInputError() {
 	stderr()
 	stderr("Options:")
 	o.flagSet.PrintDefaults()
+	stderr()
+	stderr(joinLines(o.positionalDoc))
 }
 
 func (o *fileOptions) getSource() (hasInput bool, fileName string, inline string, code int) {

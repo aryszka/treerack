@@ -116,15 +116,16 @@ func TestParse(t *testing.T) {
 			"treerack", "parse", "-help",
 		},
 		stdout: []string{
-			parseUsage,
+			joinLines(parseUsage),
 			"-syntax",
 			"-syntax-string",
 			"-input",
 			"-input-string",
 			"-pretty",
 			"-indent",
-			parseExample,
-			docRef,
+			joinLines(positionalInputUsage),
+			joinLines(parseExample),
+			joinLines(docRef),
 		},
 	})
 
