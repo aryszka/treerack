@@ -13,9 +13,9 @@ type commandOptions struct {
 func initOptions(usage, example, positionalDoc string, args []string) *commandOptions {
 	var o commandOptions
 
-	o.usage = joinLines(usage)
-	o.example = joinLines(example)
-	o.positionalDoc = joinLines(positionalDoc)
+	o.usage = wrapLines(usage)
+	o.example = wrapLines(example)
+	o.positionalDoc = wrapLines(positionalDoc)
 	o.args = args
 
 	o.flagSet = flag.NewFlagSet("", flag.ContinueOnError)
@@ -26,12 +26,12 @@ func initOptions(usage, example, positionalDoc string, args []string) *commandOp
 }
 
 func (o *commandOptions) boolFlag(v *bool, name, usage string) {
-	usage = joinLines(usage)
+	usage = wrapLines(usage)
 	o.flagSet.BoolVar(v, name, *v, usage)
 }
 
 func (o *commandOptions) stringFlag(v *string, name, usage string) {
-	usage = joinLines(usage)
+	usage = wrapLines(usage)
 	o.flagSet.StringVar(v, name, *v, usage)
 }
 
@@ -65,7 +65,7 @@ func (o *commandOptions) printHelp() {
 	stdout()
 	stdout(o.example)
 	stdout()
-	stdout(joinLines(docRef))
+	stdout(wrapLines(docRef))
 }
 
 func (o *commandOptions) help() bool {

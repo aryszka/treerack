@@ -1,12 +1,15 @@
 package main
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 const summary = `treerack - parser generator - https://github.com/aryszka/treerack`
 
 const commandsHelp = `Available commands:
-check          validates an arbitrary input against a syntax definition
-parse          parses an arbitrary input with a syntax definition into an abstract syntax tree
+check          validates arbitrary input against a syntax definition
+parse          parses arbitrary input with a syntax definition into an abstract syntax tree
 check-syntax   validates a syntax definition
 generate       generates a parser from a syntax definition
 help           prints the current help
@@ -40,8 +43,8 @@ const indentUsage = `string used for indentation of the printed AST`
 
 const checkUsage = `'treerack check' takes a syntax description from a file or inline string, an arbitrary piece
 of text from the standard input, or a file, or inline string, and parses the input text with the defined syntax.
-It returns non-zero exit code and prints the problem if the provided syntax is not valid or the intput cannot be
-parsed against it.`
+It returns non-zero exit code and prints the problem if the provided syntax is not valid or the input cannot be
+parsed with it.`
 
 const checkExample = `Example:
 treerack check -syntax example.treerack foo.example`
@@ -67,6 +70,37 @@ standard output.`
 const generateExample = `Example:
 treerack generate example.treerack > parser.go`
 
-func joinLines(s string) string {
-	return strings.Replace(s, "\n", " ", -1)
+const wrap = 72
+
+func wrapLines(s string) string {
+	s = strings.Replace(s, "\n", " ", -1)
+	w := strings.Split(s, " ")
+
+	var l, ll []string
+	for i := 0; i < len(w); i++ {
+		ll = append(ll, w[i])
+		lineLength := utf8.RuneCount([]byte(strings.Join(ll, " ")))
+		if lineLength < wrap {
+			continue
+		}
+
+		if lineLength > wrap {
+			ll = ll[:len(ll)-1]
+			i--
+		}
+
+		if len(ll) == 0 {
+			l = append(l, w[i])
+			i++
+		} else {
+			l = append(l, strings.Join(ll, " "))
+			ll = nil
+		}
+	}
+
+	if len(ll) > 0 {
+		l = append(l, strings.Join(ll, " "))
+	}
+
+	return strings.Join(l, "\n")
 }

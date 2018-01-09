@@ -12,7 +12,7 @@ var checkSyntaxFailureTests = []mainTest{
 		stderr: []string{
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
+			wrapLines(positionalSyntaxUsage),
 		},
 	},
 
@@ -26,7 +26,7 @@ var checkSyntaxFailureTests = []mainTest{
 			"only one syntax",
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
+			wrapLines(positionalSyntaxUsage),
 		},
 	},
 
@@ -40,7 +40,7 @@ var checkSyntaxFailureTests = []mainTest{
 			"only one syntax",
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
+			wrapLines(positionalSyntaxUsage),
 		},
 	},
 
@@ -54,7 +54,7 @@ var checkSyntaxFailureTests = []mainTest{
 			"only one syntax",
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
+			wrapLines(positionalSyntaxUsage),
 		},
 	},
 
@@ -68,7 +68,7 @@ var checkSyntaxFailureTests = []mainTest{
 			"missing syntax",
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
+			wrapLines(positionalSyntaxUsage),
 		},
 	},
 
@@ -134,12 +134,12 @@ func TestCheckSyntax(t *testing.T) {
 			"treerack", "check-syntax", "-help",
 		},
 		stdout: []string{
-			joinLines(checkSyntaxUsage),
+			wrapLines(checkSyntaxUsage),
 			"-syntax",
 			"-syntax-string",
-			joinLines(positionalSyntaxUsage),
-			joinLines(checkSyntaxExample),
-			joinLines(docRef),
+			wrapLines(positionalSyntaxUsage),
+			wrapLines(checkSyntaxExample),
+			wrapLines(docRef),
 		},
 	})
 

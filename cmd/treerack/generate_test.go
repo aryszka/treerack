@@ -90,14 +90,14 @@ func TestGenerate(t *testing.T) {
 			"treerack", "generate", "-help",
 		},
 		stdout: []string{
-			joinLines(generateUsage),
+			wrapLines(generateUsage),
 			"-syntax",
 			"-syntax-string",
 			"-export",
 			"-package-name",
-			joinLines(positionalSyntaxUsage),
-			joinLines(generateExample),
-			joinLines(docRef),
+			wrapLines(positionalSyntaxUsage),
+			wrapLines(generateExample),
+			wrapLines(docRef),
 		},
 	})
 

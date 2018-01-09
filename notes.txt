@@ -1,13 +1,13 @@
 [next]
 no random generator output and generator output check
 errors
+spellcheck
+linting
+releasing
 formatter
 report unused parsers
 parse hashed, storing only the results
 linux packaging
-
-[cmd]
-help for positional argument
 
 [errors]
 take the last

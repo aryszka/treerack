@@ -26,7 +26,7 @@ func (o *fileOptions) multipleInputsError() {
 	stderr("Options:")
 	o.flagSet.PrintDefaults()
 	stderr()
-	stderr(joinLines(o.positionalDoc))
+	stderr(wrapLines(o.positionalDoc))
 }
 
 func (o *fileOptions) missingInputError() {
@@ -35,7 +35,7 @@ func (o *fileOptions) missingInputError() {
 	stderr("Options:")
 	o.flagSet.PrintDefaults()
 	stderr()
-	stderr(joinLines(o.positionalDoc))
+	stderr(wrapLines(o.positionalDoc))
 }
 
 func (o *fileOptions) getSource() (hasInput bool, fileName string, inline string, code int) {
