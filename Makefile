@@ -1,6 +1,8 @@
 SOURCES = $(shell find . -name '*.go')
 PARSERS = $(shell find . -name '*.treerack')
 
+.PHONY: cpu.out
+
 default: build
 
 deps:
@@ -39,6 +41,7 @@ generate: $(SOURCES) $(PARSERS) fmt head install
 regenerate: $(SOURCES) $(PARSERS) fmt head install
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
+	go install ./cmd/treerack
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
 	@mv self/self.go{.next,}
 	@gofmt -s -w self/self.go
@@ -77,15 +80,15 @@ check-generate: $(SOURCES) $(PARSERS)
 	@mv head.go.backup head.go
 	@mv self/self.go.backup self/self.go
 
-check: imports build $(PARSERS)
+check: build $(PARSERS)
 	go test -test.short -run ^Test
 	go test ./cmd/treerack -test.short -run ^Test
 
-checkall: imports build $(PARSERS)
+checkall: build $(PARSERS)
 	go test
 	go test ./cmd/treerack
 
-.coverprofile: $(SOURCES) imports
+.coverprofile: $(SOURCES)
 	go test -coverprofile .coverprofile
 
 cover: .coverprofile
@@ -94,7 +97,7 @@ cover: .coverprofile
 showcover: .coverprofile
 	go tool cover -html .coverprofile
 
-.coverprofile-cmd: $(SOURCES) imports
+.coverprofile-cmd: $(SOURCES)
 	go test ./cmd/treerack -coverprofile .coverprofile-cmd
 
 cover-cmd: .coverprofile-cmd
@@ -108,7 +111,7 @@ publishcoverage: .coverprofile
 	curl -s https://codecov.io/bash -o codecov
 	bash codecov -Zf .coverprofile
 
-cpu.out: $(SOURCES) $(PARSERS)
+cpu.out:
 	go test -v -run TestMMLFile -cpuprofile cpu.out
 
 cpu: cpu.out

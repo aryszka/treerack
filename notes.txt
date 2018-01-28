@@ -1,9 +1,10 @@
 [next]
-no random generator output and generator output check
 errors
 generator 1
+documentation
+parser 1
 releasing
-parser
+parser 2
 generator 2
 formatter
 report unused parsers
@@ -20,7 +21,9 @@ input name needed in command to differentiate between syntax and input in check 
 allchars: can have char sequence
 make generator output non-random (track parsers in a list in definition order)
 fix the license in the output
-play with the int sizes
+
+[generator 2]
+js
 
 [releasing]
 spellcheck
@@ -28,13 +31,14 @@ linting
 convert notes into issues
 try to remove some files
 
-[parser]
+[parser 1]
+try winning on allChars
+retry collapsing
+
+[parser 2]
 custom tokens
 indentation
 streaming support // ReadNode(io.Reader)
-
-[generator 2]
-js
 
 [optimization]
 try preallocate larger store chunks
@@ -44,3 +48,4 @@ how the char classes are different from regexp
 why need nows when using ws
 lib only useful for dynamic syntax definition
 warn nows usage in docs, e.g. spaces in symbol = [a-z]+
+tutorial
