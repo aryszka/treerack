@@ -2309,6 +2309,24 @@ func TestMML(t *testing.T) {
 			}},
 			ignorePosition: true,
 		}, {
+			title: "binary 1, 1, 1",
+			text:  "a + b + c",
+			nodes: []*Node{{
+				Name: "binary1",
+				Nodes: []*Node{{
+					Name: "symbol",
+				}, {
+					Name: "add",
+				}, {
+					Name: "symbol",
+				}, {
+					Name: "add",
+				}, {
+					Name: "symbol",
+				}},
+			}},
+			ignorePosition: true,
+		}, {
 			title: "binary 3, 4, 5",
 			text:  "a * b + c * d == e * f && g || h -> f()",
 			nodes: []*Node{{

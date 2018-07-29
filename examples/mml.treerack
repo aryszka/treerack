@@ -434,12 +434,12 @@ operand3:alias = operand2 | binary2;
 operand4:alias = operand3 | binary3;
 operand5:alias = operand4 | binary4;
 
-binary0 = operand0 binary-op0 operand0;
-binary1 = operand1 binary-op1 operand1;
-binary2 = operand2 binary-op2 operand2;
-binary3 = operand3 binary-op3 operand3;
-binary4 = operand4 binary-op4 operand4;
-binary5 = operand5 binary-op5 operand5;
+binary0 = operand0 (binary-op0 operand0)+;
+binary1 = operand1 (binary-op1 operand1)+;
+binary2 = operand2 (binary-op2 operand2)+;
+binary3 = operand3 (binary-op3 operand3)+;
+binary4 = operand4 (binary-op4 operand4)+;
+binary5 = operand5 (binary-op5 operand5)+;
 
 binary-expression:alias = binary0 | binary1 | binary2 | binary3 | binary4 | binary5;
 

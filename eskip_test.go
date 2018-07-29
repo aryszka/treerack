@@ -529,22 +529,24 @@ func checkTerm(t *testing.T, gotName, expectedName string, gotArgs, expectedArgs
 		return
 	}
 
-	// legacy bug support
-	for i := len(expectedArgs) - 1; i >= 0; i-- {
-		if _, ok := expectedArgs[i].(int); ok {
-			expectedArgs = append(expectedArgs[:i], expectedArgs[i+1:]...)
-			continue
-		}
-
-		if v, ok := expectedArgs[i].(float64); ok && v < 0 {
-			gotArgs = append(gotArgs[:i], gotArgs[i+1:]...)
-			expectedArgs = append(expectedArgs[:i], expectedArgs[i+1:]...)
-		}
+	if len(gotArgs) != len(expectedArgs) {
+		t.Error("invalid term args length in:", gotName, len(gotArgs), len(expectedArgs))
+		return
 	}
 
-	if len(gotArgs) != len(expectedArgs) {
-		t.Error("invalid term args length", len(gotArgs), len(expectedArgs))
-		return
+	// legacy bug support, dropping numeric arguments:
+	for i, a := range gotArgs {
+		ea := expectedArgs[i]
+		switch a.(type) {
+		case int, float64:
+			switch ea.(type) {
+			case int, float64:
+				gotArgs = append(gotArgs[:i], gotArgs[i+1:]...)
+				expectedArgs = append(expectedArgs[:i], expectedArgs[i+1:]...)
+			default:
+				t.Error("invalid argument type at:", i)
+			}
+		}
 	}
 
 	for i, a := range gotArgs {
@@ -723,7 +725,7 @@ func TestEskip(t *testing.T) {
 	const count = 1 << 9
 
 	r := generateEskip(count)
-	e := eskip.Print(true, r...)
+	e := eskip.Print(eskip.PrettyPrintInfo{Pretty: true}, r...)
 	b := bytes.NewBufferString(e)
 
 	s, err := openSyntaxFile("examples/eskip.treerack")
