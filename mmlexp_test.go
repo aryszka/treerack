@@ -2987,7 +2987,7 @@ func TestMMLFile(t *testing.T) {
 
 	const n = 180
 
-	s, err := openSyntaxFile("examples/mml.treerack")
+	s, err := openSyntaxFile("examples/mml-exp.treerack")
 	if err != nil {
 		t.Error(err)
 		return
