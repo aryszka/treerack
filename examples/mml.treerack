@@ -1,21 +1,10 @@
-// whitespace is ignored except for \n which is only ignored
-// most of the time, but can serve as separator in:
-// - list
-// - struct
-// - function args
-// - statements
-// - list, struct and function type constraints
-//
-// comments are not ignored because they are needed during formatting
 ws:ws    = " " | "\b" | "\f" | "\r" | "\t" | "\v";
 wsc:ws   = comment;
 nl:alias = "\n";
 
-// comments can be line or block comments
-// indentation can hold meaning
 line-comment-content:nows  = [^\n]*;
 line-comment:alias:nows    = "//" line-comment-content;
-block-comment-content:nows = ([^*] | "*" [^/])*; // TODO: why is the :nows required here if it is there for block-comment?
+block-comment-content:nows = ([^*] | "*" [^/])*;
 block-comment:alias:nows   = "/*" block-comment-content "*/";
 comment-part:alias         = line-comment | block-comment;
 comment:alias              = comment-part ("\n"? comment-part)*;
@@ -24,408 +13,120 @@ decimal-digit:alias = [0-9];
 octal-digit:alias   = [0-7];
 hexa-digit:alias    = [0-9a-fA-F];
 
-// interger examples: 42, 0666, 0xfff
 decimal:alias:nows = [1-9] decimal-digit*;
 octal:alias:nows   = "0" octal-digit*;
 hexa:alias:nows    = "0" [xX] hexa-digit+;
 int                = decimal | octal | hexa;
 
-// float examples: .0, 0., 3.14, 1E-12
 exponent:alias:nows = [eE] [+\-]? decimal-digit+;
 float:nows          = decimal-digit+ "." decimal-digit* exponent?
                     | "." decimal-digit+ exponent?
                     | decimal-digit+ exponent;
 
-// string example: "Hello, world!"
-// only \ and " need to be escaped, e.g. allows new lines
-// common escaped chars get unescaped, the rest gets unescaped to themselves
 string:nows = "\"" ([^\\"] | "\\" .)* "\"";
 
 true       = "true";
 false      = "false";
 bool:alias = true | false;
 
-// symbols normally can have only \w chars: fooBar_baz
-// basic symbols cannot start with a digit
-// some positions allow strings to be used as symbols, e.g: let "123" 123
-// when this is not possible, dynamic symbols need to be used, but they are
-// not allowed in every case, e.g: {symbol(foo()): "bar"}
-// TODO: needs decision log for dynamic symbol
-// TODO: exclude keywords
-//
-// dynamic symbol decision log:
-// - every value is equatable
-// - structs can act as hashtables (optimization is transparent)
-// - in structs, must differentiate between symbol and value of a symbol when used as a key
-// - js style [a] would be enough for the structs
-// - the variables in a scope are like fields in a struct
-// - [a] would be ambigous with the list as an expression
-// - a logical loophole is closed with symbol(a)
-// - dynamic-symbols need to be handled differently in match expressions and type expressions
-symbol:nows             = [a-zA-Z_][a-zA-Z_0-9]*;
-static-symbol:alias     = symbol | string;
-dynamic-symbol          = "symbol" "(" nl* expression nl* ")";
-symbol-expression:alias = static-symbol | dynamic-symbol;
+symbol:nows = [a-zA-Z_][a-zA-Z_0-9]*;
 
-// TODO: what happens when a dynamic symbol gets exported?
-
-// list items are separated by comma or new line (or both)
-/*
-        []
-        [a, b, c]
-        [
-                a
-                b
-                c
-        ]
-        [1, 2, a..., [b, c], [d, [e]]...]
-*/
 spread-expression     = primary-expression "...";
-list-sep:alias        = ("," | "\n") (nl | ",")*;
+list-sep:alias        = (nl | ",")+;
 list-item:alias       = expression | spread-expression;
 expression-list:alias = list-item (list-sep list-item)*;
 
-// list example: [1, 2, 3]
-// lists can be constructed with other lists: [l1..., l2...]
-list-fact:alias = "[" (nl | ",")* expression-list? (nl | ",")* "]";
+list-fact:alias = "[" list-sep? expression-list? list-sep? "]";
 list            = list-fact;
 mutable-list    = "~" nl* list-fact;
 
-indexer-symbol    = "[" nl* expression nl* "]";
-entry             = (symbol-expression | indexer-symbol) nl* ":" nl* expression;
-entry-list:alias  = (entry | spread-expression) (list-sep (entry | spread-expression))*;
-struct-fact:alias = "{" (nl | ",")* entry-list? (nl | ",")* "}";
-struct            = struct-fact;
-mutable-struct    = "~" nl* struct-fact;
+expression-key     = "[" nl* expression nl* "]";
+entry              = (symbol | string | expression-key) nl* ":" nl* expression;
+entry-list:alias   = (entry | spread-expression) (list-sep (entry | spread-expression))*;
+struct-fact:alias  = "{" list-sep? entry-list? list-sep? "}";
+struct             = struct-fact;
+mutable-struct     = "~" nl* struct-fact;
 
-channel = "<>" | "<" nl* int nl* ">";
+channel = "<>" | "<" nl* expression nl* ">";
 
-// and-expression:doc = "and" "(" (nl | ",")* expression-list? (nl | ",")* ")";
-// or-expression:doc  = "or" "(" (nl | ",")* expression-list? (nl | ",")* ")";
+parameter-list:alias = symbol (list-sep symbol)*;
+collect-parameter    = "..." nl* symbol;
+return               = "return" (nl* expression)?;
+block                = "{" sep? statement-list? sep? "}";
+function-fact:alias  = "(" list-sep?
+                       parameter-list?
+                       (list-sep collect-parameter)?
+                       list-sep? ")" nl*
+                       (simple-statement | block);
+function             = "fn" nl* function-fact;
+effect               = "fn" nl* "~" nl* function-fact;
 
-argument-list:alias = static-symbol (list-sep static-symbol)*;
-collect-symbol      = "..." nl* static-symbol;
-function-fact:alias = "(" (nl | ",")*
-                      argument-list?
-                      (nl | ",")*
-                      collect-symbol?
-                      (nl | ",")* ")" nl*
-                      expression;
-function            = "fn" nl* function-fact; // can it ever cause a conflict with call and grouping?
-effect              = "fn" nl* "~" nl* function-fact;
+range-from  = expression;
+range-to    = expression;
+range:alias = range-from? nl* ":" nl* range-to?;
 
-/*
-a[42]
-a[3:9]
-a[:9]
-a[3:]
-a[b][c][d]
-a.foo
-a."foo"
-a.symbol(foo)
-*/
-range-from               = expression;
-range-to                 = expression;
-range-expression:alias   = range-from? nl* ":" nl* range-to?;
-indexer-expression:alias = expression | range-expression;
-expression-indexer:alias = primary-expression "[" nl* indexer-expression nl* "]";
-symbol-indexer:alias     = primary-expression nl* "." nl* symbol-expression;
-indexer                  = expression-indexer | symbol-indexer;
+simple-indexer:alias     = primary-expression "[" nl* expression nl* "]";
+range-indexer:alias      = primary-expression "[" nl* range nl* "]";
+expression-indexer       = simple-indexer | range-indexer;
+symbol-indexer           = primary-expression nl* "." nl* symbol;
 
-function-application = primary-expression "(" (nl | ",")* expression-list? (nl | ",")* ")";
+function-application = primary-expression "(" list-sep? expression-list? list-sep? ")";
 
-if = "if" nl* expression nl* block
-     (nl* "else" nl* "if" nl* expression nl* block)*
-     (nl* "else" nl* block)?;
-
-default            = "default" nl* ":";
-default-line:alias = default (nl | ";")* statement?;
-case               = "case" nl* expression nl* ":";
-case-line:alias    = case ";"* statement?;
-switch             = "switch" nl* expression? nl* "{" (nl | ";")*
-                     ((case-line | default-line) (sep (case-line | default-line | statement))*)?
-                     (nl | ";")* "}";
-
-int-type    = "int";
-float-type  = "float";
-string-type = "string";
-bool-type   = "bool";
-error-type  = "error";
-
-/*
-support:
-
-	go {
-		foo()
-		bar()
-	}
-
-	go { for { f() } }
-	go func() { for { f() } }()
-	fn f() { go f() }; go f()
-
-and not:
-
-	go for {foo()}
-
-or:
-
-	go for foo()
-
-because we don't know what the arguments are
-*/
-
-/*
-
-	fn foo() {
-		bar()
-		baz()
-	}
-	let qux foo()
-
-equivalent to:
-
-	let qux {
-		bar()
-		baz()
-	}
-*/
-
-primitive-type:alias = int-type
-                     | float-type
-                     | string-type
-                     | bool-type
-                     | error-type;
-
-type-alias-name:alias = static-symbol;
-
-static-range-from             = int;
-static-range-to               = int;
-static-range-expression:alias = static-range-from? nl* ":" nl* static-range-to?;
-items-quantifier              = int | static-range-expression;
-// TODO: maybe this can be confusing with matching constants. Shall we support matching constants, values?
-
-items-type = items-quantifier
-           | type-set (nl* ":" nl* items-quantifier)?
-           | static-symbol nl* type-set (nl* ":" nl* items-quantifier)?;
-
-destructure-item = type-set | static-symbol nl* type-set;
-
-collect-destructure-item = "..." nl* destructure-item?
-                           (nl* ":" items-quantifier)?;
-list-destructure-type    = destructure-item
-                           (list-sep destructure-item)*
-                           (list-sep collect-destructure-item)?
-                         | collect-destructure-item;
-list-type-fact:alias     = "[" (nl | ",")*
-                           (items-type | list-destructure-type)?
-                           (nl | ",")* "]";
-list-type                = list-type-fact;
-mutable-list-type        = "~" nl* list-type-fact;
-
-destructure-match-item = match-set
-                       | static-symbol nl* match-set
-                       | static-symbol nl* static-symbol nl* match-set;
-
-collect-destructure-match-item = "..." nl* destructure-match-item?
-                           (nl* ":" items-quantifier)?;
-list-destructure-match   = destructure-match-item
-                           (list-sep destructure-match-item)*
-                           (list-sep collect-destructure-match-item)?
-                         | collect-destructure-match-item;
-list-match-fact:alias    = "[" (nl | ",")*
-                           (list-destructure-match | items-type)?
-                           (nl | ",")* "]";
-list-match               = list-match-fact;
-mutable-list-match       = "~" nl* list-match;
-
-entry-type             = static-symbol (nl* ":" nl* destructure-item)?;
-entry-types:alias      = entry-type (list-sep entry-type)*;
-struct-type-fact:alias = "{" (nl | ",")* entry-types? (nl | ",")* "}";
-struct-type            = struct-type-fact;
-mutable-struct-type    = "~" nl* struct-type-fact;
-
-entry-match             = static-symbol (nl* ":" nl* destructure-match-item)?;
-entry-matches:alias     = entry-match (list-sep entry-match)*;
-struct-match-fact:alias = "{" (nl | ",")* entry-matches?  (nl | ",")* "}";
-struct-match            = struct-match-fact;
-mutable-struct-match    = "~" nl* struct-match-fact;
-
-arg-type                 = type-set | static-symbol nl* type-set;
-args-type:alias          = arg-type (list-sep arg-type)*;
-function-type-fact:alias = "(" nl* args-type?  nl* ")"
-                            (type-set | static-symbol type-set)?;
-function-type            = "fn" nl* function-type-fact;
-effect-type              = "fn" nl* "~" nl* function-type-fact;
-
-// TODO: heavy naming crime
-
-receive-direction = "receive";
-send-direction    = "send";
-channel-type      = "<" nl*
-                    (receive-direction | send-direction)? nl*
-                    destructure-item?
-                    nl* ">";
-
-type-fact-group:alias = "(" nl* type-fact nl* ")";
-type-fact:alias = primitive-type
-                | type-alias-name
-                | list-type
-                | mutable-list-type
-                | struct-type
-                | mutable-struct-type
-                | function-type
-                | effect-type
-                | channel-type
-                | type-fact-group;
-
-type-set:alias        = type-fact (nl* "|" nl* type-fact)*;
-type-expression:alias = type-set | static-symbol type-set;
-
-match-fact:alias = list-match
-                 | mutable-list-match
-                 | struct-match
-                 | mutable-struct-match;
-
-match-set:alias        = type-set | match-fact;
-match-expression:alias = match-set | static-symbol match-set;
-
-match-case               = "case" nl* match-expression nl* ":";
-match-case-line:alias    = match-case ";"* statement?;
-match                    = "match" nl* expression nl* "{" (nl | ";")*
-                           ((match-case-line | default-line)
-                           (sep (match-case-line | default-line | statement))*)?
-                           (nl | ";")* "}";
-
-conditional:alias = if
-                  | switch
-                  | match;
-
-receive-call                    = "receive" "(" (nl | ",")* expression (nl | ",")* ")";
-receive-op                      = "<-" primary-expression;
-receive-expression-group:alias  = "(" nl* receive-expression nl* ")";
-receive-expression:alias        = receive-call | receive-op | receive-expression-group;
-
-receive-assign-capture:alias = assignable nl* ("=" nl*)? receive-expression;
-receive-assignment           = "set" nl* receive-assign-capture;
-receive-assignment-equal     = assignable nl* "=" nl* receive-expression;
-receive-capture:alias        = symbol-expression nl* ("=" nl*)? receive-expression;
-receive-definition           = "let" nl* receive-capture;
-receive-mutable-definition   = "let" nl* "~" nl* receive-capture;
-receive-statement:alias      = receive-assignment | receive-definition;
-
-send-call:alias       = "send" "(" (nl | ",")* expression list-sep expression (nl | ",")* ")";
-send-op:alias         = primary-expression "<-" expression;
-send-call-group:alias = "(" nl* send nl* ")";
-send                  = send-call | send-op | send-call-group;
-
-close = "close" "(" (nl | ",")* expression (nl | ",")* ")";
-
-communication-group:alias = "(" nl* communication nl* ")";
-communication:alias       = receive-expression | receive-statement | send | communication-group;
-
-select-case            = "case" nl* communication nl* ":";
-select-case-line:alias = select-case ";"* statement?;
-select                 = "select" nl* "{" (nl | ";")*
-                         ((select-case-line | default-line)
-                          (sep (select-case-line | default-line | statement))*)?
-                         (nl | ";")* "}";
-
-go = "go" nl* (function-application | block);
-
-/*
-require . = "mml/foo"
-require bar = "mml/foo"
-require . "mml/foo"
-require bar "mml/foo"
-require "mml/foo"
-require (
-        . = "mml/foo"
-        bar = "mml/foo"
-        . "mml/foo"
-        bar "mml/foo"
-        "mml/foo"
-)
-require ()
-*/
-require-inline                = ".";
-require-fact                  = string
-                              | (static-symbol | require-inline) (nl* "=")? nl* string;
-require-facts:alias           = require-fact (list-sep require-fact)*;
-require-statement:alias       = "require" nl* require-fact;
-require-statement-group:alias = "require" "(" (nl | ",")*
-                                require-facts?
-                                (nl | ",")* ")";
-require                       = require-statement | require-statement-group;
-
-panic   = "panic" "(" (nl | ",")* expression (nl | ",")* ")";
-recover = "recover" "(" (nl | ",")* ")";
-
-block                  = "{" (nl | ";")* statements? (nl | ";")* "}";
-expression-group:alias = "(" nl* expression nl* ")";
-
+expression-group:alias   = "(" nl* expression nl* ")";
 primary-expression:alias = int
                          | float
                          | string
                          | bool
                          | symbol
-                         | dynamic-symbol
                          | list
                          | mutable-list
                          | struct
                          | mutable-struct
                          | channel
-                         // | and-expression // only documentation
-                         // | or-expression // only documentation
                          | function
                          | effect
-                         | indexer
-                         | function-application // pseudo-expression
-                         | conditional // pseudo-expression
-                         | receive-call
-                         | select // pseudo-expression
-                         | recover
-                         | block // pseudo-expression
+                         | expression-indexer
+                         | symbol-indexer
+                         | function-application
+                         | receive
                          | expression-group;
 
-plus                 = "+";
-minus                = "-";
-logical-not          = "!";
-binary-not           = "^";
-unary-operator:alias = plus | minus | logical-not | binary-not;
-unary-expression = unary-operator primary-expression | receive-op;
-
-mul        = "*";
-div        = "/";
-mod        = "%";
+binary-not = "^";
+binary-and = "&";
+binary-or  = "|";
+xor        = "^";
+and-not    = "&^";
 lshift     = "<<";
 rshift     = ">>";
-binary-and = "&";
-and-not    = "&^";
 
-add       = "+";
-sub       = "-";
-binary-or = "|";
-xor       = "^";
+plus  = "+";
+minus = "-";
+mul   = "*";
+div   = "/";
+mod   = "%";
+add   = "+";
+sub   = "-";
 
+logical-not   = "!";
 eq            = "==";
 not-eq        = "!=";
 less          = "<";
 less-or-eq    = "<=";
 greater       = ">";
 greater-or-eq = ">=";
+logical-and   = "&&";
+logical-or    = "||";
 
-logical-and = "&&";
-logical-or  = "||";
+chain:alias = "->";
 
-chain = "->";
+unary-operator:alias = plus | minus | binary-not | logical-not;
+unary-expression     = unary-operator primary-expression;
 
-binary-op0:alias = mul | div | mod | lshift | rshift | binary-and | and-not;
-binary-op1:alias = add | sub | binary-or | xor;
+binary-op0:alias = binary-and | and-not | lshift | rshift | mul | div | mod;
+binary-op1:alias = binary-or | xor | add | sub;
 binary-op2:alias = eq | not-eq | less | less-or-eq | greater | greater-or-eq;
 binary-op3:alias = logical-and;
 binary-op4:alias = logical-or;
-binary-op5:alias = chain;
 
 operand0:alias = primary-expression | unary-expression;
 operand1:alias = operand0 | binary0;
@@ -434,14 +135,19 @@ operand3:alias = operand2 | binary2;
 operand4:alias = operand3 | binary3;
 operand5:alias = operand4 | binary4;
 
-binary0 = operand0 (binary-op0 operand0)+;
-binary1 = operand1 (binary-op1 operand1)+;
-binary2 = operand2 (binary-op2 operand2)+;
-binary3 = operand3 (binary-op3 operand3)+;
-binary4 = operand4 (binary-op4 operand4)+;
-binary5 = operand5 (binary-op5 operand5)+;
+binary0  = operand0 (binary-op0 operand0)+;
+binary1  = operand1 (binary-op1 operand1)+;
+binary2  = operand2 (binary-op2 operand2)+;
+binary3  = operand3 (binary-op3 operand3)+;
+binary4  = operand4 (binary-op4 operand4)+;
+chaining = operand5 (nl* chain nl* operand5)+;
 
-binary-expression:alias = binary0 | binary1 | binary2 | binary3 | binary4 | binary5;
+binary-expression:alias = binary0
+                        | binary1
+                        | binary2
+                        | binary3
+                        | binary4
+                        | chaining;
 
 ternary-expression = expression nl* "?" nl* expression nl* ":" nl* expression;
 
@@ -450,84 +156,72 @@ expression:alias = primary-expression
                  | binary-expression
                  | ternary-expression;
 
-// TODO: code()
-// TODO: observability
+if = "if" nl* expression nl* block
+     (nl* "else" nl* "if" nl* expression nl* block)*
+     (nl* "else" nl* block)?;
 
-break              = "break";
-continue           = "continue";
-loop-control:alias = break | continue;
+default            = "default" nl* ":";
+default-line:alias = default ";"* statement?;
+case               = "case" nl* expression nl* ":";
+case-line:alias    = case ";"* statement?;
+switch             = "switch" nl* expression? nl* "{" sep?
+                     ((case-line | default-line) (sep (case-line | default-line | statement))*)?
+                     sep? "}";
 
-in-expression   = static-symbol nl* "in" nl* (expression | range-expression);
-loop-expression = expression | in-expression;
-loop            = "for" nl* (block | loop-expression nl* block);
+receive                 = "<<>" primary-expression;
+receive-definition      = "let" nl* symbol nl* receive;
+receive-assignment      = "set" nl* symbol nl* receive;
+receive-statement:alias = receive-definition
+                        | receive-assignment;
+send                    = primary-expression "<<>" primary-expression;
+communication:alias     = receive | receive-statement | send;
 
-/*
-a = b
-set c = d
-set e f
-set (
-        g = h
-        i j
-)
-*/
-assignable:alias      = symbol-expression | indexer;
-assign-capture        = assignable nl* ("=" nl*)? expression;
-assign-set:alias      = "set" nl* assign-capture;
-assign-equal          = assignable nl* "=" nl* expression;
-assign-captures:alias = assign-capture (list-sep assign-capture)*;
-assign-group:alias    = "set" nl* "(" (nl | ",")* assign-captures? (nl | ",")* ")";
-assignment            = assign-set | assign-equal | assign-group;
+select-case            = "case" nl* communication nl* ":";
+select-case-line:alias = select-case ";"* statement?;
+select                 = "select" nl* "{" sep?
+                         ((select-case-line | default-line)
+                          (sep (select-case-line | default-line | statement))*)?
+                          sep? "}";
 
-/*
-let a = b
-let c d
-let ~ e = f
-let ~ g h
-let (
-        i = j
-        k l
-        ~ m = n
-        ~ o p
-)
-let ~ (
-        q = r
-        s t
-)
-*/
-value-capture-fact:alias = symbol-expression nl* ("=" nl*)? expression;
+go    = "go" nl* function-application;
+defer = "defer" nl* function-application;
+
+break                 = "break";
+continue              = "continue";
+range-over-expression = symbol nl* "in" nl* (expression | range) | range;
+loop-expression:alias = expression | range-over-expression;
+loop                  = "for" ((nl* loop-expression)? nl* block | nl* block);
+
+assignable:alias          = symbol-indexer | simple-indexer | symbol;
+assign-capture            = assignable (nl* "=")? nl* expression;
+assign-capture-list:alias = assign-capture (list-sep assign-capture)*;
+assign-set:alias          = "set" nl* assign-capture;
+assign-equal:alias        = assignable nl* "=" nl* expression;
+assign-group:alias        = "set" nl* "(" list-sep? assign-capture-list? list-sep? ")";
+assignment                = assign-set | assign-equal | assign-group;
+
+value-capture-fact:alias = symbol (nl* "=")? nl* expression;
 value-capture            = value-capture-fact;
 mutable-capture          = "~" nl* value-capture-fact;
 value-definition         = "let" nl* (value-capture | mutable-capture);
-value-captures:alias     = value-capture (list-sep value-capture)*;
-mixed-captures:alias     = (value-capture | mutable-capture) (list-sep (value-capture | mutable-capture))*;
-value-definition-group   = "let" nl* "(" (nl | ",")* mixed-captures? (nl | ",")* ")";
-mutable-definition-group = "let" nl* "~" nl* "(" (nl | ",")* value-captures? (nl | ",")* ")";
+mixed-capture-list:alias = (value-capture | mutable-capture) (list-sep (value-capture | mutable-capture))*;
+value-capture-list:alias = value-capture (list-sep value-capture)*;
+value-definition-group   = "let" nl* "(" list-sep? mixed-capture-list? list-sep? ")";
+mutable-definition-group = "let" nl* "~" nl* "(" list-sep? value-capture-list? list-sep? ")";
 
-/*
-fn a() b
-fn ~ c() d
-fn (
-        e() f
-        ~ g() h
-)
-fn ~ (
-        i()
-        j()
-)
-*/
-function-definition-fact:alias = static-symbol nl* function-fact;
-function-capture               = function-definition-fact;
-effect-capture                 = "~" nl* function-definition-fact;
-function-definition            = "fn" nl* (function-capture | effect-capture);
-function-captures:alias        = function-capture (list-sep function-capture)*;
-mixed-function-captures:alias  = (function-capture | effect-capture)
-                                 (list-sep (function-capture | effect-capture))*;
-function-definition-group      = "fn" nl* "(" (nl | ",")*
-                                 mixed-function-captures?
-                                 (nl | ",")* ")";
-effect-definition-group        = "fn" nl* "~" nl* "(" (nl | ",")*
-                                 function-captures?
-                                 (nl | ",")* ")";
+function-definition-fact:alias    = symbol nl* function-fact;
+function-capture                  = function-definition-fact;
+effect-capture                    = "~" nl* function-definition-fact;
+function-definition               = "fn" nl* (function-capture | effect-capture);
+function-capture-list:alias       = function-capture (list-sep function-capture)*;
+mixed-function-capture-list:alias = (function-capture | effect-capture)
+                                    (list-sep (function-capture | effect-capture))*;
+function-definition-group         = "fn" nl* "(" list-sep?
+                                    mixed-function-capture-list?
+                                    list-sep? ")";
+effect-definition-group           = "fn" nl* "~" nl* "(" list-sep?
+                                    function-capture-list?
+                                    list-sep? ")";
 
 definition:alias = value-definition
                  | value-definition-group
@@ -536,27 +230,42 @@ definition:alias = value-definition
                  | function-definition-group
                  | effect-definition-group;
 
-type-alias      = "type" nl* "alias" nl* static-symbol nl* type-set;
-type-constraint = "type" nl* static-symbol nl* type-set;
+require-inline                = ".";
+require-fact                  = string
+                              | (symbol | require-inline) (nl* "=")? nl* string;
+require-fact-list:alias       = require-fact (list-sep require-fact)*;
+require-statement:alias       = "require" nl* require-fact;
+require-statement-group:alias = "require" nl* "(" list-sep?
+                                require-fact-list?
+                                list-sep? ")";
+require                       = require-statement | require-statement-group;
 
-statement-group:alias = "(" nl* statement nl* ")";
+export = "export" nl* definition;
 
-statement:alias = send
-                | close
-                | panic
-                | require
-                | loop-control
-                | go
-                | loop
-                | assignment
-                | definition
-                | expression
-                | type-alias
-                | type-constraint
-                | statement-group;
+simple-statement:alias       = expression
+                             | send
+                             | go
+                             | defer
+                             | assignment
+                             | simple-statement-group;
+simple-statement-group:alias = "(" nl* simple-statement nl* ")";
+statement:alias              = simple-statement
+                             | return
+                             | if
+                             | switch
+                             | select
+                             | break
+                             | continue
+                             | loop
+                             | definition
+                             | require
+                             | export
+                             | statement-group;
+statement-group:alias        = "(" nl* statement nl* ")";
 
-shebang-command  = [^\n]*;
-shebang          = "#!" shebang-command "\n";
-sep:alias        = (";" | "\n") (nl | ";")*;
-statements:alias = statement (sep statement)*;
-mml:root         = shebang? (nl | ";")* statements? (nl | ";")*;
+sep:alias            = (";" | nl)+;
+statement-list:alias = statement (sep statement)*;
+
+shebang-command = [^\n]*;
+shebang         = "#!" shebang-command "\n";
+mml:root        = shebang? sep? statement-list? sep?;

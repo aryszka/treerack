@@ -5,6 +5,8 @@ import "testing"
 func checkNodes(t *testing.T, ignorePosition bool, left, right []*Node) {
 	if len(left) != len(right) {
 		t.Error("length doesn't match", len(left), len(right))
+		t.Log(left)
+		t.Log(right)
 		return
 	}
 
