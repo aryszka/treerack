@@ -2118,12 +2118,9 @@ func TestMML(t *testing.T) {
 			nodes: []*Node{{
 				Name: "assignment",
 				Nodes: []*Node{{
-					Name: "assign-capture",
-					Nodes: []*Node{{
-						Name: "symbol",
-					}, {
-						Name: "symbol",
-					}},
+					Name: "symbol",
+				}, {
+					Name: "symbol",
 				}},
 			}},
 			ignorePosition: true,
@@ -2133,37 +2130,96 @@ func TestMML(t *testing.T) {
 			nodes: []*Node{{
 				Name: "assignment",
 				Nodes: []*Node{{
-					Name: "assign-capture",
-					Nodes: []*Node{{
-						Name: "symbol",
-					}, {
-						Name: "symbol",
-					}},
+					Name: "symbol",
+				}, {
+					Name: "symbol",
 				}},
 			}},
 			ignorePosition: true,
 		}, {
 			title: "assign, group",
 			text: `set (
- 			a = b
- 			c d
- 		)`,
+				a = b
+				c d
+			)`,
 			nodes: []*Node{{
 				Name: "assignment",
 				Nodes: []*Node{{
-					Name: "assign-capture",
+					Name: "symbol",
+				}, {
+					Name: "symbol",
+				}, {
+					Name: "symbol",
+				}, {
+					Name: "symbol",
+				}},
+			}},
+			ignorePosition: true,
+		}, {
+			title: "assign to struct field",
+			text:  "set a.b c",
+			nodes: []*Node{{
+				Name: "assignment",
+				Nodes: []*Node{{
+					Name: "symbol-indexer",
 					Nodes: []*Node{{
 						Name: "symbol",
 					}, {
 						Name: "symbol",
 					}},
 				}, {
-					Name: "assign-capture",
+					Name: "symbol",
+				}},
+			}},
+			ignorePosition: true,
+		}, {
+			title: "indexer",
+			text:  "set a[1] 42",
+			nodes: []*Node{{
+				Name: "assignment",
+				Nodes: []*Node{{
+					Name: "expression-indexer",
 					Nodes: []*Node{{
 						Name: "symbol",
 					}, {
-						Name: "symbol",
+						Name: "int",
 					}},
+				}, {
+					Name: "int",
+				}},
+			}},
+			ignorePosition: true,
+		}, {
+			title: "indexer, eq",
+			text:  "a[1] = 42",
+			nodes: []*Node{{
+				Name: "assignment",
+				Nodes: []*Node{{
+					Name: "expression-indexer",
+					Nodes: []*Node{{
+						Name: "symbol",
+					}, {
+						Name: "int",
+					}},
+				}, {
+					Name: "int",
+				}},
+			}},
+			ignorePosition: true,
+		}, {
+			title: "indexer, set, eq",
+			text:  "set a[1] = 42",
+			nodes: []*Node{{
+				Name: "assignment",
+				Nodes: []*Node{{
+					Name: "expression-indexer",
+					Nodes: []*Node{{
+						Name: "symbol",
+					}, {
+						Name: "int",
+					}},
+				}, {
+					Name: "int",
 				}},
 			}},
 			ignorePosition: true,

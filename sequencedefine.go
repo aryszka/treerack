@@ -92,22 +92,12 @@ func (d *sequenceDefinition) validate(r *registry) error {
 	return nil
 }
 
-func (d *sequenceDefinition) createBuilder() {
-	d.sbuilder = &sequenceBuilder{
-		name:   d.name,
-		id:     d.id,
-		commit: d.commit,
-		ranges: d.ranges,
-	}
-}
-
 func (d *sequenceDefinition) initItems(r *registry) {
 	allChars := true
 	for _, item := range d.items {
 		def := r.definition[item.Name]
 		d.itemDefs = append(d.itemDefs, def)
 		def.init(r)
-		d.sbuilder.items = append(d.sbuilder.items, def.builder())
 		if allChars {
 			if _, isChar := def.(*charParser); !isChar {
 				allChars = false
@@ -115,7 +105,6 @@ func (d *sequenceDefinition) initItems(r *registry) {
 		}
 	}
 
-	d.sbuilder.allChars = allChars
 	d.allChars = allChars
 }
 
@@ -126,7 +115,6 @@ func (d *sequenceDefinition) init(r *registry) {
 
 	d.initialized = true
 	d.initRanges()
-	d.createBuilder()
 	d.initItems(r)
 }
 
@@ -166,7 +154,33 @@ func (d *sequenceDefinition) parser() parser {
 	return d.sparser
 }
 
-func (d *sequenceDefinition) builder() builder { return d.sbuilder }
+func (d *sequenceDefinition) createBuilder() {
+	d.sbuilder = &sequenceBuilder{
+		name:            d.name,
+		id:              d.id,
+		commit:          d.commit,
+		ranges:          d.ranges,
+		allChars:        d.allChars,
+		generalizations: d.generalizations,
+	}
+}
+
+func (d *sequenceDefinition) createItemBuilders() {
+	for _, item := range d.itemDefs {
+		pi := item.builder()
+		d.sbuilder.items = append(d.sbuilder.items, pi)
+	}
+}
+
+func (d *sequenceDefinition) builder() builder {
+	if d.sbuilder != nil {
+		return d.sbuilder
+	}
+
+	d.createBuilder()
+	d.createItemBuilders()
+	return d.sbuilder
+}
 
 func (d *sequenceDefinition) isCharSequence(r *registry) bool {
 	for i := range d.originalItems {

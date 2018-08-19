@@ -186,19 +186,16 @@ select                 = "select" nl* "{" sep?
 go    = "go" nl* function-application;
 defer = "defer" nl* function-application;
 
-break                 = "break";
-continue              = "continue";
 range-over-expression = symbol nl* "in" nl* (expression | range) | range;
 loop-expression:alias = expression | range-over-expression;
 loop                  = "for" ((nl* loop-expression)? nl* block | nl* block);
 
-assignable:alias          = symbol-indexer | simple-indexer | symbol;
-assign-capture            = assignable (nl* "=")? nl* expression;
+assign-capture:alias      = primary-expression (nl* "=")? nl* expression;
 assign-capture-list:alias = assign-capture (list-sep assign-capture)*;
 assign-set:alias          = "set" nl* assign-capture;
-assign-equal:alias        = assignable nl* "=" nl* expression;
-assign-group:alias        = "set" nl* "(" list-sep? assign-capture-list? list-sep? ")";
-assignment                = assign-set | assign-equal | assign-group;
+assign-eq:alias           = primary-expression nl* "=" nl* expression;
+assign-group:alias        = "set" nl* "(" (list-sep assign-capture-list)? list-sep? ")";
+assignment                = assign-set | assign-eq | assign-group;
 
 value-capture-fact:alias = symbol (nl* "=")? nl* expression;
 value-capture            = value-capture-fact;
@@ -254,8 +251,6 @@ statement:alias              = simple-statement
                              | if
                              | switch
                              | select
-                             | break
-                             | continue
                              | loop
                              | definition
                              | require

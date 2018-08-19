@@ -2669,9 +2669,9 @@ func TestMMLExp(t *testing.T) {
 		}, {
 			title: "assign, group",
 			text: `set (
- 			a = b
- 			c d
- 		)`,
+				a = b
+				c d
+			)`,
 			nodes: []*Node{{
 				Name: "assignment",
 				Nodes: []*Node{{

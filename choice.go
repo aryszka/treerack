@@ -9,10 +9,11 @@ type choiceParser struct {
 }
 
 type choiceBuilder struct {
-	name    string
-	id      int
-	commit  CommitType
-	options []builder
+	name            string
+	id              int
+	commit          CommitType
+	options         []builder
+	generalizations []int
 }
 
 func (p *choiceParser) nodeName() string       { return p.name }
@@ -123,12 +124,18 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 
 	if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
+		for _, g := range b.generalizations {
+			c.results.dropMatchTo(c.offset, g, to)
+		}
 	} else {
 		if c.results.pending(c.offset, b.id) {
 			return nil, false
 		}
 
 		c.results.markPending(c.offset, b.id)
+		for _, g := range b.generalizations {
+			c.results.markPending(c.offset, g)
+		}
 	}
 
 	var option builder
@@ -142,6 +149,9 @@ func (b *choiceBuilder) build(c *context) ([]*Node, bool) {
 	n, _ := option.build(c)
 	if !parsed {
 		c.results.unmarkPending(from, b.id)
+		for _, g := range b.generalizations {
+			c.results.unmarkPending(from, g)
+		}
 	}
 
 	if b.commit&Alias != 0 {

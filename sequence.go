@@ -11,12 +11,13 @@ type sequenceParser struct {
 }
 
 type sequenceBuilder struct {
-	name     string
-	id       int
-	commit   CommitType
-	items    []builder
-	ranges   [][]int
-	allChars bool
+	name            string
+	id              int
+	commit          CommitType
+	items           []builder
+	ranges          [][]int
+	generalizations []int
+	allChars        bool
 }
 
 func (p *sequenceParser) nodeName() string       { return p.name }
@@ -123,12 +124,19 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 		}}, true
 	} else if parsed {
 		c.results.dropMatchTo(c.offset, b.id, to)
+		for _, g := range b.generalizations {
+			c.results.dropMatchTo(c.offset, g, to)
+		}
 	} else {
 		if c.results.pending(c.offset, b.id) {
 			return nil, false
 		}
 
 		c.results.markPending(c.offset, b.id)
+
+		for _, g := range b.generalizations {
+			c.results.markPending(c.offset, g)
+		}
 	}
 
 	var (
@@ -170,6 +178,9 @@ func (b *sequenceBuilder) build(c *context) ([]*Node, bool) {
 
 	if !parsed {
 		c.results.unmarkPending(from, b.id)
+		for _, g := range b.generalizations {
+			c.results.unmarkPending(from, g)
+		}
 	}
 
 	if b.commit&Alias != 0 {

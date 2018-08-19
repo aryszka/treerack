@@ -54,20 +54,11 @@ func (d *choiceDefinition) validate(r *registry) error {
 	return nil
 }
 
-func (d *choiceDefinition) createBuilder() {
-	d.cbuilder = &choiceBuilder{
-		name:   d.name,
-		id:     d.id,
-		commit: d.commit,
-	}
-}
-
 func (d *choiceDefinition) initOptions(r *registry) {
 	for _, o := range d.options {
 		def := r.definition[o]
 		d.optionDefs = append(d.optionDefs, def)
 		def.init(r)
-		d.cbuilder.options = append(d.cbuilder.options, def.builder())
 		def.addGeneralization(d.id)
 	}
 }
@@ -78,7 +69,6 @@ func (d *choiceDefinition) init(r *registry) {
 	}
 
 	d.initialized = true
-	d.createBuilder()
 	d.initOptions(r)
 }
 
@@ -119,7 +109,30 @@ func (d *choiceDefinition) parser() parser {
 	return d.cparser
 }
 
-func (d *choiceDefinition) builder() builder { return d.cbuilder }
+func (d *choiceDefinition) createBuilder() {
+	d.cbuilder = &choiceBuilder{
+		name:            d.name,
+		id:              d.id,
+		commit:          d.commit,
+		generalizations: d.generalizations,
+	}
+}
+func (d *choiceDefinition) createOptionBuilders() {
+	for _, def := range d.optionDefs {
+		option := def.builder()
+		d.cbuilder.options = append(d.cbuilder.options, option)
+	}
+}
+
+func (d *choiceDefinition) builder() builder {
+	if d.cbuilder != nil {
+		return d.cbuilder
+	}
+
+	d.createBuilder()
+	d.createOptionBuilders()
+	return d.cbuilder
+}
 
 func (d *choiceDefinition) format(r *registry, f formatFlags) string {
 	var chars []rune
