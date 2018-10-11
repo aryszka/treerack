@@ -1,0 +1,271 @@
+ws:ws    = " " | "\b" | "\f" | "\r" | "\t" | "\v";
+wsc:ws   = comment;
+nl:alias = "\n";
+
+line-comment-content:nows  = [^\n]*;
+line-comment:alias:nows    = "//" line-comment-content;
+block-comment-content:nows = ([^*] | "*" [^/])*;
+block-comment:alias:nows   = "/*" block-comment-content "*/";
+comment-part:alias         = line-comment | block-comment;
+comment:alias              = comment-part (nl? comment-part)*;
+
+decimal-digit:alias = [0-9];
+octal-digit:alias   = [0-7];
+hexa-digit:alias    = [0-9a-fA-F];
+
+decimal:alias:nows = [1-9] decimal-digit*;
+octal:alias:nows   = "0" octal-digit*;
+hexa:alias:nows    = "0" [xX] hexa-digit+;
+int                = decimal | octal | hexa;
+
+exponent:alias:nows = [eE] [+\-]? decimal-digit+;
+float:nows          = decimal-digit+ "." decimal-digit* exponent?
+                    | "." decimal-digit+ exponent?
+                    | decimal-digit+ exponent;
+
+string:nows = "\"" ([^\\"] | "\\" .)* "\"";
+
+true       = "true";
+false      = "false";
+bool:alias = true | false;
+
+symbol:nows = [a-zA-Z_][a-zA-Z_0-9]*;
+
+spread-expression     = primary-expression "...";
+list-sep:alias        = (nl | ",")+;
+list-item:alias       = expression | spread-expression;
+expression-list:alias = list-item (list-sep list-item)*;
+
+list-fact:alias = "[" list-sep? expression-list? list-sep? "]";
+list            = list-fact;
+mutable-list    = "~" nl* list-fact;
+
+expression-key     = "[" nl* expression nl* "]";
+entry              = (symbol | string | expression-key) nl* ":" nl* expression;
+entry-list:alias   = (entry | spread-expression) (list-sep (entry | spread-expression))*;
+struct-fact:alias  = "{" list-sep? entry-list? list-sep? "}";
+struct             = struct-fact;
+mutable-struct     = "~" nl* struct-fact;
+
+parameter-list:alias = symbol (list-sep symbol)*;
+collect-parameter    = "..." nl* symbol;
+return               = "return" (nl* expression)?;
+block                = "{" sep? statement-list? sep? "}";
+function-fact:alias  = "(" list-sep?
+                       (parameter-list
+		     | parameter-list list-sep collect-parameter
+		     | collect-parameter)?
+                       list-sep? ")" nl*
+                       (simple-statement | block);
+function             = "fn" nl* function-fact;
+effect               = "fn" nl* "~" nl* function-fact;
+
+range-from  = expression;
+range-to    = expression;
+range:alias = range-from? nl* ":" nl* range-to?;
+
+simple-indexer:alias     = primary-expression "[" nl* expression nl* "]";
+range-indexer:alias      = primary-expression "[" nl* range nl* "]";
+expression-indexer       = simple-indexer | range-indexer;
+symbol-indexer           = primary-expression nl* "." nl* symbol;
+
+function-application = primary-expression "(" list-sep? expression-list? list-sep? ")";
+
+expression-group:alias   = "(" nl* expression nl* ")";
+primary-expression:alias = int
+                         | float
+                         | string
+                         | bool
+                         | receive
+                         | symbol
+                         | list
+                         | mutable-list
+                         | struct
+                         | mutable-struct
+                         | function
+                         | effect
+                         | expression-indexer
+                         | symbol-indexer
+                         | function-application
+                         | expression-group;
+
+binary-not = "^";
+binary-and = "&";
+binary-or  = "|";
+xor        = "^";
+and-not    = "&^";
+lshift     = "<<";
+rshift     = ">>";
+
+plus  = "+";
+minus = "-";
+mul   = "*";
+div   = "/";
+mod   = "%";
+add   = "+";
+sub   = "-";
+
+logical-not   = "!";
+eq            = "==";
+not-eq        = "!=";
+less          = "<";
+less-or-eq    = "<=";
+greater       = ">";
+greater-or-eq = ">=";
+logical-and   = "&&";
+logical-or    = "||";
+
+chain:alias = "->";
+
+unary-operator:alias = plus | minus | binary-not | logical-not;
+unary-expression     = unary-operator primary-expression;
+
+binary-op0:alias = binary-and | and-not | lshift | rshift | mul | div | mod;
+binary-op1:alias = binary-or | xor | add | sub;
+binary-op2:alias = eq | not-eq | less | less-or-eq | greater | greater-or-eq;
+binary-op3:alias = logical-and;
+binary-op4:alias = logical-or;
+
+operand0:alias = primary-expression | unary-expression;
+operand1:alias = operand0 | binary0;
+operand2:alias = operand1 | binary1;
+operand3:alias = operand2 | binary2;
+operand4:alias = operand3 | binary3;
+operand5:alias = operand4 | binary4;
+
+binary0  = operand0 (nl* binary-op0 nl* operand0)+;
+binary1  = operand1 (nl* binary-op1 nl* operand1)+;
+binary2  = operand2 (nl* binary-op2 nl* operand2)+;
+binary3  = operand3 (nl* binary-op3 nl* operand3)+;
+binary4  = operand4 (nl* binary-op4 nl* operand4)+;
+
+binary-expression:alias = binary0
+                        | binary1
+                        | binary2
+                        | binary3
+                        | binary4;
+
+ternary-expression = expression nl* "?" nl* expression nl* ":" nl* expression;
+
+chainingOperand:alias = primary-expression
+                      | unary-expression
+		    | binary-expression
+		    | ternary-expression;
+chaining = chainingOperand (nl* chain nl* chainingOperand)+;
+
+expression:alias = primary-expression
+                 | unary-expression
+                 | binary-expression
+                 | ternary-expression
+	        | chaining;
+
+if = "if" nl* expression nl* block
+     (nl* "else" nl* "if" nl* expression nl* block)*
+     (nl* "else" nl* block)?;
+
+// TODO: empty switch not parsed
+default            = "default" nl* ":";
+default-line:alias = default ";"* statement?;
+case               = "case" nl* expression nl* ":";
+case-line:alias    = case ";"* statement?;
+switch             = "switch" nl* expression? nl* "{" sep?
+                     ((case-line | default-line) (sep (case-line | default-line | statement))*)?
+                     sep? "}";
+
+send                   = "send" nl* primary-expression nl* primary-expression;
+receive                = "receive" nl* primary-expression;
+receive-definition     = symbol nl* receive;
+communication:alias    = send | receive | receive-definition;
+select-case            = "case" nl* communication nl* ":";
+select-case-line:alias = select-case ";"* statement?;
+select                 = "select" nl* "{" sep?
+                         ((select-case-line | default-line)
+                          (sep (select-case-line | default-line | statement))*)?
+                          sep? "}";
+
+go    = "go" nl* function-application;
+defer = "defer" nl* function-application;
+
+range-over-expression = symbol nl* "in" nl* (expression | range) | range;
+loop-expression:alias = expression | range-over-expression;
+loop                  = "for" ((nl* loop-expression)? nl* block | nl* block);
+
+// TODO: set(a b)
+assign-capture:alias      = primary-expression (nl* "=")? nl* expression;
+assign-capture-list:alias = assign-capture (list-sep assign-capture)*;
+assign-set:alias          = "set" nl* assign-capture;
+assign-eq:alias           = primary-expression nl* "=" nl* expression;
+assign-group:alias        = "set" nl* "(" (list-sep assign-capture-list)? list-sep? ")";
+assignment                = assign-set | assign-eq | assign-group;
+
+value-capture-fact:alias = symbol (nl* "=")? nl* expression;
+value-capture            = value-capture-fact;
+mutable-capture          = "~" nl* value-capture-fact;
+value-definition         = "let" nl* (value-capture | mutable-capture);
+mixed-capture-list:alias = (value-capture | mutable-capture) (list-sep (value-capture | mutable-capture))*;
+value-capture-list:alias = value-capture (list-sep value-capture)*;
+value-definition-group   = "let" nl* "(" list-sep? mixed-capture-list? list-sep? ")";
+mutable-definition-group = "let" nl* "~" nl* "(" list-sep? value-capture-list? list-sep? ")";
+
+function-definition-fact:alias    = symbol nl* function-fact;
+function-capture                  = function-definition-fact;
+effect-capture                    = "~" nl* function-definition-fact;
+function-definition               = "fn" nl* (function-capture | effect-capture);
+function-capture-list:alias       = function-capture (list-sep function-capture)*;
+mixed-function-capture-list:alias = (function-capture | effect-capture)
+                                    (list-sep (function-capture | effect-capture))*;
+function-definition-group         = "fn" nl* "(" list-sep?
+                                    mixed-function-capture-list?
+                                    list-sep? ")";
+effect-definition-group           = "fn" nl* "~" nl* "(" list-sep?
+                                    function-capture-list?
+                                    list-sep? ")";
+
+definition:alias = value-definition
+                 | value-definition-group
+                 | mutable-definition-group
+                 | function-definition
+                 | function-definition-group
+                 | effect-definition-group;
+
+// TODO:
+// - use effect
+// - rename to 'use'
+
+use-inline                = ".";
+use-fact                  = string
+                              | (symbol | use-inline) (nl* "=")? nl* string;
+use-fact-list:alias       = use-fact (list-sep use-fact)*;
+use-statement:alias       = "use" nl* use-fact;
+use-statement-group:alias = "use" nl* "(" list-sep?
+                            use-fact-list?
+                            list-sep? ")";
+use                       = use-statement | use-statement-group;
+
+export = "export" nl* definition;
+
+simple-statement:alias       = send
+                             | go
+                             | defer
+                             | assignment
+                             | simple-statement-group
+                             | expression;
+simple-statement-group:alias = "(" nl* simple-statement nl* ")";
+statement:alias              = return
+                             | if
+                             | switch
+                             | select
+                             | loop
+                             | definition
+                             | use
+                             | export
+                             | statement-group
+                             | simple-statement;
+statement-group:alias        = "(" nl* statement nl* ")";
+
+sep:alias            = (";" | nl)+;
+statement-list:alias = statement (sep statement)*;
+
+shebang-command = [^\n]*;
+shebang         = "#!" shebang-command "\n";
+mml:root        = shebang? sep? statement-list? sep?;
