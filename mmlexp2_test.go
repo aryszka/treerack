@@ -13,23 +13,26 @@ func TestMMLExp2(t *testing.T) {
 
 	t.Run("indexer", func(t *testing.T) {
 		// BUG:
-		t.Skip()
+		// t.Skip()
 
 		runTestsSyntax(t, s, []testItem{{
 			title: "mixed indexer",
 			text:  "a.b[c]",
 			ignorePosition: true,
 			nodes: []*Node{{
-				Name: "expression-indexer",
+				Name: "indexer",
 				Nodes: []*Node{{
-					Name: "symbol-indexer",
+					Name: "symbol",
+				}, {
+					Name: "symbol-index",
 					Nodes: []*Node{{
-						Name: "symbol",
-					}, {
 						Name: "symbol",
 					}},
 				}, {
-					Name: "symbol",
+					Name: "expression-index",
+					Nodes: []*Node{{
+						Name: "symbol",
+					}},
 				}},
 			}},
 		}})
@@ -39,16 +42,19 @@ func TestMMLExp2(t *testing.T) {
 			text:  "a[b].c",
 			ignorePosition: true,
 			nodes: []*Node{{
-				Name: "symbol-indexer",
+				Name: "indexer",
 				Nodes: []*Node{{
-					Name: "expression-indexer",
+					Name: "symbol",
+				}, {
+					Name: "expression-index",
 					Nodes: []*Node{{
-						Name: "symbol",
-					}, {
 						Name: "symbol",
 					}},
 				}, {
-					Name: "symbol",
+					Name: "symbol-index",
+					Nodes: []*Node{{
+						Name: "symbol",
+					}},
 				}},
 			}},
 		}})
