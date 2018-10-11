@@ -12,9 +12,6 @@ func TestMMLExp2(t *testing.T) {
 	}
 
 	t.Run("indexer", func(t *testing.T) {
-		// BUG:
-		// t.Skip()
-
 		runTestsSyntax(t, s, []testItem{{
 			title: "mixed indexer",
 			text:  "a.b[c]",

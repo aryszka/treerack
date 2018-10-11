@@ -64,11 +64,6 @@ range-from  = expression;
 range-to    = expression;
 range:alias = range-from? nl* ":" nl* range-to?;
 
-// simple-indexer:alias     = primary-expression "[" nl* expression nl* "]";
-// range-indexer:alias      = primary-expression "[" nl* range nl* "]";
-// expression-indexer       = simple-indexer | range-indexer;
-// symbol-indexer           = primary-expression nl* "." nl* symbol;
-
 symbol-index     = "." nl* symbol;
 expression-index = "[" nl* expression nl* "]";
 index:alias      = symbol-index | expression-index;
@@ -90,8 +85,6 @@ primary-expression:alias = int
                          | mutable-struct
                          | function
                          | effect
-                         // | expression-indexer
-                         // | symbol-indexer
 		       | indexer
                          | function-application
                          | expression-group;
