@@ -13,8 +13,8 @@ func TestMMLExp2(t *testing.T) {
 
 	t.Run("indexer", func(t *testing.T) {
 		runTestsSyntax(t, s, []testItem{{
-			title: "mixed indexer",
-			text:  "a.b[c]",
+			title:          "mixed indexer",
+			text:           "a.b[c]",
 			ignorePosition: true,
 			nodes: []*Node{{
 				Name: "indexer",
@@ -35,8 +35,8 @@ func TestMMLExp2(t *testing.T) {
 		}})
 
 		runTestsSyntax(t, s, []testItem{{
-			title: "mixed indexer inverted",
-			text:  "a[b].c",
+			title:          "mixed indexer inverted",
+			text:           "a[b].c",
 			ignorePosition: true,
 			nodes: []*Node{{
 				Name: "indexer",
