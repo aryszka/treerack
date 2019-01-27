@@ -137,6 +137,17 @@ func (p *sequenceParser) parse(c *context) {
 				currentCount = 0
 				continue
 			}
+			c.offset = from
+			if c.fromResults(p) {
+				if to > c.failOffset {
+					c.failOffset = -1
+					c.failingParser = nil
+				}
+				if !p.allChars {
+					c.results.unmarkPending(from, p.id)
+				}
+				return
+			}
 			if c.failingParser == nil && p.commit&userDefined != 0 && p.commit&Whitespace == 0 && p.commit&FailPass == 0 {
 				c.failingParser = p
 			}
