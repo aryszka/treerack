@@ -394,6 +394,15 @@ func (b *sequenceBuilder) generate(w io.Writer, done map[string]bool) error {
 		fprintf("},")
 	}
 
+	if len(b.generalizations) > 0 {
+		fprintf("generalizations: []int{")
+		for i := range b.generalizations {
+			fprintf("%d,", b.generalizations[i])
+		}
+
+		fprintf("},")
+	}
+
 	fprintf("};")
 
 	if len(b.items) > 0 {

@@ -227,6 +227,15 @@ func (b *choiceBuilder) generate(w io.Writer, done map[string]bool) error {
 		fprintf("name: \"%s\",", b.name)
 	}
 
+	if len(b.generalizations) > 0 {
+		fprintf("generalizations: []int{")
+		for i := range b.generalizations {
+			fprintf("%d,", b.generalizations[i])
+		}
+
+		fprintf("},")
+	}
+
 	fprintf("};")
 
 	if len(b.options) > 0 {
