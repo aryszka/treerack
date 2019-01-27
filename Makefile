@@ -35,15 +35,15 @@ head: $(SOURCES) fmt
 
 generate: $(SOURCES) $(PARSERS) fmt head install
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
-	@mv self/self.go{.next,}
+	@mv self/self.go.next self/self.go
 	@gofmt -s -w self/self.go
 
 regenerate: $(SOURCES) $(PARSERS) fmt head install
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
-	@mv self/self.go{.next,}
+	@mv self/self.go.next self/self.go
 	go install ./cmd/treerack
 	treerack generate -export -package-name self < syntax.treerack > self/self.go.next
-	@mv self/self.go{.next,}
+	@mv self/self.go.next self/self.go
 	@gofmt -s -w self/self.go
 
 check-generate: $(SOURCES) $(PARSERS)
@@ -68,7 +68,7 @@ check-generate: $(SOURCES) $(PARSERS)
 	@echo checking self
 	@mv self/self.go self/self.go.backup
 	@treerack generate -export -package-name self < syntax.treerack > self/self.go.next
-	@mv self/self.go{.next,}
+	@mv self/self.go.next self/self.go
 	@gofmt -s -w self/self.go
 	@if ! diff self/self.go self/self.go.backup > /dev/null; then \
 		mv self/self.go.backup self/self.go; \
