@@ -344,6 +344,15 @@ func (s *Syntax) Init() error {
 	return nil
 }
 
+func (s *Syntax) keywordParsers() []parser {
+	var p []parser
+	for _, kw := range s.keywords {
+		p = append(p, kw.parser())
+	}
+
+	return p
+}
+
 func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	if err := s.Init(); err != nil {
 		return err
@@ -396,6 +405,13 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	fprintln()
 
 	done := make(map[string]bool)
+	for _, p := range s.keywordParsers() {
+		if err := p.(generator).generate(w, done); err != nil {
+			return err
+		}
+	}
+	fprintln()
+
 	if err := s.root.parser().(generator).generate(w, done); err != nil {
 		return err
 	}
@@ -421,15 +437,6 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	fprintln()
 
 	return nil
-}
-
-func (s *Syntax) keywordParsers() []parser {
-	var p []parser
-	for _, kw := range s.keywords {
-		p = append(p, kw.parser())
-	}
-
-	return p
 }
 
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {

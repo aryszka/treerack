@@ -809,6 +809,7 @@ func parseInput(r io.Reader, p parser, b builder, kw []parser) (*Node, error) {
 }
 
 func Parse(r io.Reader) (*Node, error) {
+
 	var p196 = sequenceParser{id: 196, commit: 128, ranges: [][]int{{0, -1}, {1, 1}, {0, -1}}}
 	var p194 = choiceParser{id: 194, commit: 2}
 	var p193 = choiceParser{id: 193, commit: 262, name: "wsc", generalizations: []int{194}}
