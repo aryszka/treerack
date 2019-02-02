@@ -78,6 +78,19 @@ func (p *choiceParser) parse(c *context) {
 	}
 
 	if match {
+		if p.commit&NoKeyword != 0 && c.isKeyword(from, to) {
+			if c.failingParser == nil &&
+				p.commit&userDefined != 0 &&
+				p.commit&Whitespace == 0 &&
+				p.commit&FailPass == 0 {
+				c.failingParser = p
+			}
+
+			c.fail(from)
+			c.results.unmarkPending(from, p.id)
+			return
+		}
+
 		if failOffset > to {
 			c.failOffset = failOffset
 			c.failingParser = failingParser

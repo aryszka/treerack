@@ -94,6 +94,22 @@ func (p *sequenceParser) parse(c *context) {
 		}
 	}
 
+	if p.commit&NoKeyword != 0 && c.isKeyword(from, to) {
+		if c.failingParser == nil &&
+			p.commit&userDefined != 0 &&
+			p.commit&Whitespace == 0 &&
+			p.commit&FailPass == 0 {
+			c.failingParser = p
+		}
+
+		c.fail(from)
+		if !p.allChars {
+			c.results.unmarkPending(from, p.id)
+		}
+
+		return
+	}
+
 	for _, g := range p.generalizations {
 		if c.results.pending(from, g) {
 			c.results.setMatch(from, g, to)

@@ -8,9 +8,11 @@ import (
 
 type context struct {
 	reader        io.RuneReader
+	keywords      []parser
 	offset        int
 	readOffset    int
 	consumed      int
+	offsetLimit   int
 	failOffset    int
 	failingParser parser
 	readErr       error
@@ -20,11 +22,13 @@ type context struct {
 	matchLast     bool
 }
 
-func newContext(r io.RuneReader) *context {
+func newContext(r io.RuneReader, keywords []parser) *context {
 	return &context{
-		reader:     r,
-		results:    &results{},
-		failOffset: -1,
+		reader:      r,
+		keywords:    keywords,
+		results:     &results{},
+		offsetLimit: -1,
+		failOffset:  -1,
 	}
 }
 
@@ -58,6 +62,10 @@ func (c *context) read() bool {
 }
 
 func (c *context) token() (rune, bool) {
+	if c.offset == c.offsetLimit {
+		return 0, false
+	}
+
 	if c.offset == c.readOffset {
 		if !c.read() {
 			return 0, false
@@ -80,6 +88,21 @@ func (c *context) fromResults(p parser) bool {
 	}
 
 	return true
+}
+
+func (c *context) isKeyword(from, to int) bool {
+	ol := c.offsetLimit
+	c.offsetLimit = to
+	defer func() { c.offsetLimit = ol }()
+	for _, kw := range c.keywords {
+		c.offset = from
+		kw.parse(c)
+		if c.matchLast && c.offset == to {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *context) success(to int) {

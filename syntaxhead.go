@@ -14,6 +14,8 @@ const (
 	Alias CommitType = 1 << iota
 	Whitespace
 	NoWhitespace
+	Keyword
+	NoKeyword
 	FailPass
 	Root
 
@@ -80,8 +82,8 @@ func (pe *ParseError) Error() string {
 	)
 }
 
-func parseInput(r io.Reader, p parser, b builder) (*Node, error) {
-	c := newContext(bufio.NewReader(r))
+func parseInput(r io.Reader, p parser, b builder, kw []parser) (*Node, error) {
+	c := newContext(bufio.NewReader(r), kw)
 	p.parse(c)
 	if c.readErr != nil {
 		return nil, c.readErr

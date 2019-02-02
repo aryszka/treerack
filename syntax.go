@@ -21,9 +21,8 @@ type Syntax struct {
 	initialized  bool
 	initFailed   bool
 	explicitRoot bool
+	keywords     []definition
 	root         definition
-	parser       parser
-	builder      builder
 }
 
 type GeneratorOptions struct {
@@ -57,12 +56,32 @@ var (
 	ErrInitFailed             = errors.New("init failed")
 	ErrNoParsersDefined       = errors.New("no parsers defined")
 	ErrInvalidEscapeCharacter = errors.New("invalid escape character")
-	ErrRootAlias              = errors.New("root node cannot be an alias")
-	ErrRootWhitespace         = errors.New("root node cannot be a whitespace")
-	ErrRootFailPass           = errors.New("root node cannot pass failing definition")
 	ErrMultipleRoots          = errors.New("multiple roots")
 	ErrInvalidSymbolName      = errors.New("invalid symbol name")
 )
+
+func (ct CommitType) String() string {
+	switch ct {
+	case None:
+		return "none"
+	case Alias:
+		return "alias"
+	case Whitespace:
+		return "whitespace"
+	case NoWhitespace:
+		return "no-whitespace"
+	case Keyword:
+		return "keyword"
+	case NoKeyword:
+		return "no-keyword"
+	case FailPass:
+		return "fail-pass"
+	case Root:
+		return "root"
+	default:
+		return "unknown"
+	}
+}
 
 func duplicateDefinition(name string) error {
 	return fmt.Errorf("duplicate definition: %s", name)
@@ -100,6 +119,36 @@ func intsContain(is []int, i int) bool {
 	return false
 }
 
+var incompatibleCommitTypes = map[CommitType][]CommitType{
+	Alias:      {Root},
+	Whitespace: {Keyword, NoKeyword, FailPass, Root},
+	Keyword:    {NoKeyword, Root},
+	FailPass:   {Root},
+}
+
+func (s *Syntax) checkCommitType(d definition) error {
+	for ct, ict := range incompatibleCommitTypes {
+		if d.commitType()&ct == 0 {
+			continue
+		}
+
+		for _, cti := range ict {
+			if d.commitType()&cti == 0 {
+				continue
+			}
+
+			return fmt.Errorf(
+				"incompatible commit types in %s: %v and %v",
+				d.nodeName(),
+				ct,
+				cti,
+			)
+		}
+	}
+
+	return nil
+}
+
 func (s *Syntax) applyRoot(d definition) error {
 	explicitRoot := d.commitType()&Root != 0
 	if explicitRoot && s.explicitRoot {
@@ -131,8 +180,16 @@ func (s *Syntax) register(d definition) error {
 		s.registry = newRegistry()
 	}
 
+	if err := s.checkCommitType(d); err != nil {
+		return err
+	}
+
 	if err := s.applyRoot(d); err != nil {
 		return err
+	}
+
+	if d.commitType()&Keyword != 0 {
+		s.keywords = append(s.keywords, d)
 	}
 
 	return s.registry.setDefinition(d)
@@ -252,20 +309,12 @@ func (s *Syntax) Init() error {
 		return ErrNoParsersDefined
 	}
 
-	if s.root.commitType()&Alias != 0 {
-		return ErrRootAlias
-	}
-
-	if s.root.commitType()&Whitespace != 0 {
-		return ErrRootWhitespace
-	}
-
-	if s.root.commitType()&FailPass != 0 {
-		return ErrRootFailPass
+	if err := s.checkCommitType(s.root); err != nil {
+		return err
 	}
 
 	defs := s.registry.definitions
-	for i := range s.registry.definitions {
+	for i := range defs {
 		defs[i].preinit()
 	}
 
@@ -274,15 +323,23 @@ func (s *Syntax) Init() error {
 		s.registry = newRegistry(defs...)
 	}
 
+	for i := range s.keywords {
+		if err := s.keywords[i].validate(s.registry); err != nil {
+			s.initFailed = true
+			return err
+		}
+	}
+
 	if err := s.root.validate(s.registry); err != nil {
 		s.initFailed = true
 		return err
 	}
 
-	s.root.init(s.registry)
-	s.parser = s.root.parser()
-	s.builder = s.root.builder()
+	for i := range s.keywords {
+		s.keywords[i].init(s.registry)
+	}
 
+	s.root.init(s.registry)
 	s.initialized = true
 	return nil
 }
@@ -339,18 +396,26 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	fprintln()
 
 	done := make(map[string]bool)
-	if err := s.parser.(generator).generate(w, done); err != nil {
+	if err := s.root.parser().(generator).generate(w, done); err != nil {
 		return err
 	}
 
 	done = make(map[string]bool)
-	if err := s.builder.(generator).generate(w, done); err != nil {
+	if err := s.root.builder().(generator).generate(w, done); err != nil {
 		return err
 	}
 
 	fprintln()
 	fprintln()
-	fprintf(`return parseInput(r, &p%d, &b%d)`, s.parser.nodeID(), s.builder.nodeID())
+	fprint(`var keywords = []parser{`)
+	for i := range s.keywords {
+		fprintf(`&p%d, `, s.keywords[i].nodeID())
+	}
+	fprint(`}`)
+
+	fprintln()
+	fprintln()
+	fprintf(`return parseInput(r, &p%d, &b%d, keywords)`, s.root.parser().nodeID(), s.root.builder().nodeID())
 	fprintln()
 	fprint(`}`)
 	fprintln()
@@ -358,10 +423,19 @@ func (s *Syntax) Generate(o GeneratorOptions, w io.Writer) error {
 	return nil
 }
 
+func (s *Syntax) keywordParsers() []parser {
+	var p []parser
+	for _, kw := range s.keywords {
+		p = append(p, kw.parser())
+	}
+
+	return p
+}
+
 func (s *Syntax) Parse(r io.Reader) (*Node, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
-	return parseInput(r, s.parser, s.builder)
+	return parseInput(r, s.root.parser(), s.root.builder(), s.keywordParsers())
 }

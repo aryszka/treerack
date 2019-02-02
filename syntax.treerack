@@ -59,9 +59,11 @@ expression:alias = terminal
 alias                      = "alias";
 ws                         = "ws";
 nows                       = "nows";
+kw                         = "kw";
+nokw                       = "nokw";
 failpass                   = "failpass";
 root                       = "root";
-flag:alias                 = alias | ws | nows | failpass | root;
+flag:alias                 = alias | ws | nows | kw | nokw | failpass | root;
 definition-name:alias:nows = symbol (":" flag)*;
 definition                 = definition-name "=" expression;
 

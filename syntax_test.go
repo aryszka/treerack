@@ -137,24 +137,14 @@ func TestInit(t *testing.T) {
 
 	t.Run("root is an alias", func(t *testing.T) {
 		s := &Syntax{}
-		if err := s.AnyChar("a", Root|Alias); err != nil {
-			t.Error(err)
-			return
-		}
-
-		if err := s.Init(); err == nil {
+		if err := s.AnyChar("a", Root|Alias); err == nil {
 			t.Error("failed to fail")
 		}
 	})
 
 	t.Run("root is whitespace", func(t *testing.T) {
 		s := &Syntax{}
-		if err := s.AnyChar("a", Root|Whitespace); err != nil {
-			t.Error(err)
-			return
-		}
-
-		if err := s.Init(); err == nil {
+		if err := s.AnyChar("a", Root|Whitespace); err == nil {
 			t.Error("failed to fail")
 		}
 	})

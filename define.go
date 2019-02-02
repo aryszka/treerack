@@ -20,6 +20,10 @@ func flagsToCommitType(n []*Node) CommitType {
 			ct |= Whitespace
 		case "nows":
 			ct |= NoWhitespace
+		case "kw":
+			ct |= Keyword
+		case "nokw":
+			ct |= NoKeyword
 		case "failpass":
 			ct |= FailPass
 		case "root":
